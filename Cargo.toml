@@ -14,3 +14,6 @@ path = "atcoder/cf17_final/cf17_final_b.rs"
 [[bin]]
 name = "cf17_final_c"
 path = "atcoder/cf17_final/cf17_final_c.rs"
+[[bin]]
+name = "cf17_final_d"
+path = "atcoder/cf17_final/cf17_final_d.rs"
