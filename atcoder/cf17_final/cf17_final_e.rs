@@ -1,42 +1,25 @@
 use std::io;
 use std::cmp;
 use std::collections::BTreeMap;
-use std::collections::BinaryHeap;
+use std::collections::VecDeque;
 use std::collections::BTreeSet;
-use std::cmp::Ordering;
-
-#[derive(Copy, Clone, Eq, PartialEq)]
-struct MinSize {
-    value: usize,
-}
-
-impl Ord for MinSize {
-    fn cmp(&self, other: &MinSize) -> Ordering {
-        other.value.cmp(&self.value)
-    }
-}
-
-impl PartialOrd for MinSize {
-    fn partial_cmp(&self, other: &MinSize) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
 
 fn main() {
     let s = read_line().trim().to_owned();
     let n = s.len();
     let methods = read_values::<usize>()[0];
-    let mut lr = Vec::new();
+    let mut segments = Vec::new();
     for _ in 0..methods {
-        let v = read_values::<usize>();
-        let mut l: usize = v[0] - 1;
-        let mut r: usize = v[1] - 1;
+        let input = read_values::<usize>();
+        let mut l: usize = input[0] - 1;
+        let mut r: usize = input[1] - 1;
         let half = n >> 1;
 
         if (n & 1) == 1 {
             if l == half && r == half {
                 continue;
             }
+
             if half < l {
                 l -= 1;
             }
@@ -44,7 +27,7 @@ fn main() {
                 r -= 1;
             }
         }
-        lr.push((l, r));
+        segments.push((l, r));
     }
 
     let s = {
@@ -59,10 +42,11 @@ fn main() {
         }
         polished
     };
+
     let n = s.len();
 
     let mut right_map: BTreeMap<usize, BTreeSet<usize>> = BTreeMap::new();
-    for x in lr.iter() {
+    for x in segments.iter() {
         let (l, r) = *x;
 
         let half = n >> 1;
@@ -73,6 +57,7 @@ fn main() {
         } else {
             let right_side = r - (half - 1);
             let left_side = half - l;
+
             if right_side > left_side {
                 let tmp_l = half + left_side;
                 (n - 1 - r, n - 1 - tmp_l)
@@ -107,27 +92,25 @@ fn main() {
 
         let mut lefts = BTreeSet::new();
 
-        let mut heap = BinaryHeap::new();
-        heap.push(MinSize { value: left });
+        let mut queue = VecDeque::new();
+        queue.push_back(left);
         let mut right = left;
-        while !heap.is_empty() {
-            let v = heap.pop().unwrap().value;
+        while !queue.is_empty() {
+            let v = queue.pop_front().unwrap();
             lefts.insert(v);
 
-            if let Some(set) = right_map.get(&v) {
+            if let Some(set) = right_map.remove(&v) {
                 for r in set.iter() {
-                    heap.push(MinSize { value: *r + 1 });
+                    queue.push_back(*r + 1);
                     right = cmp::max(right, *r + 1);
                 }
             }
-            right_map.remove(&v);
 
-            if let Some(set) = left_map.get(&v) {
+            if let Some(set) = left_map.remove(&v) {
                 for l in set.iter() {
-                    heap.push(MinSize { value: *l });
+                    queue.push_back(*l);
                 }
             }
-            left_map.remove(&v);
         }
         lefts.insert(right);
 
@@ -139,10 +122,10 @@ fn main() {
         }
     }
 
-    let mut imos = vec![0; n / 2 + 1];
+    let mut sum = vec![0; n / 2 + 1];
     let mut cur = 0;
     for i in 0..(n / 2) {
-        cur += imos[i];
+        cur += sum[i];
         let from = (s[i] as i64 + cur) % 26;
         let to = (s[n - 1 - i] as i64) % 26;
         let add = (to + 26 - from) % 26;
@@ -155,55 +138,9 @@ fn main() {
         }
         let x = *merged_map.get(&i).unwrap();
         cur += add;
-        imos[x] -= add;
+        sum[x] -= add;
     }
     println!("YES");
-}
-
-struct UnionFind {
-    parent: Vec<usize>,
-    sizes: Vec<usize>,
-    size: usize,
-}
-
-impl UnionFind {
-    fn new(n: usize) -> UnionFind {
-        UnionFind {
-            parent: (0..n).map(|i| { i }).collect::<Vec<usize>>(),
-            sizes: vec![1; n],
-            size: n,
-        }
-    }
-
-    fn find(&mut self, x: usize) -> usize {
-        if x == self.parent[x] {
-            x
-        } else {
-            let px = self.parent[x];
-            self.parent[x] = self.find(px);
-            self.parent[x]
-        }
-    }
-
-    fn unite(&mut self, x: usize, y: usize) -> bool {
-        let fx = self.find(x);
-        let fy = self.find(y);
-        if fx == fy {
-            return false;
-        }
-
-        let (tx, ty) = if self.sizes[fx] < self.sizes[fy] {
-            (fy, fx)
-        } else {
-            (fx, fy)
-        };
-
-        self.parent[ty] = tx;
-        self.sizes[tx] += self.sizes[ty];
-        self.sizes[ty] = 0;
-        self.size -= 1;
-        return true;
-    }
 }
 
 fn read_line() -> String {
