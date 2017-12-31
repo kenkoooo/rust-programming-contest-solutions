@@ -5,6 +5,7 @@ authors = ["kenkoooo <kenkou.n@gmail.com>"]
 
 [dependencies]
 
+# AtCoder
 [[bin]]
 name = "cf17_final_a"
 path = "atcoder/cf17_final/cf17_final_a.rs"
@@ -20,3 +21,12 @@ path = "atcoder/cf17_final/cf17_final_d.rs"
 [[bin]]
 name = "cf17_final_e"
 path = "atcoder/cf17_final/cf17_final_e.rs"
+[[bin]]
+name = "icpc2014summer_day4_f"
+path = "atcoder/jag2014summer-day4/icpc2014summer_day4_f.rs"
+[[bin]]
+name = "agc002_c"
+path = "atcoder/agc002/agc002_c.rs"
+[[bin]]
+name = "agc002_d"
+path = "atcoder/agc002/agc002_d.rs"
