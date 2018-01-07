@@ -36,3 +36,21 @@ path = "atcoder/agc001/agc001_c.rs"
 [[bin]]
 name = "arc060_b"
 path = "atcoder/arc060/arc060_b.rs"
+[[bin]]
+name = "agc003_c"
+path = "atcoder/agc003/agc003_c.rs"
+[[bin]]
+name = "agc003_d"
+path = "atcoder/agc003/agc003_d.rs"
+[[bin]]
+name = "abc085_a"
+path = "atcoder/abc085/abc085_a.rs"
+[[bin]]
+name = "abc085_b"
+path = "atcoder/abc085/abc085_b.rs"
+[[bin]]
+name = "abc085_c"
+path = "atcoder/abc085/abc085_c.rs"
+[[bin]]
+name = "abc085_d"
+path = "atcoder/abc085/abc085_d.rs"
