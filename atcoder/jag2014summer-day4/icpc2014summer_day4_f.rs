@@ -1,114 +1,65 @@
 use std::io;
 use std::cmp;
 use std::cmp::Ordering;
-use std::i64::MAX;
+use std::usize::MAX;
 
 fn main() {
     let s = read_line().trim().to_owned().bytes().collect::<Vec<_>>();
     let n = s.len();
-    let reverse_s = {
-        let mut r = s.clone();
-        r.reverse();
-        r
+
+    let reverse_sa = {
+        let mut reverse_s = s.clone();
+        reverse_s.reverse();
+        SuffixArray::new(reverse_s)
     };
-
     let sa = SuffixArray::new(s);
-    let reverse_sa = SuffixArray::new(reverse_s);
-
-    let mut rmq = RangeMinimumQuery::new(n + 1);
-    let mut reverse_rmq = RangeMinimumQuery::new(n + 1);
-    for i in 0..(n + 1) {
-        rmq.update(i, sa.array[i] as i64);
-        reverse_rmq.update(i, reverse_sa.array[i] as i64);
-    }
 
     let m = read_values::<usize>()[0];
+
+    let mut rmq = SegmentTree::new(n + 1, MAX, |a, b| cmp::min(a, b));
+    let mut reverse_rmq = SegmentTree::new(n + 1, MAX, |a, b| cmp::min(a, b));
+    for i in 0..(n + 1) {
+        rmq.update(i, sa.array[i]);
+        reverse_rmq.update(i, reverse_sa.array[i]);
+    }
+
     for _ in 0..m {
-        let input = read_values::<String>();
-        let x = input[0].to_owned().bytes().collect();
-        let y = {
-            let mut y = input[1].to_owned().bytes().collect::<Vec<_>>();
-            y.reverse();
-            y
+        let v = read_values::<String>();
+        let head = v[0].to_owned().bytes().collect::<Vec<_>>();
+
+        if !sa.contains(&head) {
+            println!("0");
+            continue;
+        }
+
+        let left = {
+            let head_lower = sa.lower_bound(&head);
+            let head_upper = sa.upper_bound(&head);
+            rmq.query(head_lower, head_upper)
         };
 
-        if !sa.contains(&x) {
+        let mut tail = v[1].to_owned().bytes().collect::<Vec<_>>();
+        tail.reverse();
+
+        if !reverse_sa.contains(&tail) {
             println!("0");
             continue;
         }
-        let low = sa.lower_bound(&x);
-        let up = sa.upper_bound(&x);
 
-        if !reverse_sa.contains(&y) {
-            println!("0");
-            continue;
-        }
-        let reverse_low = reverse_sa.lower_bound(&y);
-        let reverse_up = reverse_sa.upper_bound(&y);
+        let right = {
+            let tail_lower = reverse_sa.lower_bound(&tail);
+            let tail_upper = reverse_sa.upper_bound(&tail);
+            n - reverse_rmq.query(tail_lower, tail_upper)
+        };
 
-        if low >= up || reverse_low >= reverse_up {
-            println!("0");
-        }
-
-        let s = rmq.query(low, up) as usize;
-        let t = n - reverse_rmq.query(reverse_low, reverse_up) as usize;
-        if s + x.len() <= t && s <= t - y.len() {
-            println!("{}", t - s);
+        if left + head.len() <= right && left + tail.len() <= right {
+            println!("{}", right - left);
         } else {
             println!("0");
         }
     }
 }
 
-pub struct RangeMinimumQuery {
-    seg: Vec<i64>,
-    n: usize,
-}
-
-impl RangeMinimumQuery {
-    pub fn new(size: usize) -> RangeMinimumQuery {
-        let mut m = 1;
-        while m <= size {
-            m <<= 1;
-        }
-        RangeMinimumQuery {
-            seg: vec![MAX; m * 2],
-            n: m,
-        }
-    }
-
-    pub fn update(&mut self, mut k: usize, value: i64) {
-        k += self.n - 1;
-        self.seg[k] = value;
-        while k > 0 {
-            k = (k - 1) >> 1;
-            self.seg[k] = cmp::min(self.seg[k * 2 + 1], self.seg[k * 2 + 2]);
-        }
-    }
-
-    /// Get the minimum value in the array in the range [a, b)
-    ///
-    /// # Panics
-    ///
-    /// Panics if `a >= b`.
-    pub fn query(&self, a: usize, b: usize) -> i64 {
-        return self.query_range(a, b, 0, 0, self.n);
-    }
-
-    pub fn query_range(&self, a: usize, b: usize, k: usize, l: usize, r: usize) -> i64 {
-        if r <= a || b <= l {
-            return MAX;
-        }
-        if a <= l && r <= b {
-            return self.seg[k];
-        }
-        let x = self.query_range(a, b, k * 2 + 1, l, (l + r) >> 1);
-        let y = self.query_range(a, b, k * 2 + 2, (l + r) >> 1, r);
-        cmp::min(x, y)
-    }
-}
-
-#[allow(dead_code)]
 pub struct SuffixArray {
     n: usize,
     s: Vec<u8>,
@@ -193,6 +144,60 @@ impl SuffixArray {
         self.binary_search(t, check_function)
     }
 }
+
+pub struct SegmentTree<T, F> {
+    seg: Vec<T>,
+    n: usize,
+    f: F,
+    initial_value: T,
+}
+
+impl<T: Clone, F> SegmentTree<T, F> where F: Fn(T, T) -> T {
+    pub fn new(size: usize, initial_value: T, f: F) -> SegmentTree<T, F> {
+        let mut m = 1;
+        while m <= size {
+            m <<= 1;
+        }
+        SegmentTree {
+            seg: vec![initial_value.clone(); m * 2],
+            n: m,
+            f: f,
+            initial_value: initial_value.clone(),
+        }
+    }
+
+    pub fn update(&mut self, mut k: usize, value: T) {
+        k += self.n - 1;
+        self.seg[k] = value;
+        while k > 0 {
+            k = (k - 1) >> 1;
+            self.seg[k] = (self.f)(self.seg[k * 2 + 1].clone(), self.seg[k * 2 + 2].clone());
+        }
+    }
+
+    /// Get the minimum value in the array in the range [a, b)
+    ///
+    /// # Panics
+    ///
+    /// Panics if `a >= b`.
+    pub fn query(&self, a: usize, b: usize) -> T {
+        assert!(a < b);
+        return self.query_range(a, b, 0, 0, self.n);
+    }
+
+    pub fn query_range(&self, a: usize, b: usize, k: usize, l: usize, r: usize) -> T {
+        if r <= a || b <= l {
+            return self.initial_value.clone();
+        }
+        if a <= l && r <= b {
+            return self.seg[k].clone();
+        }
+        let x = self.query_range(a, b, k * 2 + 1, l, (l + r) >> 1);
+        let y = self.query_range(a, b, k * 2 + 2, (l + r) >> 1, r);
+        (self.f)(x, y)
+    }
+}
+
 
 fn read_line() -> String {
     let stdin = io::stdin();
