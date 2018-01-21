@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["kenkoooo <kenkou.n@gmail.com>"]
 
 [dependencies]
+rand = "0.4"
 
 # AOJ
 [[bin]]
@@ -59,3 +60,9 @@ path = "atcoder/abc085/abc085_c.rs"
 [[bin]]
 name = "abc085_d"
 path = "atcoder/abc085/abc085_d.rs"
+[[bin]]
+name = "arc089_a"
+path = "atcoder/arc089/arc089_a.rs"
+[[bin]]
+name = "arc089_b"
+path = "atcoder/arc089/arc089_b.rs"
