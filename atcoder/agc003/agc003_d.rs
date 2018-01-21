@@ -3,113 +3,138 @@ use std::collections::BTreeSet;
 use std::collections::BTreeMap;
 use std::cmp;
 
-const MAX: usize = 10000000000;
+const MAX_S: usize = 10000000000;
+const MAX_Q: usize = 100000;
 
 fn main() {
-    let primes = get_primes(100000);
-    let p2 = primes.iter().map(|p| p * p).collect::<BTreeSet<_>>();
-    let mut pair_map = BTreeMap::new();
-    let mut count_map = BTreeMap::new();
+    let primes = {
+        let mut is_prime = vec![true; 1000000];
+        is_prime[0] = false;
+        is_prime[1] = false;
+        for i in 2..is_prime.len() {
+            if !is_prime[i] {
+                continue;
+            }
+            let mut c = i * 2;
+            while c < is_prime.len() {
+                is_prime[c] = false;
+                c += i;
+            }
+        }
+        let mut primes = Vec::new();
+        for i in 0..is_prime.len() {
+            if is_prime[i] {
+                primes.push(i);
+            }
+        }
+        primes
+    };
+
+    let p2_map = {
+        let mut map = BTreeMap::new();
+        for p in &primes {
+            let p = *p;
+            map.insert(p * p, p);
+        }
+        map
+    };
 
     let n = read_values::<usize>()[0];
+
+    let mut count_map = BTreeMap::new();
+    let mut pair_map = BTreeMap::new();
+
+    let mut one = 0;
+
     for _ in 0..n {
         let mut s = read_values::<usize>()[0];
-        let mut normal = 1;
-        let mut pair = 1;
-        for prime in primes.iter() {
-            let prime = *prime;
-            let p3 = prime * prime * prime;
-            if p3 > MAX {
+        let mut v = Vec::new();
+
+        for p in primes.iter() {
+            let p = *p;
+            let p3 = p * p * p;
+            if p3 > s {
                 break;
             }
             while s % p3 == 0 {
                 s /= p3;
             }
-            if s % (prime * prime) == 0 {
-                s /= (prime * prime);
-                pair *= prime;
-                normal *= (prime * prime);
-            } else if s % prime == 0 {
-                s /= prime;
-                normal *= prime;
-                pair *= (prime * prime);
-            }
-            if pair > MAX {
-                pair = 0;
+
+            if s % (p * p) == 0 {
+                v.push((p, 2));
+                s /= (p * p);
+            } else if s % p == 0 {
+                v.push((p, 1));
+                s /= p;
             }
         }
         if s != 1 {
-            if p2.contains(&s) {
-                let p = (s as f64).sqrt() as usize;
-                normal *= s;
-                pair *= p;
-            } else {
-                normal *= s;
-                pair *= s;
-                if pair > MAX || (pair > 100000 && s > 100000) {
+            match p2_map.get(&s) {
+                Some(p) => v.push((*p, 2)),
+                _ => v.push((s, 1)),
+            }
+        }
+
+        let mut norm = 1;
+        let mut pair = 1;
+        for t in &v {
+            let (p, count) = *t;
+            if count == 1 {
+                norm *= p;
+                if p >= MAX_Q || pair >= MAX_S || pair * p >= MAX_S {
                     pair = 0;
                 }
-                pair *= s;
+                pair *= (p * p);
+            } else {
+                norm *= p * p;
+                if pair >= MAX_S || pair * p >= MAX_S {
+                    pair = 0;
+                }
+                pair *= p;
             }
         }
 
-        if count_map.contains_key(&normal) {
-            let cur = *count_map.get(&normal).unwrap();
-            count_map.insert(normal, cur + 1);
-        } else {
-            count_map.insert(normal, 1);
+        if pair != 0 {
+            pair_map.insert(pair, norm);
+            pair_map.insert(norm, pair);
         }
-        pair_map.insert(normal, pair);
+
+        if norm == 1 {
+            one = 1;
+        } else if count_map.contains_key(&norm) {
+            let c = *count_map.get(&norm).unwrap();
+            count_map.insert(norm, c + 1);
+        } else {
+            count_map.insert(norm, 1);
+        }
     }
 
-    let mut ans = 0;
-    let mut checked = BTreeSet::new();
-    match count_map.get(&1) {
-        Some(_) => {
-            ans += 1;
-            checked.insert(1);
-        }
-        _ => {}
-    }
-    for item in pair_map.iter() {
-        let (normal, pair) = item;
-        let normal_count = *count_map.get(normal).unwrap();
-        let pair_count = match count_map.get(pair) {
-            Some(count) => *count,
-            _ => 0,
-        };
-        if checked.contains(normal) {
+    let mut ans = one;
+    let mut viewed_set = BTreeSet::new();
+    for key in count_map.keys() {
+        if viewed_set.contains(key) {
             continue;
         }
-        ans += cmp::max(normal_count, pair_count);
-        checked.insert(*normal);
-        checked.insert(*pair);
-    }
-    println!("{}", ans);
-}
 
-fn get_primes(n: usize) -> Vec<usize> {
-    let mut is_prime = vec![true; n + 1];
-    is_prime[0] = false;
-    is_prime[1] = false;
-
-    for p in 2..(n + 1) {
-        if is_prime[p] {
-            let mut c = 2;
-            while c * p <= n {
-                is_prime[c * p] = false;
-                c += 1;
+        match pair_map.get(key) {
+            Some(pair) => {
+                let c1 = *count_map.get(key).unwrap();
+                let c2 = match count_map.get(pair) {
+                    Some(c2) => *c2,
+                    _ => 0,
+                };
+                viewed_set.insert(*key);
+                viewed_set.insert(*pair);
+                ans += cmp::max(c1, c2);
+            }
+            _ => {
+                ans += *count_map.get(key).unwrap();
+                viewed_set.insert(*key);
             }
         }
     }
 
-    let mut primes = Vec::new();
-    for i in 2..(n + 1) {
-        if is_prime[i] {
-            primes.push(i);
-        }
-    }
-    primes
+    println!("{}", ans);
 }
 
 fn read_line() -> String {

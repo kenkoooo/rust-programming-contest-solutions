@@ -5,6 +5,11 @@ authors = ["kenkoooo <kenkou.n@gmail.com>"]
 
 [dependencies]
 
+# AOJ
+[[bin]]
+name = "aoj2644"
+path = "aoj/2644.rs"
+
 # AtCoder
 [[bin]]
 name = "cf17_final_a"
