@@ -67,6 +67,9 @@ path = "atcoder/arc089/arc089_a.rs"
 name = "arc089_b"
 path = "atcoder/arc089/arc089_b.rs"
 [[bin]]
+name = "soundhound2018_c"
+path = "atcoder/soundhound2018/soundhound2018_c.rs"
+[[bin]]
 name = "soundhound2018_d"
 path = "atcoder/soundhound2018/soundhound2018_d.rs"
 [[bin]]
