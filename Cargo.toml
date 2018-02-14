@@ -81,3 +81,12 @@ path = "atcoder/arc090/arc090_b.rs"
 [[bin]]
 name = "arc090_c"
 path = "atcoder/arc090/arc090_c.rs"
+[[bin]]
+name = "yahoo_procon2018_qual_a"
+path = "atcoder/yahoo-procon2018-qual/yahoo_procon2018_qual_a.rs"
+[[bin]]
+name = "yahoo_procon2018_qual_b"
+path = "atcoder/yahoo-procon2018-qual/yahoo_procon2018_qual_b.rs"
+[[bin]]
+name = "yahoo_procon2018_qual_c"
+path = "atcoder/yahoo-procon2018-qual/yahoo_procon2018_qual_c.rs"
