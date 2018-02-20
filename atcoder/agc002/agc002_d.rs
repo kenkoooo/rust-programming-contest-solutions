@@ -1,68 +1,47 @@
-use std::io;
+use std::collections::VecDeque;
 
 fn main() {
-    let (n, m) = {
-        let v = read_values::<usize>();
-        (v[0], v[1])
-    };
-    let (a, b) = {
-        let mut a = vec![0; m];
-        let mut b = vec![0; m];
-        for i in 0..m {
-            let v = read_values::<usize>();
-            a[i] = v[0] - 1;
-            b[i] = v[1] - 1;
-        }
-        (a, b)
-    };
-    let q = read_values::<usize>()[0];
-    let (x, y, z) = {
-        let mut x = vec![0; q];
-        let mut y = vec![0; q];
-        let mut z = vec![0; q];
-        for i in 0..q {
-            let v = read_values::<usize>();
-            x[i] = v[0] - 1;
-            y[i] = v[1] - 1;
-            z[i] = v[2];
-        }
-        (x, y, z)
-    };
+    let mut sc = Scanner::new();
+    let n = sc.read::<usize>();
+    let m = sc.read::<usize>();
+    let edges = (0..m).map(|_| (sc.read::<usize>() - 1, sc.read::<usize>() - 1)).collect::<Vec<_>>();
+    let q = sc.read::<usize>();
 
-
-    let mut ng = vec![0; q];
+    let queries = (0..q).map(|_| (sc.read::<usize>() - 1, sc.read::<usize>() - 1, sc.read::<usize>())).collect::<Vec<_>>();
+    let mut ans = (0..(m + 1)).map(|_| VecDeque::new()).collect::<Vec<_>>();
     let mut ok = vec![m; q];
+    let mut ng = vec![0; q];
+    for i in 0..q {
+        let mid = (ok[i] + ng[i]) >> 1;
+        ans[mid].push_back(i);
+    }
 
-    for _ in 0..30 {
-        let mut check: Vec<Vec<usize>> = vec![Vec::new(); m + 1];
-        for i in 0..q {
-            let med = (ng[i] + ok[i]) / 2;
-            check[med].push(i);
-        }
-
+    for _ in 0..50 {
         let mut uf = UnionFind::new(n);
-        for edge_id in 0..m {
-            uf.unite(a[edge_id], b[edge_id]);
-            for query in check[edge_id].iter() {
-                let from = uf.find(x[*query]);
-                let to = uf.find(y[*query]);
-                let count = if from == to {
-                    uf.sizes[from]
+        for score in 0..m {
+            let (from, to) = edges[score];
+            uf.unite(from, to);
+            let size = ans[score + 1].len();
+            for _ in 0..size {
+                let i = ans[score + 1].pop_front().unwrap();
+                let (x, y, z) = queries[i];
+                let count = if uf.same(x, y) {
+                    uf.partial_size(x)
                 } else {
-                    uf.sizes[from] + uf.sizes[to]
+                    uf.partial_size(x) + uf.partial_size(y)
                 };
-
-                if count >= z[*query] {
-                    ok[*query] = edge_id;
+                if count >= z {
+                    ok[i] = score + 1;
                 } else {
-                    ng[*query] = edge_id;
+                    ng[i] = score + 1;
                 }
+                let mid = (ok[i] + ng[i]) >> 1;
+                ans[mid].push_back(i);
             }
         }
     }
-
-    for i in 0..q {
-        println!("{}", ok[i] + 1);
+    for score in &ok {
+        println!("{}", score);
     }
 }
 
@@ -79,6 +58,10 @@ impl UnionFind {
             sizes: vec![1; n],
             size: n,
         }
+    }
+
+    fn same(&mut self, x: usize, y: usize) -> bool {
+        self.find(x) == self.find(y)
     }
 
     fn find(&mut self, x: usize) -> usize {
@@ -110,18 +93,62 @@ impl UnionFind {
         self.size -= 1;
         return true;
     }
+
+    fn partial_size(&mut self, x: usize) -> usize {
+        let p = self.find(x);
+        self.sizes[p]
+    }
 }
 
-fn read_line() -> String {
-    let stdin = io::stdin();
-    let mut buf = String::new();
-    stdin.read_line(&mut buf).unwrap();
-    buf
+struct Scanner {
+    ptr: usize,
+    length: usize,
+    buf: Vec<u8>,
+    small_cache: Vec<u8>,
 }
 
-fn read_values<T>() -> Vec<T> where T: std::str::FromStr, T::Err: std::fmt::Debug {
-    read_line()
-        .split(' ')
-        .map(|a| a.trim().parse().unwrap())
-        .collect()
+impl Scanner {
+    fn new() -> Scanner {
+        Scanner { ptr: 0, length: 0, buf: vec![0; 1024], small_cache: vec![0; 1024] }
+    }
+
+    fn load(&mut self) {
+        use std::io::Read;
+        let mut s = std::io::stdin();
+        self.length = s.read(&mut self.buf).unwrap();
+    }
+
+    fn byte(&mut self) -> u8 {
+        if self.ptr >= self.length {
+            self.ptr = 0;
+            self.load();
+        }
+        self.ptr += 1;
+        return self.buf[self.ptr - 1];
+    }
+
+    fn is_space(b: u8) -> bool { b == b'\n' || b == b'\r' || b == b'\t' || b == b' ' }
+
+    fn read<T>(&mut self) -> T where T: std::str::FromStr, T::Err: std::fmt::Debug, {
+        let mut b = self.byte();
+        while Scanner::is_space(b) {
+            b = self.byte();
+        }
+
+        for pos in 0..self.small_cache.len() {
+            self.small_cache[pos] = b;
+            b = self.byte();
+            if Scanner::is_space(b) {
+                return String::from_utf8_lossy(&self.small_cache[0..(pos + 1)]).parse().unwrap();
+            }
+        }
+
+        let mut v = self.small_cache.clone();
+        while !Scanner::is_space(b) {
+            v.push(b);
+            b = self.byte();
+        }
+        return String::from_utf8_lossy(&v).parse().unwrap();
+    }
 }
+
