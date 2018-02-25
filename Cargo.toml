@@ -10,6 +10,9 @@ rand = "0.4"
 [[bin]]
 name = "aoj2644"
 path = "aoj/2644.rs"
+[[bin]]
+name = "aoj1585"
+path = "aoj/1585.rs"
 
 # AtCoder
 [[bin]]
