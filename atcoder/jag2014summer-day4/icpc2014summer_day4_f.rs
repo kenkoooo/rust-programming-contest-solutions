@@ -4,56 +4,53 @@ use std::cmp::Ordering;
 use std::usize::MAX;
 
 fn main() {
-    let s = read_line().trim().to_owned().bytes().collect::<Vec<_>>();
+    let mut sc = Scanner::new();
+    let s = sc.read::<String>().bytes().collect::<Vec<_>>();
     let n = s.len();
+    let m = sc.read::<usize>();
 
-    let reverse_sa = {
-        let mut reverse_s = s.clone();
-        reverse_s.reverse();
-        SuffixArray::new(reverse_s)
-    };
-    let sa = SuffixArray::new(s);
+    let xy = (0..m).map(|_| {
+        let x = sc.read::<String>().bytes().collect::<Vec<_>>();
+        let mut y = sc.read::<String>().bytes().collect::<Vec<_>>();
+        y.reverse();
+        (x, y)
+    }).collect::<Vec<_>>();
 
-    let m = read_values::<usize>()[0];
+    let mut reverse_s = s.clone();
+    reverse_s.reverse();
 
-    let mut rmq = SegmentTree::new(n + 1, MAX, |a, b| cmp::min(a, b));
-    let mut reverse_rmq = SegmentTree::new(n + 1, MAX, |a, b| cmp::min(a, b));
+    let sa = SuffixArray::new(&s);
+    let reverse_sa = SuffixArray::new(&reverse_s);
+    let mut rmq = SegmentTree::new(n + 1, MAX, |a: usize, b: usize| cmp::min(a, b));
+    let mut reverse_rmq = SegmentTree::new(n + 1, MAX, |a: usize, b: usize| cmp::min(a, b));
+
     for i in 0..(n + 1) {
         rmq.update(i, sa.array[i]);
         reverse_rmq.update(i, reverse_sa.array[i]);
     }
 
-    for _ in 0..m {
-        let v = read_values::<String>();
-        let head = v[0].to_owned().bytes().collect::<Vec<_>>();
-
-        if !sa.contains(&head) {
+    for t in &xy {
+        let (ref x, ref y) = *t;
+        if !sa.contains(&x) {
             println!("0");
             continue;
         }
 
-        let left = {
-            let head_lower = sa.lower_bound(&head);
-            let head_upper = sa.upper_bound(&head);
-            rmq.query(head_lower, head_upper)
-        };
-
-        let mut tail = v[1].to_owned().bytes().collect::<Vec<_>>();
-        tail.reverse();
-
-        if !reverse_sa.contains(&tail) {
+        if !reverse_sa.contains(&y) {
             println!("0");
             continue;
         }
 
-        let right = {
-            let tail_lower = reverse_sa.lower_bound(&tail);
-            let tail_upper = reverse_sa.upper_bound(&tail);
-            n - reverse_rmq.query(tail_lower, tail_upper)
-        };
+        let lx = sa.lower_bound(&x);
+        let rx = sa.upper_bound(&x);
+        let l = rmq.query(lx, rx);
 
-        if left + head.len() <= right && left + tail.len() <= right {
-            println!("{}", right - left);
+        let ly = reverse_sa.lower_bound(&y);
+        let ry = reverse_sa.upper_bound(&y);
+        let r = reverse_rmq.query(ly, ry);
+
+        if l + y.len() <= n - r && l + x.len() <= n - r {
+            println!("{}", n - r - l);
         } else {
             println!("0");
         }
@@ -78,7 +75,7 @@ fn compare_node(i: usize, j: usize, k: usize, rank: &Vec<i32>) -> Ordering {
 }
 
 impl SuffixArray {
-    pub fn new(s: Vec<u8>) -> SuffixArray {
+    pub fn new(s: &Vec<u8>) -> SuffixArray {
         let n = s.len();
         let mut rank = vec![0; n + 1];
         let mut array = vec![0; n + 1];
@@ -103,7 +100,7 @@ impl SuffixArray {
             k *= 2;
         }
 
-        SuffixArray { n: n, rank: rank, array: array, s: s }
+        SuffixArray { n: n, rank: rank, array: array, s: s.clone() }
     }
 
     pub fn contains(&self, t: &Vec<u8>) -> bool {
@@ -198,17 +195,55 @@ impl<T: Clone, F> SegmentTree<T, F> where F: Fn(T, T) -> T {
     }
 }
 
-
-fn read_line() -> String {
-    let stdin = io::stdin();
-    let mut buf = String::new();
-    stdin.read_line(&mut buf).unwrap();
-    buf
+struct Scanner {
+    ptr: usize,
+    length: usize,
+    buf: Vec<u8>,
+    small_cache: Vec<u8>,
 }
 
-fn read_values<T>() -> Vec<T> where T: std::str::FromStr, T::Err: std::fmt::Debug {
-    read_line()
-        .split(' ')
-        .map(|a| a.trim().parse().unwrap())
-        .collect()
+impl Scanner {
+    fn new() -> Scanner {
+        Scanner { ptr: 0, length: 0, buf: vec![0; 1024], small_cache: vec![0; 1024] }
+    }
+
+    fn load(&mut self) {
+        use std::io::Read;
+        let mut s = std::io::stdin();
+        self.length = s.read(&mut self.buf).unwrap();
+    }
+
+    fn byte(&mut self) -> u8 {
+        if self.ptr >= self.length {
+            self.ptr = 0;
+            self.load();
+        }
+        self.ptr += 1;
+        return self.buf[self.ptr - 1];
+    }
+
+    fn is_space(b: u8) -> bool { b == b'\n' || b == b'\r' || b == b'\t' || b == b' ' }
+
+    fn read<T>(&mut self) -> T where T: std::str::FromStr, T::Err: std::fmt::Debug, {
+        let mut b = self.byte();
+        while Scanner::is_space(b) {
+            b = self.byte();
+        }
+
+        for pos in 0..self.small_cache.len() {
+            self.small_cache[pos] = b;
+            b = self.byte();
+            if Scanner::is_space(b) {
+                return String::from_utf8_lossy(&self.small_cache[0..(pos + 1)]).parse().unwrap();
+            }
+        }
+
+        let mut v = self.small_cache.clone();
+        while !Scanner::is_space(b) {
+            v.push(b);
+            b = self.byte();
+        }
+        return String::from_utf8_lossy(&v).parse().unwrap();
+    }
 }
+
