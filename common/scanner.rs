@@ -20,7 +20,12 @@ impl Scanner {
         if self.ptr >= self.length {
             self.ptr = 0;
             self.load();
+            if self.length == 0 {
+                self.buf[0] = b'\n';
+                self.length = 1;
+            }
         }
+
         self.ptr += 1;
         return self.buf[self.ptr - 1];
     }
