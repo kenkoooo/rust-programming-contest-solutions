@@ -9,54 +9,54 @@ fn main() {
     let mut sc = Scanner::new();
     let s = sc.read::<String>().bytes().collect::<Vec<_>>();
     let n = s.len();
+    let q = sc.read::<usize>();
+    let queries: Vec<(usize, usize, Vec<u8>)> = (0..q).map(|_| {
+        let l = sc.read::<usize>();
+        let r = sc.read::<usize>();
+        let m = sc.read::<String>().bytes().collect();
+        (l, r, m)
+    }).collect();
+
     let sa = SuffixArray::new(&s);
 
-    let q = sc.read::<usize>();
-    let mut query = Vec::new();
-    let mut queue = Vec::new();
+    let mut events = Vec::new();
+    for i in 0..(n + 1) {
+        let pos = sa.array[i];
+        events.push((pos, INSERT, i));
+    }
 
     for i in 0..q {
-        let l = sc.read::<usize>();
-        let mut r = sc.read::<usize>();
-        let m = sc.read::<String>().bytes().collect::<Vec<_>>();
-        r -= m.len() - 1;
-        if l > r {
-            continue;
+        let (l, r, ref m) = queries[i];
+        if r + 1 >= m.len() {
+            events.push((l, START, i));
+            events.push((r + 1 - m.len(), END, i));
         }
-
-        if !sa.contains(&m) {
-            query.push((0, 0));
-            continue;
-        }
-
-        let low = sa.lower_bound(&m);
-        let up = sa.upper_bound(&m);
-
-        query.push((low, up));
-        queue.push((l, START, i));
-        queue.push((r, END, i));
     }
+    events.sort();
 
-    for i in 0..(n + 1) {
-        queue.push((sa.array[i], INSERT, i));
-    }
-
-    queue.sort();
-
-    let mut ans = vec![0; q];
     let mut bit = FenwickTree::new(n + 1);
-    for t in &queue {
-        let (_, kind, pos) = *t;
-        if kind == 1 {
-            bit.add(pos, 1);
-        } else {
-            let (low, up) = query[pos];
-            let sum = bit.sum(low, up) as i64;
-            if kind == START {
-                ans[pos] -= sum;
-            } else {
-                ans[pos] += sum;
+    let mut ans: Vec<i32> = vec![0; q];
+    for e in &events {
+        let (_, t, i) = *e;
+        match t {
+            START => {
+                let (_, _, ref m) = queries[i];
+                if sa.contains(m) {
+                    let low = sa.lower_bound(m);
+                    let up = sa.upper_bound(m);
+                    ans[i] -= bit.sum(low, up) as i32;
+                }
             }
+            INSERT => { bit.add(i, 1); }
+            END => {
+                let (_, _, ref m) = queries[i];
+                if sa.contains(m) {
+                    let low = sa.lower_bound(m);
+                    let up = sa.upper_bound(m);
+                    ans[i] += bit.sum(low, up) as i32;
+                }
+            }
+            _ => {}
         }
     }
 
