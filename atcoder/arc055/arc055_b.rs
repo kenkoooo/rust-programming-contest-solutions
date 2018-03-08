@@ -3,32 +3,39 @@ fn main() {
     let n = sc.read::<usize>();
     let k = sc.read::<usize>();
 
-    let mut dp = vec![vec![-1.0; n + 1]; n + 1];
-    for i in 0..(n + 1) {
-        dp[i][i] = (i as f64) / (n as f64);
-        dp[i][0] = 0.0;
-    }
-    println!("{}", rec(n, k, &mut dp, n));
+    let mut vis = vec![vec![vec![false; 2]; k + 1]; n + 1];
+    let mut mem = vec![vec![vec![0.0; 2]; k + 1]; n + 1];
+
+    println!("{}", search(0, 0, false, &mut mem, &mut vis));
 }
 
-/// take `take` cookies from `rest` cookies.
-fn rec(rest: usize, take: usize, dp: &mut Vec<Vec<f64>>, total: usize) -> f64 {
-    if dp[rest][take] >= 0.0 {
-        return dp[rest][take];
+fn search(n: usize, k: usize, b: bool, mem: &mut Vec<Vec<Vec<f64>>>, vis: &mut Vec<Vec<Vec<bool>>>) -> f64 {
+    let total = mem.len() - 1;
+    let take = mem[0].len() - 1;
+    if n == total {
+        return if b { 1.0 } else { 0.0 };
     }
+    let b = if b { 1 } else { 0 };
+    if vis[n][k][b] {
+        return mem[n][k][b];
+    }
+    vis[n][k][b] = true;
+    let mut result = 0.0;
+    let p1 = 1.0 / (n + 1) as f64;
+    let p2 = 1.0 - p1;
 
-    let turn = total + 1 - rest;
+    let skip = search(n + 1, k, false, mem, vis);
+    if k + 1 <= take {
+        result += p1 * max_f64(skip, search(n + 1, k + 1, true, mem, vis));
+    }
+    result += p2 * search(n + 1, k, b == 1, mem, vis);
 
-    // probability to get current max in this turn
-    let get_current_max_probability = 1.0 / turn as f64;
-    let skip = rec(rest - 1, take, dp, total);
+    mem[n][k][b] = result;
+    return result;
+}
 
-    let get_global_maximum_by_eat = 1.0 / (total as f64) // probability to get global maximum in this turn
-        + get_current_max_probability * rec(rest - 1, take - 1, dp, total) // probability to get global maximum after this turn
-        + (1.0 - get_current_max_probability) * skip; // if current maximum can't be gained in this turn, this turn should be skipped.
-
-    dp[rest][take] = if get_global_maximum_by_eat > skip { get_global_maximum_by_eat } else { skip };
-    return dp[rest][take];
+fn max_f64(a: f64, b: f64) -> f64 {
+    if a > b { a } else { b }
 }
 
 struct Scanner {
