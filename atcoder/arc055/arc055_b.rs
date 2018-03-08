@@ -3,34 +3,43 @@ fn main() {
     let n = sc.read::<usize>();
     let k = sc.read::<usize>();
 
-    let mut vis = vec![vec![vec![false; 2]; k + 1]; n + 1];
     let mut mem = vec![vec![vec![0.0; 2]; k + 1]; n + 1];
+    let mut vis = vec![vec![vec![false; 2]; k + 1]; n + 1];
 
-    println!("{}", search(0, 0, false, &mut mem, &mut vis));
+    println!("{}", search(0, 0, false, &mut mem, &mut vis, n, k));
 }
 
-fn search(n: usize, k: usize, b: bool, mem: &mut Vec<Vec<Vec<f64>>>, vis: &mut Vec<Vec<Vec<bool>>>) -> f64 {
-    let total = mem.len() - 1;
-    let take = mem[0].len() - 1;
-    if n == total {
+fn search(
+    i: usize,
+    j: usize,
+    b: bool,
+    mem: &mut Vec<Vec<Vec<f64>>>,
+    vis: &mut Vec<Vec<Vec<bool>>>,
+    n: usize,
+    k: usize) -> f64 {
+    if i == k {
         return if b { 1.0 } else { 0.0 };
     }
+
     let b = if b { 1 } else { 0 };
-    if vis[n][k][b] {
-        return mem[n][k][b];
+    if vis[i][j][b] {
+        return mem[i][j][b];
     }
-    vis[n][k][b] = true;
+    vis[i][j][b] = true;
+
     let mut result = 0.0;
-    let p1 = 1.0 / (n + 1) as f64;
+    let p1 = 1.0 / (i + 1) as f64;
     let p2 = 1.0 - p1;
 
-    let skip = search(n + 1, k, false, mem, vis);
-    if k + 1 <= take {
-        result += p1 * max_f64(skip, search(n + 1, k + 1, true, mem, vis));
+    if j + 1 <= k {
+        result += p1 * max_f64(
+            search(i + 1, j, false, mem, vis, n, k),
+            search(i + 1, j + 1, true, mem, vis, n, k),
+        );
     }
-    result += p2 * search(n + 1, k, b == 1, mem, vis);
+    result += p2 * search(i + 1, j, b == 1, mem, vis, n, k);
 
-    mem[n][k][b] = result;
+    mem[i][j][b] = result;
     return result;
 }
 
