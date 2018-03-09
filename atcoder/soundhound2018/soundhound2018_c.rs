@@ -1,58 +1,56 @@
 use std::usize;
 use std::cmp;
-use std::collections::vec_deque::VecDeque;
-use std::i64::MAX;
+use std::collections::VecDeque;
 
 fn main() {
-    let (r, c) = {
-        let v = read_values::<usize>();
-        (v[0], v[1])
-    };
+    let mut sc = Scanner::new();
+    let r = sc.read::<usize>();
+    let c = sc.read::<usize>();
 
-    let dot = ".".as_bytes()[0];
-    let map = (0..r).map(|_| {
-        read_line()
-            .trim()
-            .bytes()
-            .map(|b| b == dot)
-            .collect::<Vec<_>>()
-    }).collect::<Vec<_>>();
+    let map: Vec<Vec<u8>> = (0..r).map(|_| sc.read::<String>().bytes().collect()).collect();
 
-    let mut ok = 0;
-
-    let mut dinitz = Dinitz::new(r * c + 2);
     let source = r * c;
     let sink = source + 1;
+    let v = sink + 1;
+
+    let mut ok = 0;
+    let mut dinitz = Dinitz::new(v);
     for i in 0..r {
         for j in 0..c {
-            if !map[i][j] { continue; }
-
+            if map[i][j] == b'*' {
+                continue;
+            }
             ok += 1;
 
-            let v = i * c + j;
+            let u = i * c + j;
             if i % 2 == j % 2 {
-                dinitz.add_edge(source, v, 1);
+                dinitz.add_edge(source, u, 1);
             } else {
-                dinitz.add_edge(v, sink, 1);
+                dinitz.add_edge(u, sink, 1);
                 continue;
             }
 
-            let x = vec![(1, 0), (-1, 0), (0, 1), (0, -1)];
-            for t in &x {
-                let (di, dj) = *t;
-                let ni = (i as i32) + di;
-                let nj = (j as i32) + dj;
-                if ni < 0 || ni >= r as i32 || nj < 0 || nj >= c as i32 {
-                    continue;
-                }
-                let w = ni * (c as i32) + nj;
-                dinitz.add_edge(v, w as usize, 1);
+
+            let mut add = |x: usize, y: usize| {
+                dinitz.add_edge(u, x * c + y, 1);
+            };
+
+            if i > 0 {
+                add(i - 1, j);
+            }
+            if i < r - 1 {
+                add(i + 1, j);
+            }
+            if j > 0 {
+                add(i, j - 1);
+            }
+            if j < c - 1 {
+                add(i, j + 1);
             }
         }
     }
 
-    let f = dinitz.max_flow(source, sink);
-    println!("{}", ok - f as usize);
+    println!("{}", ok - dinitz.max_flow(source, sink));
 }
 
 struct Edge {
@@ -154,7 +152,7 @@ impl Dinitz {
             }
             self.iter = vec![0; v];
             loop {
-                let f = self.dfs(s, t, MAX);
+                let f = self.dfs(s, t, std::i64::MAX);
                 if f == 0 {
                     break;
                 }
@@ -164,16 +162,59 @@ impl Dinitz {
     }
 }
 
-fn read_line() -> String {
-    let stdin = std::io::stdin();
-    let mut buf = String::new();
-    stdin.read_line(&mut buf).unwrap();
-    buf
+struct Scanner {
+    ptr: usize,
+    length: usize,
+    buf: Vec<u8>,
+    small_cache: Vec<u8>,
 }
 
-fn read_values<T>() -> Vec<T> where T: std::str::FromStr, T::Err: std::fmt::Debug, {
-    read_line()
-        .split(' ')
-        .map(|a| a.trim().parse().unwrap())
-        .collect()
+impl Scanner {
+    fn new() -> Scanner {
+        Scanner { ptr: 0, length: 0, buf: vec![0; 1024], small_cache: vec![0; 1024] }
+    }
+
+    fn load(&mut self) {
+        use std::io::Read;
+        let mut s = std::io::stdin();
+        self.length = s.read(&mut self.buf).unwrap();
+    }
+
+    fn byte(&mut self) -> u8 {
+        if self.ptr >= self.length {
+            self.ptr = 0;
+            self.load();
+            if self.length == 0 {
+                self.buf[0] = b'\n';
+                self.length = 1;
+            }
+        }
+
+        self.ptr += 1;
+        return self.buf[self.ptr - 1];
+    }
+
+    fn is_space(b: u8) -> bool { b == b'\n' || b == b'\r' || b == b'\t' || b == b' ' }
+
+    fn read<T>(&mut self) -> T where T: std::str::FromStr, T::Err: std::fmt::Debug, {
+        let mut b = self.byte();
+        while Scanner::is_space(b) {
+            b = self.byte();
+        }
+
+        for pos in 0..self.small_cache.len() {
+            self.small_cache[pos] = b;
+            b = self.byte();
+            if Scanner::is_space(b) {
+                return String::from_utf8_lossy(&self.small_cache[0..(pos + 1)]).parse().unwrap();
+            }
+        }
+
+        let mut v = self.small_cache.clone();
+        while !Scanner::is_space(b) {
+            v.push(b);
+            b = self.byte();
+        }
+        return String::from_utf8_lossy(&v).parse().unwrap();
+    }
 }
