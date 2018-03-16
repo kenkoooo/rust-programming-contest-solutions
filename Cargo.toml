@@ -105,3 +105,6 @@ path = "atcoder/yahoo-procon2018-qual/yahoo_procon2018_qual_b.rs"
 [[bin]]
 name = "yahoo_procon2018_qual_c"
 path = "atcoder/yahoo-procon2018-qual/yahoo_procon2018_qual_c.rs"
+[[bin]]
+name = "yahoo_procon2018_qual_d"
+path = "atcoder/yahoo-procon2018-qual/yahoo_procon2018_qual_d.rs"
