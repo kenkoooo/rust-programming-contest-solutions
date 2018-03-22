@@ -1,56 +1,52 @@
 use std::usize;
 use std::cmp;
 use std::collections::VecDeque;
+use std::i64;
 
 fn main() {
     let mut sc = Scanner::new();
-    let r = sc.read::<usize>();
-    let c = sc.read::<usize>();
-
-    let map: Vec<Vec<u8>> = (0..r).map(|_| sc.read::<String>().bytes().collect()).collect();
+    let r: usize = sc.read();
+    let c: usize = sc.read();
+    let map: Vec<Vec<char>> = (0..r).map(|_| sc.read::<String>().chars().collect()).collect();
 
     let source = r * c;
     let sink = source + 1;
     let v = sink + 1;
 
-    let mut ok = 0;
     let mut dinitz = Dinitz::new(v);
+    let mut total = 0;
     for i in 0..r {
         for j in 0..c {
-            if map[i][j] == b'*' {
+            if map[i][j] == '*' {
                 continue;
             }
-            ok += 1;
+            total += 1;
 
-            let u = i * c + j;
+            let dx = vec![0, 0, -1, 1];
+            let dy = vec![1, -1, 0, 0];
+
             if i % 2 == j % 2 {
-                dinitz.add_edge(source, u, 1);
+                dinitz.add_edge(source, i * c + j, 1);
             } else {
-                dinitz.add_edge(u, sink, 1);
+                dinitz.add_edge(i * c + j, sink, 1);
                 continue;
             }
 
+            for d in 0..4 {
+                let nx = i as i32 + dx[d];
+                let ny = j as i32 + dy[d];
+                if nx < 0 || ny < 0 { continue; }
 
-            let mut add = |x: usize, y: usize| {
-                dinitz.add_edge(u, x * c + y, 1);
-            };
-
-            if i > 0 {
-                add(i - 1, j);
-            }
-            if i < r - 1 {
-                add(i + 1, j);
-            }
-            if j > 0 {
-                add(i, j - 1);
-            }
-            if j < c - 1 {
-                add(i, j + 1);
+                let nx = nx as usize;
+                let ny = ny as usize;
+                if nx >= r || ny >= c { continue; }
+                if map[nx][ny] == '*' { continue; }
+                dinitz.add_edge(i * c + j, nx * c + ny, 1);
             }
         }
     }
 
-    println!("{}", ok - dinitz.max_flow(source, sink));
+    println!("{}", total - dinitz.max_flow(source, sink));
 }
 
 struct Edge {
@@ -152,7 +148,7 @@ impl Dinitz {
             }
             self.iter = vec![0; v];
             loop {
-                let f = self.dfs(s, t, std::i64::MAX);
+                let f = self.dfs(s, t, i64::MAX);
                 if f == 0 {
                     break;
                 }
@@ -218,3 +214,4 @@ impl Scanner {
         return String::from_utf8_lossy(&v).parse().unwrap();
     }
 }
+
