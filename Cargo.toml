@@ -17,109 +17,112 @@ path = "aoj/1585.rs"
 # AtCoder
 [[bin]]
 name = "cf17_final_a"
-path = "atcoder/cf17_final/cf17_final_a.rs"
+path = "atcoder/cf17_final_a.rs"
 [[bin]]
 name = "cf17_final_b"
-path = "atcoder/cf17_final/cf17_final_b.rs"
+path = "atcoder/cf17_final_b.rs"
 [[bin]]
 name = "cf17_final_c"
-path = "atcoder/cf17_final/cf17_final_c.rs"
+path = "atcoder/cf17_final_c.rs"
 [[bin]]
 name = "cf17_final_d"
-path = "atcoder/cf17_final/cf17_final_d.rs"
+path = "atcoder/cf17_final_d.rs"
 [[bin]]
 name = "cf17_final_e"
-path = "atcoder/cf17_final/cf17_final_e.rs"
+path = "atcoder/cf17_final_e.rs"
 [[bin]]
 name = "icpc2014summer_day4_f"
-path = "atcoder/jag2014summer-day4/icpc2014summer_day4_f.rs"
+path = "atcoder/icpc2014summer_day4_f.rs"
 [[bin]]
 name = "agc002_c"
-path = "atcoder/agc002/agc002_c.rs"
+path = "atcoder/agc002_c.rs"
 [[bin]]
 name = "agc002_d"
-path = "atcoder/agc002/agc002_d.rs"
+path = "atcoder/agc002_d.rs"
 [[bin]]
 name = "agc001_c"
-path = "atcoder/agc001/agc001_c.rs"
+path = "atcoder/agc001_c.rs"
 [[bin]]
 name = "agc001_b"
-path = "atcoder/agc001/agc001_b.rs"
+path = "atcoder/agc001_b.rs"
 [[bin]]
 name = "agc001_d"
-path = "atcoder/agc001/agc001_d.rs"
+path = "atcoder/agc001_d.rs"
 [[bin]]
 name = "arc060_b"
-path = "atcoder/arc060/arc060_b.rs"
+path = "atcoder/arc060_b.rs"
 [[bin]]
 name = "agc003_c"
-path = "atcoder/agc003/agc003_c.rs"
+path = "atcoder/agc003_c.rs"
 [[bin]]
 name = "agc003_d"
-path = "atcoder/agc003/agc003_d.rs"
+path = "atcoder/agc003_d.rs"
 [[bin]]
 name = "abc085_a"
-path = "atcoder/abc085/abc085_a.rs"
+path = "atcoder/abc085_a.rs"
 [[bin]]
 name = "abc085_b"
-path = "atcoder/abc085/abc085_b.rs"
+path = "atcoder/abc085_b.rs"
 [[bin]]
 name = "abc085_c"
-path = "atcoder/abc085/abc085_c.rs"
+path = "atcoder/abc085_c.rs"
 [[bin]]
 name = "abc085_d"
-path = "atcoder/abc085/abc085_d.rs"
+path = "atcoder/abc085_d.rs"
 [[bin]]
 name = "arc089_a"
-path = "atcoder/arc089/arc089_a.rs"
+path = "atcoder/arc089_a.rs"
 [[bin]]
 name = "arc089_b"
-path = "atcoder/arc089/arc089_b.rs"
+path = "atcoder/arc089_b.rs"
 [[bin]]
 name = "arc089_c"
-path = "atcoder/arc089/arc089_c.rs"
+path = "atcoder/arc089_c.rs"
 [[bin]]
 name = "arc091_b"
-path = "atcoder/arc091/arc091_b.rs"
+path = "atcoder/arc091_b.rs"
 [[bin]]
 name = "soundhound2018_c"
-path = "atcoder/soundhound2018/soundhound2018_c.rs"
+path = "atcoder/soundhound2018_c.rs"
 [[bin]]
 name = "soundhound2018_d"
-path = "atcoder/soundhound2018/soundhound2018_d.rs"
+path = "atcoder/soundhound2018_d.rs"
 [[bin]]
 name = "arc090_a"
-path = "atcoder/arc090/arc090_a.rs"
+path = "atcoder/arc090_a.rs"
 [[bin]]
 name = "arc090_b"
-path = "atcoder/arc090/arc090_b.rs"
+path = "atcoder/arc090_b.rs"
 [[bin]]
 name = "arc090_c"
-path = "atcoder/arc090/arc090_c.rs"
+path = "atcoder/arc090_c.rs"
 [[bin]]
 name = "arc092_a"
-path = "atcoder/arc092/arc092_a.rs"
+path = "atcoder/arc092_a.rs"
 [[bin]]
 name = "arc092_b"
-path = "atcoder/arc092/arc092_b.rs"
+path = "atcoder/arc092_b.rs"
 [[bin]]
 name = "arc092_c"
-path = "atcoder/arc092/arc092_c.rs"
+path = "atcoder/arc092_c.rs"
 [[bin]]
 name = "arc092_d"
-path = "atcoder/arc092/arc092_d.rs"
+path = "atcoder/arc092_d.rs"
 [[bin]]
 name = "arc055_b"
-path = "atcoder/arc055/arc055_b.rs"
+path = "atcoder/arc055_b.rs"
+[[bin]]
+name = "abc089_d"
+path = "atcoder/abc089_d.rs"
 [[bin]]
 name = "yahoo_procon2018_qual_a"
-path = "atcoder/yahoo-procon2018-qual/yahoo_procon2018_qual_a.rs"
+path = "atcoder/yahoo_procon2018_qual_a.rs"
 [[bin]]
 name = "yahoo_procon2018_qual_b"
-path = "atcoder/yahoo-procon2018-qual/yahoo_procon2018_qual_b.rs"
+path = "atcoder/yahoo_procon2018_qual_b.rs"
 [[bin]]
 name = "yahoo_procon2018_qual_c"
-path = "atcoder/yahoo-procon2018-qual/yahoo_procon2018_qual_c.rs"
+path = "atcoder/yahoo_procon2018_qual_c.rs"
 [[bin]]
 name = "yahoo_procon2018_qual_d"
-path = "atcoder/yahoo-procon2018-qual/yahoo_procon2018_qual_d.rs"
+path = "atcoder/yahoo_procon2018_qual_d.rs"
