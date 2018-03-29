@@ -121,6 +121,12 @@ path = "atcoder/abc088_d.rs"
 name = "abc084_d"
 path = "atcoder/abc084_d.rs"
 [[bin]]
+name = "abc079_d"
+path = "atcoder/abc079_d.rs"
+[[bin]]
+name = "abc076_d"
+path = "atcoder/abc076_d.rs"
+[[bin]]
 name = "abc080_d"
 path = "atcoder/abc080_d.rs"
 [[bin]]
@@ -135,3 +141,6 @@ path = "atcoder/yahoo_procon2018_qual_c.rs"
 [[bin]]
 name = "yahoo_procon2018_qual_d"
 path = "atcoder/yahoo_procon2018_qual_d.rs"
+[[bin]]
+name = "code_festival_2017_qualc_c"
+path = "atcoder/code_festival_2017_qualc_c.rs"
