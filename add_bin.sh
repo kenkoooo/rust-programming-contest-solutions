@@ -16,6 +16,7 @@ else
     echo "[[bin]]" >> Cargo.toml
     echo "name = \"${problem_id}\"" >> Cargo.toml
     echo "path = \"${path}\"" >> Cargo.toml
-    echo "fn main() {}" > ${path}
+    echo "fn main() {let mut sc = Scanner::new();}" > ${path}
     cat common/scanner.rs >> ${path}
+    git add ${path}
 fi

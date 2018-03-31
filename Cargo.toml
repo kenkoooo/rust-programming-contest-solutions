@@ -144,3 +144,9 @@ path = "atcoder/yahoo_procon2018_qual_d.rs"
 [[bin]]
 name = "code_festival_2017_qualc_c"
 path = "atcoder/code_festival_2017_qualc_c.rs"
+[[bin]]
+name = "abc075_d"
+path = "atcoder/abc075_d.rs"
+[[bin]]
+name = "code_festival_2017_quala_c"
+path = "atcoder/code_festival_2017_quala_c.rs"
