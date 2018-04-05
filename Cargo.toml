@@ -180,3 +180,6 @@ path = "aoj/grl_3_c.rs"
 [[bin]]
 name = "arc075_b"
 path = "atcoder/arc075_b.rs"
+[[bin]]
+name = "arc073_b"
+path = "atcoder/arc073_b.rs"
