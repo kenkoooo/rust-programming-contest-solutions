@@ -20,3 +20,6 @@ else
     cat common/scanner.rs >> ${path}
     git add ${path}
 fi
+
+idea ./ ${path}
+idea ./ ./Cargo.toml
