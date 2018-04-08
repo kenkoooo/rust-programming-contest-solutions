@@ -22,23 +22,24 @@ fn search(
     }
 
     let max_eaten = if max_eaten { 1 } else { 0 };
+
     if vis[seen][eaten][max_eaten] {
         return dp[seen][eaten][max_eaten];
     }
 
     let mut result = 0.0;
+
     let current_max_appeared = 1.0 / (seen + 1) as f64;
     let non_max = 1.0 - current_max_appeared;
-
-    if eaten + 1 <= can_eat {
+    if eaten < can_eat {
         let skip = search(seen + 1, eaten, false, dp, vis);
         let eat = search(seen + 1, eaten + 1, true, dp, vis);
         result += current_max_appeared * max(skip, eat);
     }
     result += non_max * search(seen + 1, eaten, max_eaten == 1, dp, vis);
 
-    dp[seen][eaten][max_eaten] = result;
     vis[seen][eaten][max_eaten] = true;
+    dp[seen][eaten][max_eaten] = result;
     return result;
 }
 
