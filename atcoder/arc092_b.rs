@@ -1,4 +1,36 @@
-fn main() {}
+fn main() {
+    let mut sc = Scanner::new();
+    let n: usize = sc.read();
+    let a: Vec<usize> = (0..n).map(|_| sc.read()).collect();
+    let mut b: Vec<usize> = (0..n).map(|_| sc.read()).collect();
+
+    let mut ans = 0;
+    for k in 0..30 {
+        let t = 1 << k;
+        let t2 = t * 2;
+        let t2m = t2 - 1;
+
+        b.sort_by_key(|x| x & t2m);
+
+        let mut count = 0;
+        for i in 0..n {
+            let ai = a[i] & t2m;
+            let pos2 = b.binary_search_by_key(&(2 * t * 2 - 1), |bi| (ai + (bi & t2m)) * 2)
+                .err()
+                .unwrap();
+            let pos1 = b.binary_search_by_key(&(1 * t * 2 - 1), |bi| (ai + (bi & t2m)) * 2)
+                .err()
+                .unwrap();
+            let pos3 = b.binary_search_by_key(&(3 * t * 2 - 1), |bi| (ai + (bi & t2m)) * 2)
+                .err()
+                .unwrap();
+            count += n - pos3 + pos2 - pos1;
+        }
+        ans |= (count & 1) << k;
+    }
+
+    println!("{}", ans);
+}
 
 struct Scanner {
     ptr: usize,
