@@ -1,41 +1,51 @@
+const MAX_D: usize = 100;
+const MAX_C: usize = 100;
+const MAX_V: usize = 300;
+
 fn main() {
     let mut sc = Scanner::new();
     let a: usize = sc.read();
     let b: usize = sc.read();
-    let d: Vec<Vec<usize>> = (0..a).map(|_| (0..b).map(|_| sc.read()).collect()).collect();
+    let dist: Vec<Vec<usize>> = (0..a).map(|_| (0..b).map(|_| sc.read()).collect()).collect();
 
-    let n = 300;
-    let max_dist = 100;
-    let max_cost = 100;
+    let n = MAX_V;
 
-    let mut char_edges = Vec::new();
-    let xs = (0..(max_dist + 1)).map(|i| i).collect::<Vec<_>>();
-    let ys = (0..(max_dist + 1)).map(|i| n - 1 - i).collect::<Vec<_>>();
-    for i in 0..max_dist {
-        char_edges.push((xs[i], xs[i + 1], b'X'));
-        char_edges.push((ys[i + 1], ys[i], b'Y'));
+    let mut char_edge = Vec::new();
+    let xs = (0..(MAX_D + 1)).map(|i| i).collect::<Vec<_>>();
+    let ys = (0..(MAX_D + 1)).map(|i| n - 1 - i).collect::<Vec<_>>();
+    for i in 0..MAX_D {
+        char_edge.push((xs[i], xs[i + 1], 'X'));
+        char_edge.push((ys[i + 1], ys[i], 'Y'));
     }
 
     let mut used = vec![vec![false; b]; a];
-    let mut int_edges = Vec::new();
-    for x_cnt in 0..xs.len() {
-        for y_cnt in 0..ys.len() {
-            if x_cnt + y_cnt > max_dist { continue; }
-
-            let mut bridge_cost = 0;
-            for x in 0..a {
-                for y in 0..b {
-                    let base_cost = x_cnt * (x + 1) + y_cnt * (y + 1);
-                    if bridge_cost + base_cost < d[x][y] { bridge_cost = d[x][y] - base_cost; }
+    let mut int_edge = Vec::new();
+    for from in 0..(MAX_D + 1) {
+        for to in 0..(MAX_D + 1) {
+            if from + to > MAX_D {
+                continue;
+            }
+            let mut edge_cost = 0;
+            for i in 0..a {
+                for j in 0..b {
+                    let cost_x = i + 1;
+                    let cost_y = j + 1;
+                    let base_cost = from * cost_x + to * cost_y;
+                    if edge_cost + base_cost < dist[i][j] {
+                        edge_cost = dist[i][j] - base_cost;
+                    }
                 }
             }
-            if bridge_cost > max_cost { continue; }
-            int_edges.push((xs[x_cnt], ys[y_cnt], bridge_cost));
-            for x in 0..a {
-                for y in 0..b {
-                    let base_cost = x_cnt * (x + 1) + y_cnt * (y + 1);
-                    assert!(d[x][y] <= base_cost + bridge_cost);
-                    if base_cost + bridge_cost == d[x][y] { used[x][y] = true; }
+            if edge_cost > MAX_C { continue; }
+            int_edge.push((xs[from], ys[to], edge_cost));
+
+            for i in 0..a {
+                for j in 0..b {
+                    let cost_x = i + 1;
+                    let cost_y = j + 1;
+                    let base_cost = from * cost_x + to * cost_y;
+                    assert!(dist[i][j] <= base_cost + edge_cost);
+                    if base_cost + edge_cost == dist[i][j] { used[i][j] = true; }
                 }
             }
         }
@@ -51,13 +61,12 @@ fn main() {
     }
 
     println!("Possible");
-    println!("{} {}", n, int_edges.len() + char_edges.len());
-    for e in &char_edges {
+    println!("{} {}", n, int_edge.len() + char_edge.len());
+    for e in &char_edge {
         let (from, to, c) = *e;
-        let x = if c == b'X' { "X" } else { "Y" };
-        println!("{} {} {}", from + 1, to + 1, x);
+        println!("{} {} {}", from + 1, to + 1, c);
     }
-    for e in &int_edges {
+    for e in &int_edge {
         let (from, to, c) = *e;
         println!("{} {} {}", from + 1, to + 1, c);
     }
