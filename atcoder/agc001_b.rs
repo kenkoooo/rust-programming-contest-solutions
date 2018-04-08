@@ -1,26 +1,31 @@
 fn main() {
     let mut sc = Scanner::new();
-    let n = sc.read::<usize>();
-    let x = sc.read::<usize>();
+    let n: usize = sc.read();
+    let x: usize = sc.read();
 
     let mut top = x;
-    let mut right = n - x;
-    let mut ans = top + right;
-    while top > 0 && right > 0 {
-        if top < right {
-            ans += (right / top) * 2 * top;
-            right %= top;
-            if right == 0 {
-                ans -= top;
+    let mut side = n - x;
+    let mut ans = top + side;
+    loop {
+        if top > side {
+            let t = top / side;
+            ans += 2 * t * side;
+            top %= side;
+            if top == 0 {
+                ans -= side;
+                break;
             }
         } else {
-            ans += (top / right) * 2 * right;
-            top %= right;
-            if top == 0 {
-                ans -= right;
+            let t = side / top;
+            ans += 2 * t * top;
+            side %= top;
+            if side == 0 {
+                ans -= top;
+                break;
             }
         }
     }
+
     println!("{}", ans);
 }
 
