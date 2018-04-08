@@ -1,49 +1,48 @@
 fn main() {
     let mut sc = Scanner::new();
-    let n = sc.read::<usize>();
-    let k = sc.read::<usize>();
-
-    let mut mem = vec![vec![vec![0.0; 2]; k + 1]; n + 1];
+    let n: usize = sc.read();
+    let k: usize = sc.read();
+    let mut dp = vec![vec![vec![0.0; 2]; k + 1]; n + 1];
     let mut vis = vec![vec![vec![false; 2]; k + 1]; n + 1];
 
-    println!("{}", search(0, 0, false, &mut mem, &mut vis, n, k));
+    println!("{}", search(0, 0, false, &mut dp, &mut vis));
 }
 
 fn search(
-    i: usize,
-    j: usize,
-    b: bool,
-    mem: &mut Vec<Vec<Vec<f64>>>,
-    vis: &mut Vec<Vec<Vec<bool>>>,
-    n: usize,
-    k: usize) -> f64 {
-    if i == k {
-        return if b { 1.0 } else { 0.0 };
+    seen: usize,
+    eaten: usize,
+    max_eaten: bool,
+    dp: &mut Vec<Vec<Vec<f64>>>,
+    vis: &mut Vec<Vec<Vec<bool>>>) -> f64 {
+    let total = dp.len() - 1;
+    let can_eat = dp[0].len() - 1;
+
+    if seen == total {
+        return if max_eaten { 1.0 } else { 0.0 };
     }
 
-    let b = if b { 1 } else { 0 };
-    if vis[i][j][b] {
-        return mem[i][j][b];
+    let max_eaten = if max_eaten { 1 } else { 0 };
+    if vis[seen][eaten][max_eaten] {
+        return dp[seen][eaten][max_eaten];
     }
-    vis[i][j][b] = true;
 
     let mut result = 0.0;
-    let p1 = 1.0 / (i + 1) as f64;
-    let p2 = 1.0 - p1;
+    let current_max_appeared = 1.0 / (seen + 1) as f64;
+    let non_max = 1.0 - current_max_appeared;
 
-    if j + 1 <= k {
-        result += p1 * max_f64(
-            search(i + 1, j, false, mem, vis, n, k),
-            search(i + 1, j + 1, true, mem, vis, n, k),
-        );
+    if eaten + 1 <= can_eat {
+        let skip = search(seen + 1, eaten, false, dp, vis);
+        let eat = search(seen + 1, eaten + 1, true, dp, vis);
+        result += current_max_appeared * max(skip, eat);
     }
-    result += p2 * search(i + 1, j, b == 1, mem, vis, n, k);
+    result += non_max * search(seen + 1, eaten, max_eaten == 1, dp, vis);
 
-    mem[i][j][b] = result;
+    dp[seen][eaten][max_eaten] = result;
+    vis[seen][eaten][max_eaten] = true;
     return result;
 }
 
-fn max_f64(a: f64, b: f64) -> f64 {
+fn max(a: f64, b: f64) -> f64 {
     if a > b { a } else { b }
 }
 
