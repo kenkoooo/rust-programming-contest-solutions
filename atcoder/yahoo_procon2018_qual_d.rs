@@ -1,7 +1,7 @@
 use std::cmp;
 
-const MAX_A: usize = 2048;
-const MOD: usize = 1000000007;
+const MOD: usize = 1_000_000_007;
+const UPPER_A: usize = 4096;
 
 fn main() {
     let mut sc = Scanner::new();
@@ -9,80 +9,77 @@ fn main() {
     let k: usize = sc.read();
     let x: usize = sc.read();
     let y: usize = sc.read();
-    let c: Vec<usize> = (0..n).map(|_| sc.read()).collect();
-
-    let mut a = vec![vec![0; k]; k];
-    for i in 0..k {
-        for j in 0..k {
-            a[i][j] = sc.read::<usize>() ^ x;
-        }
-    }
-
-    println!("{}", solve(k, x ^ y, &c, &a));
-}
-
-fn solve(k: usize, z: usize, x: &Vec<usize>, b: &Vec<Vec<usize>>) -> usize {
-    let comb = Combination::new(MAX_A * 2, MOD);
+    let z = x ^ y;
+    let array: Vec<usize> = (0..n).map(|_| sc.read()).collect();
+    let b: Vec<Vec<usize>> = (0..k).map(|_| {
+        (0..k).map(|_| sc.read::<usize>() ^ x).collect()
+    }).collect();
 
     // check
     for i in 0..k {
-        if b[i][i] != 0 && b[i][i] != z { return 0; }
-    }
-    for i in 0..k {
+        if b[i][i] != 0 && b[i][i] != z {
+            println!("0");
+            return;
+        }
         for j in 0..k {
-            let delta = b[i][j] ^ b[j][i];
-            if delta != 0 && delta != z { return 0; }
+            if b[i][j] != b[j][i] && b[i][j] != b[j][i] ^ z {
+                println!("0");
+                return;
+            }
         }
     }
 
-    let mut count = vec![0; MAX_A + 1];
-    let mut xor_counted = vec![0; MAX_A + 1];
-    for xi in x {
-        let xi = *xi;
-        count[cmp::min(xi, xi ^ z)] += 1;
-        if (xi ^ z) < xi { xor_counted[xi ^ z] += 1; }
+    let mut count = vec![0; UPPER_A];
+    let mut xor_count = vec![0; UPPER_A];
+    for &a in &array {
+        count[cmp::min(a, a ^ z)] += 1;
+        if a ^ z < a {
+            xor_count[a ^ z] += 1;
+        }
     }
 
-    let mut answer = 0;
-    for a0 in 0..(MAX_A + 1) {
+    let mut ans = 0;
+    let comb = Combination::new(UPPER_A, MOD);
+    for a0 in 0..UPPER_A {
         if count[a0] == 0 { continue; }
-        let mut used = vec![0; MAX_A + 1];
-        used[a0] += 1;
 
         let mut can_construct = true;
-        for j in 1..k {
-            let aj = cmp::min(b[0][j] ^ a0, b[0][j] ^ a0 ^ z);
-
-            if used[aj] == count[aj] {
+        let mut used_count = vec![0; UPPER_A];
+        used_count[a0] += 1;
+        for i in 1..k {
+            let ai = cmp::min(b[0][i] ^ a0, b[0][i] ^ a0 ^ z);
+            if used_count[ai] == count[ai] {
                 can_construct = false;
                 break;
             }
-            used[aj] += 1;
+            used_count[ai] += 1;
         }
 
         if !can_construct { continue; }
 
         let mut ans_for_a0 = 1;
-        for a in 0..(MAX_A + 1) {
-            if used[a] == 0 { continue; }
+        for i in 0..UPPER_A {
+            if used_count[i] == 0 { continue; }
 
-            let needed = used[a];
-            let max_not_xor = cmp::min(count[a] - xor_counted[a], needed);
-            let min_not_xor = if needed < xor_counted[a] { 0 } else { needed - xor_counted[a] };
+            let needed = used_count[i];
+            let xor = xor_count[i];
+            let non_xor = count[i] - xor;
 
-            let mut combination_sum = 0;
-            for choose in min_not_xor..(max_not_xor + 1) {
-                combination_sum += comb.get(needed, choose);
-                if combination_sum > MOD { combination_sum -= MOD; }
+            let max_xor = cmp::min(needed, xor_count[i]);
+            let min_xor = if needed < non_xor { 0 } else { needed - non_xor };
+
+            let mut p = 0;
+            for choose in min_xor..(max_xor + 1) {
+                p += comb.get(needed, choose);
+                if p > MOD { p -= MOD; }
             }
-            ans_for_a0 *= combination_sum;
+            ans_for_a0 *= p;
             ans_for_a0 %= MOD;
         }
-        answer += ans_for_a0;
-        if answer > MOD { answer -= MOD; }
+        ans += ans_for_a0;
+        if ans > MOD { ans -= MOD; }
     }
-
-    return answer;
+    println!("{}", ans);
 }
 
 pub struct Combination {
