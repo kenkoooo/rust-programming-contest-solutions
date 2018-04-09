@@ -1,42 +1,27 @@
 fn main() {
     let mut sc = Scanner::new();
     let n: usize = sc.read();
-    let s: usize = sc.read();
-
-
-    for b in 2..1000000 {
-        let mut cur = n;
-        let mut sum = 0;
-        while cur > 0 {
-            sum += cur % b;
-            cur /= b;
-        }
-        if sum == s {
-            println!("{}", b);
-            return;
-        }
-    }
-
-    if n > s {
-        for x in (1..1000000).rev() {
-            if (n - s) % x != 0 { continue; }
-            let b = (n - s) / x + 1;
-            if n < b * x { continue; }
-            let y = n - b * x;
-            if x < b && y < b {
-                println!("{}", b);
-                return;
-            }
-        }
-    }
-
-    if n == s {
-        println!("{}", n + 1);
+    let a: Vec<usize> = (0..n).map(|_| sc.read()).collect();
+    let sum = a.iter().sum::<usize>();
+    let unit = (n + 1) * n / 2;
+    if sum % unit != 0 {
+        println!("NO");
         return;
     }
 
+    let turns = sum / unit;
+    let mut b: Vec<i64> = vec![0; n];
+    for i in 0..n {
+        b[i] = a[(i + 1) % n] as i64 - a[i] as i64 - turns as i64;
+    }
 
-    println!("-1");
+    for &b in &b {
+        if b > 0 || (-b) % (n as i64) != 0 {
+            println!("NO");
+            return;
+        }
+    }
+    println!("YES");
 }
 
 struct Scanner {

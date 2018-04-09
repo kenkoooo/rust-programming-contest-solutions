@@ -1,42 +1,53 @@
 fn main() {
     let mut sc = Scanner::new();
     let n: usize = sc.read();
-    let s: usize = sc.read();
 
+    let mut from = 0;
+    println!("{}", from);
+    let mut from_s = state(&sc.read::<String>());
 
-    for b in 2..1000000 {
-        let mut cur = n;
-        let mut sum = 0;
-        while cur > 0 {
-            sum += cur % b;
-            cur /= b;
-        }
-        if sum == s {
-            println!("{}", b);
-            return;
-        }
+    if from_s == 2 {
+        return;
     }
 
-    if n > s {
-        for x in (1..1000000).rev() {
-            if (n - s) % x != 0 { continue; }
-            let b = (n - s) / x + 1;
-            if n < b * x { continue; }
-            let y = n - b * x;
-            if x < b && y < b {
-                println!("{}", b);
-                return;
-            }
-        }
-    }
+    let mut to = n - 1;
+    println!("{}", to);
+    let mut to_s = state(&sc.read::<String>());
 
-    if n == s {
-        println!("{}", n + 1);
+    if to_s == 2 {
         return;
     }
 
 
-    println!("-1");
+    for _ in 0..18 {
+        let mid = (from + to) / 2;
+        println!("{}", mid);
+        let mut mid_s = state(&sc.read::<String>());
+        if mid_s == 2 { return; }
+        let prefix = mid - from + 1;
+        if (mid - from) % 2 == 0 {
+            if from_s != mid_s {
+                to = mid;
+                to_s = mid_s;
+            } else {
+                from = mid;
+                from_s = mid_s;
+            }
+        } else {
+            if from_s == mid_s {
+                to = mid;
+                to_s = mid_s;
+            } else {
+                from = mid;
+                from_s = mid_s;
+            }
+        }
+    }
+    panic!();
+}
+
+fn state(s: &str) -> usize {
+    if s == "Female" { 0 } else if s == "Male" { 1 } else { 2 }
 }
 
 struct Scanner {

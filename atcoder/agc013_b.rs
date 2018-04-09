@@ -1,42 +1,57 @@
+use std::collections::VecDeque;
+
 fn main() {
     let mut sc = Scanner::new();
     let n: usize = sc.read();
-    let s: usize = sc.read();
+    let m: usize = sc.read();
 
-
-    for b in 2..1000000 {
-        let mut cur = n;
-        let mut sum = 0;
-        while cur > 0 {
-            sum += cur % b;
-            cur /= b;
-        }
-        if sum == s {
-            println!("{}", b);
-            return;
-        }
+    let mut graph = vec![vec![]; n];
+    for _ in 0..m {
+        let a = sc.read::<usize>() - 1;
+        let b = sc.read::<usize>() - 1;
+        graph[a].push(b);
+        graph[b].push(a);
     }
 
-    if n > s {
-        for x in (1..1000000).rev() {
-            if (n - s) % x != 0 { continue; }
-            let b = (n - s) / x + 1;
-            if n < b * x { continue; }
-            let y = n - b * x;
-            if x < b && y < b {
-                println!("{}", b);
-                return;
+    let mut vis = vec![false; n];
+    let mut path = VecDeque::new();
+    path.push_back(0);
+    path.push_back(graph[0][0]);
+    vis[0] = true;
+    vis[graph[0][0]] = true;
+    loop {
+        let start = path.len();
+        let head = path.pop_front().unwrap();
+        path.push_front(head);
+        let tail = path.pop_back().unwrap();
+        path.push_back(tail);
+
+        for &v in &graph[head] {
+            if !vis[v] {
+                vis[v] = true;
+                path.push_front(v);
+                break;
             }
         }
+
+        for &v in &graph[tail] {
+            if !vis[v] {
+                vis[v] = true;
+                path.push_back(v);
+                break;
+            }
+        }
+
+        if path.len() == start {
+            break;
+        }
     }
 
-    if n == s {
-        println!("{}", n + 1);
-        return;
+    println!("{}", path.len());
+    while !path.is_empty() {
+        print!("{} ", path.pop_front().unwrap() + 1);
     }
-
-
-    println!("-1");
+    println!();
 }
 
 struct Scanner {

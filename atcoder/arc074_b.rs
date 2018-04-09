@@ -1,42 +1,51 @@
+use std::collections::BinaryHeap;
+use std::cmp;
+
 fn main() {
     let mut sc = Scanner::new();
     let n: usize = sc.read();
-    let s: usize = sc.read();
-
-
-    for b in 2..1000000 {
-        let mut cur = n;
-        let mut sum = 0;
-        while cur > 0 {
-            sum += cur % b;
-            cur /= b;
-        }
-        if sum == s {
-            println!("{}", b);
-            return;
+    let a: Vec<i64> = (0..(3 * n)).map(|_| sc.read()).collect();
+    let mut prefix_sum = vec![0; 3 * n];
+    let mut heap = BinaryHeap::new();
+    for i in 0..n {
+        heap.push(-a[i]);
+        prefix_sum[i] = a[i];
+        if i > 0 {
+            prefix_sum[i] += prefix_sum[i - 1];
         }
     }
 
-    if n > s {
-        for x in (1..1000000).rev() {
-            if (n - s) % x != 0 { continue; }
-            let b = (n - s) / x + 1;
-            if n < b * x { continue; }
-            let y = n - b * x;
-            if x < b && y < b {
-                println!("{}", b);
-                return;
-            }
+    for i in n..(3 * n) {
+        let p = -heap.pop().unwrap();
+        let s = cmp::max(p, a[i]);
+        heap.push(-s);
+        prefix_sum[i] = prefix_sum[i - 1] - p + s;
+    }
+
+    heap.clear();
+    let mut suffix_sum = vec![0; 3 * n];
+    for i in ((2 * n)..(3 * n)).rev() {
+        heap.push(a[i]);
+        suffix_sum[i] = a[i];
+        if i < 3 * n - 1 {
+            suffix_sum[i] += suffix_sum[i + 1];
         }
     }
 
-    if n == s {
-        println!("{}", n + 1);
-        return;
+    for i in (0..(2 * n)).rev() {
+        let p = heap.pop().unwrap();
+        let s = cmp::min(p, a[i]);
+        heap.push(s);
+        suffix_sum[i] = suffix_sum[i + 1] - p + s;
     }
 
-
-    println!("-1");
+    let mut max = std::i64::MIN;
+    for i in n..(2 * n + 1) {
+        let prefix = prefix_sum[i - 1];
+        let suffix = suffix_sum[i];
+        max = cmp::max(max, prefix - suffix);
+    }
+    println!("{}", max);
 }
 
 struct Scanner {
