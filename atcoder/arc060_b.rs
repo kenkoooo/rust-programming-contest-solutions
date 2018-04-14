@@ -1,29 +1,30 @@
 fn main() {
     let mut sc = Scanner::new();
-    let n: usize = sc.read();
-    let s: usize = sc.read();
-
-
-    for b in 2..1000000 {
+    let n: u64 = sc.read();
+    let s: u64 = sc.read();
+    for b in 2..2000000 {
         let mut cur = n;
-        let mut sum = 0;
+        let mut check = 0;
         while cur > 0 {
-            sum += cur % b;
+            check += cur % b;
             cur /= b;
         }
-        if sum == s {
+        if check == s {
             println!("{}", b);
             return;
         }
     }
 
     if n > s {
-        for x in (1..1000000).rev() {
-            if (n - s) % x != 0 { continue; }
+        for x in (1..2000000).rev() {
+            if (n - s) % x != 0 {
+                continue;
+            }
+
             let b = (n - s) / x + 1;
-            if n < b * x { continue; }
-            let y = n - b * x;
-            if x < b && y < b {
+            if s < x { continue; }
+            let y = s - x;
+            if n == b * x + y && s == x + y && b > y {
                 println!("{}", b);
                 return;
             }
@@ -32,11 +33,9 @@ fn main() {
 
     if n == s {
         println!("{}", n + 1);
-        return;
+    } else {
+        println!("-1");
     }
-
-
-    println!("-1");
 }
 
 struct Scanner {

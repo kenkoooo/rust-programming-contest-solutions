@@ -20,7 +20,10 @@ else
 fi
 
 # Create a file
-echo "fn main() {let mut sc = Scanner::new();}" > ${path}
+echo "
+fn main() {
+    let mut sc = Scanner::new();
+}" > ${path}
 cat common/scanner.rs >> ${path}
 git add ${path}
 
