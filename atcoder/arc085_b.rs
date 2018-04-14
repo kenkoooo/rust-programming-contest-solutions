@@ -1,56 +1,41 @@
-use std::collections::VecDeque;
+use std::cmp;
 
 fn main() {
     let mut sc = Scanner::new();
     let n: usize = sc.read();
-    let m: usize = sc.read();
-    let mut graph = vec![vec![]; n];
-    for _ in 0..m {
-        let a = sc.read::<usize>() - 1;
-        let b = sc.read::<usize>() - 1;
-        graph[a].push(b);
-        graph[b].push(a);
+    let z: i32 = sc.read();
+    let w: i32 = sc.read();
+    let mut a = vec![z, w];
+    for _ in 0..n {
+        a.push(sc.read::<i32>());
     }
 
-    let mut vis = vec![false; n];
-    let mut path = VecDeque::new();
-    path.push_back(0);
-    path.push_back(graph[0][0]);
-    vis[0] = true;
-    vis[graph[0][0]] = true;
-    loop {
-        let head = path.pop_front().unwrap();
-        path.push_front(head);
+    let n = n + 2;
+    let mut dp = vec![vec![vec![-1; 2]; n]; n];
+    println!("{}", rec(&a, 0, 1, 0, &mut dp));
+}
 
-        let mut ok = true;
-        for &v in &graph[head] {
-            if !vis[v] {
-                path.push_front(v);
-                ok = false;
-                vis[v] = true;
-                break;
-            }
-        }
+fn rec(cards: &Vec<i32>, xi: usize, yi: usize, turn: usize, dp: &mut Vec<Vec<Vec<i32>>>) -> i32 {
+    let last = cmp::max(xi, yi);
+    if last == cards.len() - 1 {
+        return (cards[xi] - cards[yi]).abs();
+    }
 
-        let tail = path.pop_back().unwrap();
-        path.push_back(tail);
-        for &v in &graph[tail] {
-            if !vis[v] {
-                path.push_back(v);
-                ok = false;
-                vis[v] = true;
-                break;
-            }
-        }
+    if dp[xi][yi][turn] >= 0 {
+        return dp[xi][yi][turn];
+    }
 
-        if ok {
-            println!("{}", path.len());
-            while !path.is_empty() {
-                print!("{} ", path.pop_front().unwrap() + 1);
-            }
-            println!();
-            return;
-        }
+    if turn == 0 {
+        let m1 = rec(cards, last + 1, yi, 0, dp);
+        let m2 = rec(cards, last + 1, yi, 1, dp);
+        dp[xi][yi][0] = cmp::max(m1, m2);
+        return dp[xi][yi][0];
+    } else {
+        let m1 = rec(cards, xi, last + 1, 0, dp);
+        let m2 = rec(cards, xi, last + 1, 1, dp);
+
+        dp[xi][yi][1] = cmp::min(m1, m2);
+        return dp[xi][yi][1];
     }
 }
 
