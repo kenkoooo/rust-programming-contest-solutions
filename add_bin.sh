@@ -13,9 +13,9 @@ if [ -e ${path} ]
 then
     echo "${path} is already exists"
 else
-    echo "#[[bin]]" >> Cargo.toml
-    echo "#name = \"${problem_id}\"" >> Cargo.toml
-    echo "#path = \"${path}\"" >> Cargo.toml
+    echo "[[bin]]" >> Cargo.toml
+    echo "name = \"${problem_id}\"" >> Cargo.toml
+    echo "path = \"${path}\"" >> Cargo.toml
 fi
 
 # Create a file
@@ -28,6 +28,5 @@ fn main() {
 cat common/scanner.rs >> ${path}
 git add ${path}
 
-# Open in IDEA
-idea ./ ${path}
-idea ./ ./Cargo.toml
+# Open in VSCode
+code ./ ${path}
