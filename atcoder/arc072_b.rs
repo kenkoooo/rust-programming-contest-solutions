@@ -1,63 +1,60 @@
-const MAX_K: usize = 51;
+use std::collections::{BTreeMap, BTreeSet};
 
 fn main() {
     let mut sc = Scanner::new();
-    let n: usize = sc.read();
 
-    let a: Vec<usize> = (0..n).map(|_| sc.read()).collect();
-    let b: Vec<usize> = (0..n).map(|_| sc.read()).collect();
+    let x: i64 = sc.read();
+    let y: i64 = sc.read();
+    if (x - y).abs() <= 1 {
+        println!("Brown");
+    } else {
+        println!("Alice");
+    }
+}
 
-    let mut ans: Vec<usize> = Vec::new();
-
-    for k in (0..(MAX_K + 1)).rev() {
-        let mut ok = vec![vec![false; MAX_K + 1]; MAX_K + 1];
-        for i in 0..(MAX_K + 1) {
-            ok[i][i] = true;
-        }
-
-        for from in 0..(MAX_K + 1) {
-            for i in 1..k {
-                let to = from % i;
-                ok[from][to] = true;
+fn exp() {
+    let mut map = BTreeMap::new();
+    for z in 0..10000 {
+        for x in 0..(z + 1) {
+            let y = z - x;
+            if y < x { continue; }
+            if grundy(x, y, &mut map) == 0 {
+                println!("{} {} {}", x, y, y - x);
             }
         }
-        for from in 0..(MAX_K + 1) {
-            for &i in &ans {
-                let to = from % i;
-                ok[from][to] = true;
-            }
+    }
+}
+
+fn grundy(x: usize, y: usize, map: &mut BTreeMap<(usize, usize), usize>) -> usize {
+    let (x, y) = norm(x, y);
+    if !map.contains_key(&(x, y)) {
+        let mut set = BTreeSet::new();
+        for i in 1..(x / 2 + 1) {
+            set.insert(grundy(x - 2 * i, y + i, map));
         }
-        for k in 0..(MAX_K + 1) {
-            for i in 0..(MAX_K + 1) {
-                for j in 0..(MAX_K + 1) {
-                    ok[i][j] = ok[i][j] || (ok[i][k] && ok[k][j]);
-                }
-            }
+        for i in 1..(y / 2 + 1) {
+            set.insert(grundy(x + i, y - 2 * i, map));
         }
 
-        let mut check = true;
-        for i in 0..n {
-            if !ok[a[i]][b[i]] {
-                check = false;
+        let mut g = 0;
+        loop {
+            if set.contains(&g) {
+                g += 1;
+            } else {
                 break;
             }
         }
-
-        if !check {
-            if k == 51 {
-                println!("-1");
-                return;
-            }
-
-            ans.push(k);
-        }
+        map.insert((x, y), g);
     }
 
-    let mut cost = 0;
-    for &a in &ans {
-        cost += ((1 as usize) << a);
-    }
-    println!("{}", cost);
+
+    let g: usize = *map.get(&(x, y)).unwrap();
+    return g;
+}
+
+
+fn norm(x: usize, y: usize) -> (usize, usize) {
+    if x >= y { (y, x) } else { (x, y) }
 }
 
 struct Scanner {

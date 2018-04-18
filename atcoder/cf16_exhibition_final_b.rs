@@ -1,63 +1,25 @@
-const MAX_K: usize = 51;
-
 fn main() {
     let mut sc = Scanner::new();
-    let n: usize = sc.read();
+    let (x1, y1): (f64, f64) = (sc.read(), sc.read());
+    let (x2, y2): (f64, f64) = (sc.read(), sc.read());
+    let (x3, y3): (f64, f64) = (sc.read(), sc.read());
+    let a = dist(x1, y1, x2, y2);
+    let b = dist(x1, y1, x3, y3);
+    let c = dist(x2, y2, x3, y3);
+    let s = (a + b + c) / 2.0;
+    let t = (s * (s - a) * (s - b) * (s - c)).sqrt();
+    let r = t * 2.0 / (a + b + c);
+    let mut max = if a > b { a } else { b };
+    max = if max > c { max } else { c };
 
-    let a: Vec<usize> = (0..n).map(|_| sc.read()).collect();
-    let b: Vec<usize> = (0..n).map(|_| sc.read()).collect();
+    let x = max * r / (2.0 * r + max);
+    println!("{}", x);
+}
 
-    let mut ans: Vec<usize> = Vec::new();
-
-    for k in (0..(MAX_K + 1)).rev() {
-        let mut ok = vec![vec![false; MAX_K + 1]; MAX_K + 1];
-        for i in 0..(MAX_K + 1) {
-            ok[i][i] = true;
-        }
-
-        for from in 0..(MAX_K + 1) {
-            for i in 1..k {
-                let to = from % i;
-                ok[from][to] = true;
-            }
-        }
-        for from in 0..(MAX_K + 1) {
-            for &i in &ans {
-                let to = from % i;
-                ok[from][to] = true;
-            }
-        }
-        for k in 0..(MAX_K + 1) {
-            for i in 0..(MAX_K + 1) {
-                for j in 0..(MAX_K + 1) {
-                    ok[i][j] = ok[i][j] || (ok[i][k] && ok[k][j]);
-                }
-            }
-        }
-
-        let mut check = true;
-        for i in 0..n {
-            if !ok[a[i]][b[i]] {
-                check = false;
-                break;
-            }
-        }
-
-        if !check {
-            if k == 51 {
-                println!("-1");
-                return;
-            }
-
-            ans.push(k);
-        }
-    }
-
-    let mut cost = 0;
-    for &a in &ans {
-        cost += ((1 as usize) << a);
-    }
-    println!("{}", cost);
+fn dist(x1: f64, y1: f64, x2: f64, y2: f64) -> f64 {
+    let dx = x1 - x2;
+    let dy = y1 - y2;
+    (dx * dx + dy * dy).sqrt()
 }
 
 struct Scanner {

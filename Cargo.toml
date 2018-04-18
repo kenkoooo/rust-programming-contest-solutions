@@ -237,3 +237,30 @@ path = "atcoder/arc095_b.rs"
 [[bin]]
 name = "arc095_c"
 path = "atcoder/arc095_c.rs"
+[[bin]]
+name = "arc095_d"
+path = "atcoder/arc095_d.rs"
+[[bin]]
+name = "code_festival_2017_qualb_c"
+path = "atcoder/code_festival_2017_qualb_c.rs"
+[[bin]]
+name = "tenka1_2017_d"
+path = "atcoder/tenka1_2017_d.rs"
+[[bin]]
+name = "arc083_b"
+path = "atcoder/arc083_b.rs"
+[[bin]]
+name = "agc019_b"
+path = "atcoder/agc019_b.rs"
+[[bin]]
+name = "arc072_b"
+path = "atcoder/arc072_b.rs"
+[[bin]]
+name = "cf16_exhibition_final_a"
+path = "atcoder/cf16_exhibition_final_a.rs"
+[[bin]]
+name = "cf16_exhibition_final_c"
+path = "atcoder/cf16_exhibition_final_c.rs"
+[[bin]]
+name = "cf16_exhibition_final_b"
+path = "atcoder/cf16_exhibition_final_b.rs"

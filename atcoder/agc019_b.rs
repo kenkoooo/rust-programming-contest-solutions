@@ -1,63 +1,19 @@
-const MAX_K: usize = 51;
-
 fn main() {
     let mut sc = Scanner::new();
-    let n: usize = sc.read();
-
-    let a: Vec<usize> = (0..n).map(|_| sc.read()).collect();
-    let b: Vec<usize> = (0..n).map(|_| sc.read()).collect();
-
-    let mut ans: Vec<usize> = Vec::new();
-
-    for k in (0..(MAX_K + 1)).rev() {
-        let mut ok = vec![vec![false; MAX_K + 1]; MAX_K + 1];
-        for i in 0..(MAX_K + 1) {
-            ok[i][i] = true;
-        }
-
-        for from in 0..(MAX_K + 1) {
-            for i in 1..k {
-                let to = from % i;
-                ok[from][to] = true;
-            }
-        }
-        for from in 0..(MAX_K + 1) {
-            for &i in &ans {
-                let to = from % i;
-                ok[from][to] = true;
-            }
-        }
-        for k in 0..(MAX_K + 1) {
-            for i in 0..(MAX_K + 1) {
-                for j in 0..(MAX_K + 1) {
-                    ok[i][j] = ok[i][j] || (ok[i][k] && ok[k][j]);
-                }
-            }
-        }
-
-        let mut check = true;
-        for i in 0..n {
-            if !ok[a[i]][b[i]] {
-                check = false;
-                break;
-            }
-        }
-
-        if !check {
-            if k == 51 {
-                println!("-1");
-                return;
-            }
-
-            ans.push(k);
-        }
+    let s: Vec<char> = sc.read::<String>().chars().collect();
+    let mut count = vec![0; 26];
+    for &c in &s {
+        count[(c as u8 - 'a' as u8) as usize] += 1;
     }
 
-    let mut cost = 0;
-    for &a in &ans {
-        cost += ((1 as usize) << a);
+    let n = s.len();
+    let mut ans = n * (n - 1) / 2;
+    for &c in &count {
+        if c == 0 { continue; }
+        ans -= c * (c - 1) / 2;
     }
-    println!("{}", cost);
+
+    println!("{}", ans + 1);
 }
 
 struct Scanner {

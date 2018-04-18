@@ -1,63 +1,41 @@
-const MAX_K: usize = 51;
+use std::cmp;
+
+const B_SIZE: usize = 31;
 
 fn main() {
     let mut sc = Scanner::new();
     let n: usize = sc.read();
+    let k: u32 = sc.read();
 
-    let a: Vec<usize> = (0..n).map(|_| sc.read()).collect();
-    let b: Vec<usize> = (0..n).map(|_| sc.read()).collect();
+    let ab: Vec<(u32, u64)> = (0..n).map(|_| (sc.read(), sc.read())).collect();
 
-    let mut ans: Vec<usize> = Vec::new();
+    let mut max = 0;
+    for r in 0..B_SIZE {
+        if ((1 << r) & k) == 0 { continue; }
+        let u = (1 << B_SIZE) - (1 << (r + 1));
+        assert_eq!(k, (u & k) + (1 << r) + (((1 << r) - 1) & k));
+        let x = (u & k) + (1 << r) - 1;
 
-    for k in (0..(MAX_K + 1)).rev() {
-        let mut ok = vec![vec![false; MAX_K + 1]; MAX_K + 1];
-        for i in 0..(MAX_K + 1) {
-            ok[i][i] = true;
-        }
-
-        for from in 0..(MAX_K + 1) {
-            for i in 1..k {
-                let to = from % i;
-                ok[from][to] = true;
-            }
-        }
-        for from in 0..(MAX_K + 1) {
-            for &i in &ans {
-                let to = from % i;
-                ok[from][to] = true;
-            }
-        }
-        for k in 0..(MAX_K + 1) {
-            for i in 0..(MAX_K + 1) {
-                for j in 0..(MAX_K + 1) {
-                    ok[i][j] = ok[i][j] || (ok[i][k] && ok[k][j]);
-                }
+        let mut values = 0;
+        for &t in &ab {
+            let (a, b) = t;
+            if (x | a) == x {
+                values += b;
             }
         }
 
-        let mut check = true;
-        for i in 0..n {
-            if !ok[a[i]][b[i]] {
-                check = false;
-                break;
-            }
-        }
-
-        if !check {
-            if k == 51 {
-                println!("-1");
-                return;
-            }
-
-            ans.push(k);
+        max = cmp::max(max, values);
+    }
+    let mut values = 0;
+    for &t in &ab {
+        let (a, b) = t;
+        if (k | a) == k {
+            values += b;
         }
     }
+    max = cmp::max(max, values);
 
-    let mut cost = 0;
-    for &a in &ans {
-        cost += ((1 as usize) << a);
-    }
-    println!("{}", cost);
+    println!("{}", max);
 }
 
 struct Scanner {

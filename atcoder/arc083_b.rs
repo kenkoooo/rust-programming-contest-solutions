@@ -1,63 +1,37 @@
-const MAX_K: usize = 51;
-
 fn main() {
     let mut sc = Scanner::new();
     let n: usize = sc.read();
+    let dist: Vec<Vec<u64>> = (0..n).map(|_| (0..n).map(|_| sc.read()).collect()).collect();
 
-    let a: Vec<usize> = (0..n).map(|_| sc.read()).collect();
-    let b: Vec<usize> = (0..n).map(|_| sc.read()).collect();
-
-    let mut ans: Vec<usize> = Vec::new();
-
-    for k in (0..(MAX_K + 1)).rev() {
-        let mut ok = vec![vec![false; MAX_K + 1]; MAX_K + 1];
-        for i in 0..(MAX_K + 1) {
-            ok[i][i] = true;
-        }
-
-        for from in 0..(MAX_K + 1) {
-            for i in 1..k {
-                let to = from % i;
-                ok[from][to] = true;
-            }
-        }
-        for from in 0..(MAX_K + 1) {
-            for &i in &ans {
-                let to = from % i;
-                ok[from][to] = true;
-            }
-        }
-        for k in 0..(MAX_K + 1) {
-            for i in 0..(MAX_K + 1) {
-                for j in 0..(MAX_K + 1) {
-                    ok[i][j] = ok[i][j] || (ok[i][k] && ok[k][j]);
+    for k in 0..n {
+        for i in 0..n {
+            for j in 0..n {
+                if dist[i][j] > dist[i][k] + dist[k][j] {
+                    println!("-1");
+                    return;
                 }
             }
         }
+    }
 
-        let mut check = true;
-        for i in 0..n {
-            if !ok[a[i]][b[i]] {
-                check = false;
-                break;
+    let mut sum = 0;
+    for i in 0..n {
+        for j in (i + 1)..n {
+            let mut check = true;
+            for k in 0..n {
+                if k == i || k == j { continue; }
+                if dist[i][j] == dist[i][k] + dist[k][j] {
+                    check = false;
+                    break;
+                }
             }
-        }
-
-        if !check {
-            if k == 51 {
-                println!("-1");
-                return;
+            if check {
+                sum += dist[i][j];
             }
-
-            ans.push(k);
         }
     }
 
-    let mut cost = 0;
-    for &a in &ans {
-        cost += ((1 as usize) << a);
-    }
-    println!("{}", cost);
+    println!("{}", sum);
 }
 
 struct Scanner {

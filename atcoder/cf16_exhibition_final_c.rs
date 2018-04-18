@@ -1,63 +1,33 @@
-const MAX_K: usize = 51;
-
 fn main() {
     let mut sc = Scanner::new();
     let n: usize = sc.read();
+    let a: Vec<u32> = (0..n).map(|_| sc.read()).collect();
 
-    let a: Vec<usize> = (0..n).map(|_| sc.read()).collect();
-    let b: Vec<usize> = (0..n).map(|_| sc.read()).collect();
 
-    let mut ans: Vec<usize> = Vec::new();
+    let mut xor_sum = 0;
+    for &a in &a {
+        xor_sum ^= a;
+    }
 
-    for k in (0..(MAX_K + 1)).rev() {
-        let mut ok = vec![vec![false; MAX_K + 1]; MAX_K + 1];
-        for i in 0..(MAX_K + 1) {
-            ok[i][i] = true;
-        }
-
-        for from in 0..(MAX_K + 1) {
-            for i in 1..k {
-                let to = from % i;
-                ok[from][to] = true;
-            }
-        }
-        for from in 0..(MAX_K + 1) {
-            for &i in &ans {
-                let to = from % i;
-                ok[from][to] = true;
-            }
-        }
-        for k in 0..(MAX_K + 1) {
-            for i in 0..(MAX_K + 1) {
-                for j in 0..(MAX_K + 1) {
-                    ok[i][j] = ok[i][j] || (ok[i][k] && ok[k][j]);
-                }
-            }
-        }
-
-        let mut check = true;
-        for i in 0..n {
-            if !ok[a[i]][b[i]] {
-                check = false;
+    let mut ans = 0;
+    for bit in (0..30).rev() {
+        if ((1 << bit) & xor_sum) == 0 { continue; }
+        let x = (1 << (bit + 1)) - 1;
+        for &a in &a {
+            let y = a ^ (a - 1);
+            if y == x {
+                xor_sum ^= y;
+                ans += 1;
                 break;
             }
         }
-
-        if !check {
-            if k == 51 {
-                println!("-1");
-                return;
-            }
-
-            ans.push(k);
-        }
     }
 
-    let mut cost = 0;
-    for &a in &ans {
-        cost += ((1 as usize) << a);
+    if xor_sum != 0 {
+        println!("-1");
+    } else {
+        println!("{}", ans);
     }
-    println!("{}", cost);
 }
 
 struct Scanner {

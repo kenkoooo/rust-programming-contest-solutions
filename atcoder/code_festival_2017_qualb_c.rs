@@ -1,63 +1,36 @@
-const MAX_K: usize = 51;
+use std::cmp;
 
 fn main() {
     let mut sc = Scanner::new();
     let n: usize = sc.read();
+    let m: usize = sc.read();
 
-    let a: Vec<usize> = (0..n).map(|_| sc.read()).collect();
-    let b: Vec<usize> = (0..n).map(|_| sc.read()).collect();
-
-    let mut ans: Vec<usize> = Vec::new();
-
-    for k in (0..(MAX_K + 1)).rev() {
-        let mut ok = vec![vec![false; MAX_K + 1]; MAX_K + 1];
-        for i in 0..(MAX_K + 1) {
-            ok[i][i] = true;
-        }
-
-        for from in 0..(MAX_K + 1) {
-            for i in 1..k {
-                let to = from % i;
-                ok[from][to] = true;
-            }
-        }
-        for from in 0..(MAX_K + 1) {
-            for &i in &ans {
-                let to = from % i;
-                ok[from][to] = true;
-            }
-        }
-        for k in 0..(MAX_K + 1) {
-            for i in 0..(MAX_K + 1) {
-                for j in 0..(MAX_K + 1) {
-                    ok[i][j] = ok[i][j] || (ok[i][k] && ok[k][j]);
-                }
-            }
-        }
-
-        let mut check = true;
-        for i in 0..n {
-            if !ok[a[i]][b[i]] {
-                check = false;
-                break;
-            }
-        }
-
-        if !check {
-            if k == 51 {
-                println!("-1");
-                return;
-            }
-
-            ans.push(k);
-        }
+    let mut graph = vec![vec![]; n];
+    for _ in 0..m {
+        let a = sc.read::<usize>() - 1;
+        let b = sc.read::<usize>() - 1;
+        graph[a].push(b);
+        graph[b].push(a);
     }
 
-    let mut cost = 0;
-    for &a in &ans {
-        cost += ((1 as usize) << a);
+    let mut color = vec![0; n];
+    color[0] = 1;
+    if coloring(0, &graph, &mut color) {
+        let b: usize = color.iter().filter(|&&a| a == 1).sum();
+        println!("{}", b * (n - b) - m);
+    } else {
+        println!("{}", n * (n - 1) / 2 - m);
     }
-    println!("{}", cost);
+}
+
+fn coloring(v: usize, graph: &Vec<Vec<usize>>, color: &mut Vec<usize>) -> bool {
+    for &u in &graph[v] {
+        if color[u] == 0 {
+            color[u] = if color[v] == 1 { 2 } else { 1 };
+            if !coloring(u, graph, color) { return false; };
+        } else if color[u] == color[v] { return false; }
+    }
+    return true;
 }
 
 struct Scanner {
