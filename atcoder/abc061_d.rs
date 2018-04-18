@@ -2,22 +2,33 @@ fn main() {
     let mut sc = Scanner::new();
     let n: usize = sc.read();
     let m: usize = sc.read();
-
     let mut graph = vec![vec![]; n];
     for _ in 0..m {
-        let a: usize = sc.read::<usize>() - 1;
-        let b: usize = sc.read::<usize>() - 1;
-        let c: i64 = sc.read();
+        let a = sc.read::<usize>() - 1;
+        let b = sc.read::<usize>() - 1;
+        let c = sc.read::<i64>();
         graph[a].push((b, -c));
     }
 
-    let inf = std::i64::MAX;
+    let (dist, negative) = shortest_path(&graph, 0, std::i64::MAX);
+    if negative[n - 1] {
+        println!("inf");
+    } else {
+        println!("{}", -dist[n - 1]);
+    }
+}
+
+pub fn shortest_path(
+    graph: &Vec<Vec<(usize, i64)>>,
+    start: usize,
+    inf: i64,
+) -> (Vec<i64>, Vec<bool>) {
+    let n = graph.len();
     let mut dist = vec![inf; n];
-    dist[0] = 0;
+    dist[start] = 0;
     for _ in 0..n {
         for v in 0..n {
-            for e in &graph[v] {
-                let (to, cost) = *e;
+            for &(to, cost) in &graph[v] {
                 if dist[v] == inf || dist[to] <= dist[v] + cost {
                     continue;
                 }
@@ -29,8 +40,7 @@ fn main() {
     let mut negative = vec![false; n];
     for _ in 0..n {
         for v in 0..n {
-            for e in &graph[v] {
-                let (to, cost) = *e;
+            for &(to, cost) in &graph[v] {
                 if dist[v] == inf {
                     continue;
                 }
@@ -45,11 +55,7 @@ fn main() {
         }
     }
 
-    if negative[n - 1] {
-        println!("inf");
-    } else {
-        println!("{}", -dist[n - 1]);
-    }
+    return (dist, negative);
 }
 
 struct Scanner {
@@ -61,7 +67,12 @@ struct Scanner {
 
 impl Scanner {
     fn new() -> Scanner {
-        Scanner { ptr: 0, length: 0, buf: vec![0; 1024], small_cache: vec![0; 1024] }
+        Scanner {
+            ptr: 0,
+            length: 0,
+            buf: vec![0; 1024],
+            small_cache: vec![0; 1024],
+        }
     }
 
     fn load(&mut self) {
@@ -84,9 +95,15 @@ impl Scanner {
         return self.buf[self.ptr - 1];
     }
 
-    fn is_space(b: u8) -> bool { b == b'\n' || b == b'\r' || b == b'\t' || b == b' ' }
+    fn is_space(b: u8) -> bool {
+        b == b'\n' || b == b'\r' || b == b'\t' || b == b' '
+    }
 
-    fn read<T>(&mut self) -> T where T: std::str::FromStr, T::Err: std::fmt::Debug, {
+    fn read<T>(&mut self) -> T
+        where
+            T: std::str::FromStr,
+            T::Err: std::fmt::Debug,
+    {
         let mut b = self.byte();
         while Scanner::is_space(b) {
             b = self.byte();
@@ -96,7 +113,9 @@ impl Scanner {
             self.small_cache[pos] = b;
             b = self.byte();
             if Scanner::is_space(b) {
-                return String::from_utf8_lossy(&self.small_cache[0..(pos + 1)]).parse().unwrap();
+                return String::from_utf8_lossy(&self.small_cache[0..(pos + 1)])
+                    .parse()
+                    .unwrap();
             }
         }
 
@@ -108,4 +127,3 @@ impl Scanner {
         return String::from_utf8_lossy(&v).parse().unwrap();
     }
 }
-

@@ -238,9 +238,6 @@ path = "atcoder/arc095_b.rs"
 name = "arc095_c"
 path = "atcoder/arc095_c.rs"
 [[bin]]
-name = "arc095_d"
-path = "atcoder/arc095_d.rs"
-[[bin]]
 name = "code_festival_2017_qualb_c"
 path = "atcoder/code_festival_2017_qualb_c.rs"
 [[bin]]

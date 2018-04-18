@@ -5,28 +5,24 @@ fn main() {
     let mut b: Vec<usize> = (0..n).map(|_| sc.read()).collect();
 
     let mut ans = 0;
-    for k in 0..30 {
+    for k in (0..30).rev() {
+        ans *= 2;
         let t = 1 << k;
         let t2 = t * 2;
         let t2m = t2 - 1;
+        b.sort_by_key(|&bi| bi & t2m);
 
-        b.sort_by_key(|x| x & t2m);
+        let mut ans_i = 0;
+        for &a in &a {
+            let a = a & t2m;
+            let s1 = b.binary_search_by_key(&(1 * t * 2 - 1), |&b| ((b & t2m) + a) * 2).err().unwrap();
+            let s2 = b.binary_search_by_key(&(2 * t * 2 - 1), |&b| ((b & t2m) + a) * 2).err().unwrap();
+            let s3 = b.binary_search_by_key(&(3 * t * 2 - 1), |&b| ((b & t2m) + a) * 2).err().unwrap();
 
-        let mut count = 0;
-        for i in 0..n {
-            let ai = a[i] & t2m;
-            let pos2 = b.binary_search_by_key(&(2 * t * 2 - 1), |bi| (ai + (bi & t2m)) * 2)
-                .err()
-                .unwrap();
-            let pos1 = b.binary_search_by_key(&(1 * t * 2 - 1), |bi| (ai + (bi & t2m)) * 2)
-                .err()
-                .unwrap();
-            let pos3 = b.binary_search_by_key(&(3 * t * 2 - 1), |bi| (ai + (bi & t2m)) * 2)
-                .err()
-                .unwrap();
-            count += n - pos3 + pos2 - pos1;
+            let q = n - s3 + s2 - s1;
+            ans_i = ans_i ^ (q % 2);
         }
-        ans |= (count & 1) << k;
+        ans += ans_i;
     }
 
     println!("{}", ans);
@@ -41,7 +37,12 @@ struct Scanner {
 
 impl Scanner {
     fn new() -> Scanner {
-        Scanner { ptr: 0, length: 0, buf: vec![0; 1024], small_cache: vec![0; 1024] }
+        Scanner {
+            ptr: 0,
+            length: 0,
+            buf: vec![0; 1024],
+            small_cache: vec![0; 1024],
+        }
     }
 
     fn load(&mut self) {
@@ -64,9 +65,15 @@ impl Scanner {
         return self.buf[self.ptr - 1];
     }
 
-    fn is_space(b: u8) -> bool { b == b'\n' || b == b'\r' || b == b'\t' || b == b' ' }
+    fn is_space(b: u8) -> bool {
+        b == b'\n' || b == b'\r' || b == b'\t' || b == b' '
+    }
 
-    fn read<T>(&mut self) -> T where T: std::str::FromStr, T::Err: std::fmt::Debug, {
+    fn read<T>(&mut self) -> T
+        where
+            T: std::str::FromStr,
+            T::Err: std::fmt::Debug,
+    {
         let mut b = self.byte();
         while Scanner::is_space(b) {
             b = self.byte();
@@ -76,7 +83,9 @@ impl Scanner {
             self.small_cache[pos] = b;
             b = self.byte();
             if Scanner::is_space(b) {
-                return String::from_utf8_lossy(&self.small_cache[0..(pos + 1)]).parse().unwrap();
+                return String::from_utf8_lossy(&self.small_cache[0..(pos + 1)])
+                    .parse()
+                    .unwrap();
             }
         }
 
@@ -88,4 +97,3 @@ impl Scanner {
         return String::from_utf8_lossy(&v).parse().unwrap();
     }
 }
-

@@ -9,7 +9,6 @@ judge="$1"
 problem_id="$2"
 path="${judge}/${problem_id}.rs"
 
-
 if [ -e ${path} ]
 then
     echo "${path} is already exists"
@@ -24,7 +23,8 @@ echo "
 fn main() {
     let mut sc = Scanner::new();
 
-}" > ${path}
+}
+" > ${path}
 cat common/scanner.rs >> ${path}
 git add ${path}
 
