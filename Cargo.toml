@@ -264,3 +264,9 @@ path = "atcoder/cf16_exhibition_final_b.rs"
 [[bin]]
 name = "arc061_c"
 path = "atcoder/arc061_c.rs"
+[[bin]]
+name = "arc064_c"
+path = "atcoder/arc064_c.rs"
+[[bin]]
+name = "arc066_b"
+path = "atcoder/arc066_b.rs"
