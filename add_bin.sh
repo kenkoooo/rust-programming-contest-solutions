@@ -28,5 +28,6 @@ fn main() {
 cat common/scanner.rs >> ${path}
 git add ${path}
 
-# Open in VSCode
-code ./ ${path}
+# Open in IntellJ
+idea ./ ${path}
+idea ./ Cargo.toml
