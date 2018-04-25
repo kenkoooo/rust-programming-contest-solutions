@@ -4,48 +4,40 @@ fn main() {
     let k: usize = sc.read();
     let mut dp = vec![vec![vec![0.0; 2]; k + 1]; n + 1];
     let mut vis = vec![vec![vec![false; 2]; k + 1]; n + 1];
-
-    println!("{}", search(0, 0, false, &mut dp, &mut vis));
+    println!("{}", search(&mut dp, &mut vis, false, n, k));
 }
 
 fn search(
-    seen: usize,
-    eaten: usize,
-    max_eaten: bool,
     dp: &mut Vec<Vec<Vec<f64>>>,
-    vis: &mut Vec<Vec<Vec<bool>>>) -> f64 {
-    let total = dp.len() - 1;
-    let can_eat = dp[0].len() - 1;
-
-    if seen == total {
-        return if max_eaten { 1.0 } else { 0.0 };
+    vis: &mut Vec<Vec<Vec<bool>>>,
+    have_max: bool,
+    rest: usize, taking: usize) -> f64 {
+    if rest == 0 {
+        return if have_max { 1.0 } else { 0.0 };
+    }
+    let have_max = if have_max { 1 } else { 0 };
+    if vis[rest][taking][have_max] {
+        return dp[rest][taking][have_max];
     }
 
-    let max_eaten = if max_eaten { 1 } else { 0 };
+    let n = dp.len() - 1;
+    let turn = n - rest + 1;
+    let max_appear = 1.0 / (turn as f64);
 
-    if vis[seen][eaten][max_eaten] {
-        return dp[seen][eaten][max_eaten];
-    }
+    let p = if taking > 0 {
+        max_appear * max(
+            search(dp, vis, true, rest - 1, taking - 1),
+            search(dp, vis, false, rest - 1, taking),
+        )
+    } else { 0.0 } + (1.0 - max_appear) * search(dp, vis, have_max == 1, rest - 1, taking);
 
-    let mut result = 0.0;
+    vis[rest][taking][have_max] = true;
+    dp[rest][taking][have_max] = p;
 
-    let current_max_appeared = 1.0 / (seen + 1) as f64;
-    let non_max = 1.0 - current_max_appeared;
-    if eaten < can_eat {
-        let skip = search(seen + 1, eaten, false, dp, vis);
-        let eat = search(seen + 1, eaten + 1, true, dp, vis);
-        result += current_max_appeared * max(skip, eat);
-    }
-    result += non_max * search(seen + 1, eaten, max_eaten == 1, dp, vis);
-
-    vis[seen][eaten][max_eaten] = true;
-    dp[seen][eaten][max_eaten] = result;
-    return result;
+    return p;
 }
 
-fn max(a: f64, b: f64) -> f64 {
-    if a > b { a } else { b }
-}
+fn max(x: f64, y: f64) -> f64 { if x > y { x } else { y } }
 
 struct Scanner {
     ptr: usize,
@@ -56,7 +48,12 @@ struct Scanner {
 
 impl Scanner {
     fn new() -> Scanner {
-        Scanner { ptr: 0, length: 0, buf: vec![0; 1024], small_cache: vec![0; 1024] }
+        Scanner {
+            ptr: 0,
+            length: 0,
+            buf: vec![0; 1024],
+            small_cache: vec![0; 1024],
+        }
     }
 
     fn load(&mut self) {
@@ -79,9 +76,15 @@ impl Scanner {
         return self.buf[self.ptr - 1];
     }
 
-    fn is_space(b: u8) -> bool { b == b'\n' || b == b'\r' || b == b'\t' || b == b' ' }
+    fn is_space(b: u8) -> bool {
+        b == b'\n' || b == b'\r' || b == b'\t' || b == b' '
+    }
 
-    fn read<T>(&mut self) -> T where T: std::str::FromStr, T::Err: std::fmt::Debug, {
+    fn read<T>(&mut self) -> T
+        where
+            T: std::str::FromStr,
+            T::Err: std::fmt::Debug,
+    {
         let mut b = self.byte();
         while Scanner::is_space(b) {
             b = self.byte();
@@ -91,7 +94,9 @@ impl Scanner {
             self.small_cache[pos] = b;
             b = self.byte();
             if Scanner::is_space(b) {
-                return String::from_utf8_lossy(&self.small_cache[0..(pos + 1)]).parse().unwrap();
+                return String::from_utf8_lossy(&self.small_cache[0..(pos + 1)])
+                    .parse()
+                    .unwrap();
             }
         }
 
@@ -103,4 +108,3 @@ impl Scanner {
         return String::from_utf8_lossy(&v).parse().unwrap();
     }
 }
-
