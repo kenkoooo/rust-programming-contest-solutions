@@ -1,43 +1,18 @@
+use std::cmp;
 fn main() {
     let mut sc = Scanner::new();
-    let n: usize = sc.read();
-    let k: usize = sc.read();
-    let mut dp = vec![vec![vec![0.0; 2]; k + 1]; n + 1];
-    let mut vis = vec![vec![vec![false; 2]; k + 1]; n + 1];
-    println!("{}", search(&mut dp, &mut vis, false, n, k));
-}
+    let (a, b, c): (i64, i64, i64) = (sc.read(), sc.read(), sc.read());
+    let (x, y): (i64, i64) = (sc.read(), sc.read());
 
-fn search(
-    dp: &mut Vec<Vec<Vec<f64>>>,
-    vis: &mut Vec<Vec<Vec<bool>>>,
-    have_max: bool,
-    rest: usize, taking: usize) -> f64 {
-    if rest == 0 {
-        return if have_max { 1.0 } else { 0.0 };
+    let mut min = std::i64::MAX;
+    for z in 0..1000000 {
+        let x_cost = a * cmp::max(x - z / 2, 0);
+        let y_cost = b * cmp::max(y - z / 2, 0);
+        let z_cost = z * c;
+        min = cmp::min(min, x_cost + y_cost + z_cost);
     }
-    let have_max = if have_max { 1 } else { 0 };
-    if vis[rest][taking][have_max] {
-        return dp[rest][taking][have_max];
-    }
-
-    let n = dp.len() - 1;
-    let turn = n - rest + 1;
-    let max_appear = 1.0 / (turn as f64);
-
-    let p = if taking > 0 {
-        max_appear * max(
-            search(dp, vis, true, rest - 1, taking - 1),
-            search(dp, vis, false, rest - 1, taking),
-        )
-    } else { 0.0 } + (1.0 - max_appear) * search(dp, vis, have_max == 1, rest - 1, taking);
-
-    vis[rest][taking][have_max] = true;
-    dp[rest][taking][have_max] = p;
-
-    return p;
+    println!("{}", min);
 }
-
-fn max(x: f64, y: f64) -> f64 { if x > y { x } else { y } }
 
 struct Scanner {
     ptr: usize,
@@ -81,9 +56,9 @@ impl Scanner {
     }
 
     fn read<T>(&mut self) -> T
-        where
-            T: std::str::FromStr,
-            T::Err: std::fmt::Debug,
+    where
+        T: std::str::FromStr,
+        T::Err: std::fmt::Debug,
     {
         let mut b = self.byte();
         while Scanner::is_space(b) {

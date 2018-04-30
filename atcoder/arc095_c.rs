@@ -2,44 +2,54 @@ fn main() {
     let mut sc = Scanner::new();
     let h: usize = sc.read();
     let _: usize = sc.read();
-    let s: Vec<Vec<char>> = (0..h).map(|_| sc.read::<String>().chars().collect()).collect();
 
-    let mut used = vec![false; h];
+    let s: Vec<Vec<char>> = (0..h)
+        .map(|_| sc.read::<String>().chars().collect())
+        .collect();
+
     let mut rows = vec![0; h];
-    if rec(&mut used, &mut rows, &s, 0) {
+    let mut used = vec![false; h];
+
+    if solve(&s, &mut rows, &mut used, 0) {
         println!("YES");
     } else {
         println!("NO");
     }
 }
 
-
-fn rec(used: &mut Vec<bool>,
-       rows: &mut Vec<usize>,
-       s: &Vec<Vec<char>>,
-       count: usize) -> bool {
-    let h = s.len();
-
-    if count == h / 2 {
-        if h % 2 == 1 {
+fn solve(s: &Vec<Vec<char>>, rows: &mut Vec<usize>, used: &mut Vec<bool>, pos: usize) -> bool {
+    let h = rows.len();
+    if pos == h / 2 {
+        if h % 2 == 0 {
+            return check(s, rows);
+        } else {
             for i in 0..h {
                 if !used[i] {
-                    rows[h / 2] = i;
+                    rows[pos] = i;
+                    break;
                 }
             }
+            return check(s, rows);
         }
-        return check(rows, s);
     }
 
     for i in 0..h {
-        if used[i] { continue; }
+        if used[i] {
+            continue;
+        }
         used[i] = true;
-        rows[count] = i;
         for j in (i + 1)..h {
-            if used[j] { continue; }
+            if used[j] {
+                continue;
+            }
             used[j] = true;
-            rows[h - 1 - count] = j;
-            if rec(used, rows, s, count + 1) { return true; };
+
+            rows[pos] = i;
+            rows[h - 1 - pos] = j;
+            if solve(s, rows, used, pos + 1) {
+                return true;
+            }
+
             used[j] = false;
         }
         used[i] = false;
@@ -48,15 +58,19 @@ fn rec(used: &mut Vec<bool>,
     return false;
 }
 
-fn check(rows: &Vec<usize>, s: &Vec<Vec<char>>) -> bool {
+fn check(s: &Vec<Vec<char>>, rows: &Vec<usize>) -> bool {
     let h = s.len();
     let w = s[0].len();
     let mut centered = false;
     let mut used = vec![false; w];
     for i in 0..w {
-        if used[i] { continue; }
+        if used[i] {
+            continue;
+        }
         for j in (i + 1)..w {
-            if used[i] { continue; }
+            if used[i] {
+                continue;
+            }
 
             let mut ok = true;
             for k in 0..h {
@@ -73,11 +87,17 @@ fn check(rows: &Vec<usize>, s: &Vec<Vec<char>>) -> bool {
             }
         }
         if !used[i] {
-            if w % 2 == 0 { return false; }
-            if centered { return false; }
+            if w % 2 == 0 {
+                return false;
+            }
+            if centered {
+                return false;
+            }
             centered = true;
             for k in 0..h {
-                if s[rows[k]][i] != s[rows[h - 1 - k]][i] { return false; }
+                if s[rows[k]][i] != s[rows[h - 1 - k]][i] {
+                    return false;
+                }
             }
         }
     }
@@ -94,7 +114,12 @@ struct Scanner {
 
 impl Scanner {
     fn new() -> Scanner {
-        Scanner { ptr: 0, length: 0, buf: vec![0; 1024], small_cache: vec![0; 1024] }
+        Scanner {
+            ptr: 0,
+            length: 0,
+            buf: vec![0; 1024],
+            small_cache: vec![0; 1024],
+        }
     }
 
     fn load(&mut self) {
@@ -117,9 +142,15 @@ impl Scanner {
         return self.buf[self.ptr - 1];
     }
 
-    fn is_space(b: u8) -> bool { b == b'\n' || b == b'\r' || b == b'\t' || b == b' ' }
+    fn is_space(b: u8) -> bool {
+        b == b'\n' || b == b'\r' || b == b'\t' || b == b' '
+    }
 
-    fn read<T>(&mut self) -> T where T: std::str::FromStr, T::Err: std::fmt::Debug, {
+    fn read<T>(&mut self) -> T
+    where
+        T: std::str::FromStr,
+        T::Err: std::fmt::Debug,
+    {
         let mut b = self.byte();
         while Scanner::is_space(b) {
             b = self.byte();
@@ -129,7 +160,9 @@ impl Scanner {
             self.small_cache[pos] = b;
             b = self.byte();
             if Scanner::is_space(b) {
-                return String::from_utf8_lossy(&self.small_cache[0..(pos + 1)]).parse().unwrap();
+                return String::from_utf8_lossy(&self.small_cache[0..(pos + 1)])
+                    .parse()
+                    .unwrap();
             }
         }
 
@@ -141,4 +174,3 @@ impl Scanner {
         return String::from_utf8_lossy(&v).parse().unwrap();
     }
 }
-

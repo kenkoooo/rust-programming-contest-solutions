@@ -1,10 +1,7 @@
-use std::cmp;
-
 fn main() {
     let mut sc = Scanner::new();
     let n: usize = sc.read();
     let m: usize = sc.read();
-
     let mut graph = vec![vec![]; n];
     for _ in 0..m {
         let a = sc.read::<usize>() - 1;
@@ -13,22 +10,27 @@ fn main() {
         graph[b].push(a);
     }
 
-    let mut color = vec![0; n];
-    color[0] = 1;
-    if coloring(0, &graph, &mut color) {
-        let b: usize = color.iter().filter(|&&a| a == 1).sum();
-        println!("{}", b * (n - b) - m);
+    let mut color = vec![2; n];
+    color[0] = 0;
+    if dfs(0, &graph, &mut color) {
+        let black: usize = color.iter().sum();
+        let white = n - black;
+        println!("{}", black * white - m);
     } else {
         println!("{}", n * (n - 1) / 2 - m);
     }
 }
 
-fn coloring(v: usize, graph: &Vec<Vec<usize>>, color: &mut Vec<usize>) -> bool {
-    for &u in &graph[v] {
-        if color[u] == 0 {
-            color[u] = if color[v] == 1 { 2 } else { 1 };
-            if !coloring(u, graph, color) { return false; };
-        } else if color[u] == color[v] { return false; }
+fn dfs(v: usize, graph: &Vec<Vec<usize>>, color: &mut Vec<usize>) -> bool {
+    for &to in &graph[v] {
+        if color[to] == 2 {
+            color[to] = 1 ^ color[v];
+            if !dfs(to, graph, color) {
+                return false;
+            }
+        } else if color[to] == color[v] {
+            return false;
+        }
     }
     return true;
 }
@@ -42,7 +44,12 @@ struct Scanner {
 
 impl Scanner {
     fn new() -> Scanner {
-        Scanner { ptr: 0, length: 0, buf: vec![0; 1024], small_cache: vec![0; 1024] }
+        Scanner {
+            ptr: 0,
+            length: 0,
+            buf: vec![0; 1024],
+            small_cache: vec![0; 1024],
+        }
     }
 
     fn load(&mut self) {
@@ -65,9 +72,15 @@ impl Scanner {
         return self.buf[self.ptr - 1];
     }
 
-    fn is_space(b: u8) -> bool { b == b'\n' || b == b'\r' || b == b'\t' || b == b' ' }
+    fn is_space(b: u8) -> bool {
+        b == b'\n' || b == b'\r' || b == b'\t' || b == b' '
+    }
 
-    fn read<T>(&mut self) -> T where T: std::str::FromStr, T::Err: std::fmt::Debug, {
+    fn read<T>(&mut self) -> T
+    where
+        T: std::str::FromStr,
+        T::Err: std::fmt::Debug,
+    {
         let mut b = self.byte();
         while Scanner::is_space(b) {
             b = self.byte();
@@ -77,7 +90,9 @@ impl Scanner {
             self.small_cache[pos] = b;
             b = self.byte();
             if Scanner::is_space(b) {
-                return String::from_utf8_lossy(&self.small_cache[0..(pos + 1)]).parse().unwrap();
+                return String::from_utf8_lossy(&self.small_cache[0..(pos + 1)])
+                    .parse()
+                    .unwrap();
             }
         }
 
@@ -89,4 +104,3 @@ impl Scanner {
         return String::from_utf8_lossy(&v).parse().unwrap();
     }
 }
-
