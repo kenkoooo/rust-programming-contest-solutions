@@ -1,44 +1,39 @@
 fn main() {
     let mut sc = Scanner::new();
     let n: usize = sc.read();
-    let k: usize = sc.read();
+    let mut a: Vec<i64> = (0..n).map(|_| sc.read()).collect();
 
-    let mut p = vec![vec![vec![-1.0; 2]; k + 1]; n + 1];
-    println!("{}", rec(n, k, false, &mut p));
-}
+    let mut ans = 0;
+    loop {
+        let mut s = 0;
+        for i in 0..n {
+            let n = n as i64;
+            if a[i] > n - 1 {
+                let t = (a[i] - (n - 1) + n - 1) / n;
+                s += t;
+            }
+        }
+        for i in 0..n {
+            let n = n as i64;
+            let t = (a[i] - (n - 1) + n - 1) / n;
+            a[i] = a[i] + s - t - t * n;
+        }
 
-fn rec(rest: usize, taking: usize, have_max: bool, p: &mut Vec<Vec<Vec<f64>>>) -> f64 {
-    if rest == 0 {
-        return if have_max { 1.0 } else { 0.0 };
-    }
+        ans += s;
 
-    let have_max = if have_max { 1 } else { 0 };
-    if p[rest][taking][have_max] >= 0.0 {
-        return p[rest][taking][have_max];
-    }
+        let mut ok = true;
+        for i in 0..n {
+            let n = n as i64;
+            if a[i] > n - 1 {
+                ok = false;
+                break;
+            }
+        }
 
-    let total = p.len() - 1;
-    let turn = total - rest + 1;
-    let current_max = 1.0 / (turn as f64);
-
-    let result = (1.0 - current_max) * rec(rest - 1, taking, have_max == 1, p)
-        + current_max * if taking > 0 {
-            max(
-                rec(rest - 1, taking - 1, true, p),
-                rec(rest - 1, taking, false, p),
-            )
-        } else {
-            rec(rest - 1, taking, false, p)
-        };
-    p[rest][taking][have_max] = result;
-    return result;
-}
-
-fn max(a: f64, b: f64) -> f64 {
-    if a > b {
-        a
-    } else {
-        b
+        if ok {
+            println!("{}", ans);
+            return;
+        }
     }
 }
 

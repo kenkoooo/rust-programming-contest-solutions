@@ -1,41 +1,41 @@
 use std::cmp;
 
-const B_SIZE: usize = 31;
-
 fn main() {
     let mut sc = Scanner::new();
     let n: usize = sc.read();
-    let k: u32 = sc.read();
+    let k: usize = sc.read();
 
-    let ab: Vec<(u32, u64)> = (0..n).map(|_| (sc.read(), sc.read())).collect();
+    let ab: Vec<(usize, usize)> = (0..n).map(|_| (sc.read(), sc.read())).collect();
 
-    let mut max = 0;
-    for r in 0..B_SIZE {
-        if ((1 << r) & k) == 0 { continue; }
-        let u = (1 << B_SIZE) - (1 << (r + 1));
-        assert_eq!(k, (u & k) + (1 << r) + (((1 << r) - 1) & k));
-        let x = (u & k) + (1 << r) - 1;
+    let mut ans = 0;
+    for pos in 0..32 {
+        if (1 << pos) & k == 0 {
+            continue;
+        }
+        let m = (k >> (pos + 1)) << (pos + 1);
+        let t = (1 << pos) - 1;
+        let k = m + t;
+        assert_eq!((1 << pos) & k, 0);
 
-        let mut values = 0;
-        for &t in &ab {
-            let (a, b) = t;
-            if (x | a) == x {
-                values += b;
+        let mut sum = 0;
+        for &(a, b) in &ab {
+            if (k | a) <= k {
+                sum += b;
             }
         }
 
-        max = cmp::max(max, values);
+        ans = cmp::max(ans, sum);
     }
-    let mut values = 0;
-    for &t in &ab {
-        let (a, b) = t;
-        if (k | a) == k {
-            values += b;
+
+    let mut sum = 0;
+    for &(a, b) in &ab {
+        if (k | a) <= k {
+            sum += b;
         }
     }
-    max = cmp::max(max, values);
+    ans = cmp::max(ans, sum);
 
-    println!("{}", max);
+    println!("{}", ans);
 }
 
 struct Scanner {
@@ -47,7 +47,12 @@ struct Scanner {
 
 impl Scanner {
     fn new() -> Scanner {
-        Scanner { ptr: 0, length: 0, buf: vec![0; 1024], small_cache: vec![0; 1024] }
+        Scanner {
+            ptr: 0,
+            length: 0,
+            buf: vec![0; 1024],
+            small_cache: vec![0; 1024],
+        }
     }
 
     fn load(&mut self) {
@@ -70,9 +75,15 @@ impl Scanner {
         return self.buf[self.ptr - 1];
     }
 
-    fn is_space(b: u8) -> bool { b == b'\n' || b == b'\r' || b == b'\t' || b == b' ' }
+    fn is_space(b: u8) -> bool {
+        b == b'\n' || b == b'\r' || b == b'\t' || b == b' '
+    }
 
-    fn read<T>(&mut self) -> T where T: std::str::FromStr, T::Err: std::fmt::Debug, {
+    fn read<T>(&mut self) -> T
+    where
+        T: std::str::FromStr,
+        T::Err: std::fmt::Debug,
+    {
         let mut b = self.byte();
         while Scanner::is_space(b) {
             b = self.byte();
@@ -82,7 +93,9 @@ impl Scanner {
             self.small_cache[pos] = b;
             b = self.byte();
             if Scanner::is_space(b) {
-                return String::from_utf8_lossy(&self.small_cache[0..(pos + 1)]).parse().unwrap();
+                return String::from_utf8_lossy(&self.small_cache[0..(pos + 1)])
+                    .parse()
+                    .unwrap();
             }
         }
 
@@ -94,4 +107,3 @@ impl Scanner {
         return String::from_utf8_lossy(&v).parse().unwrap();
     }
 }
-

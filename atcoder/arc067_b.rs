@@ -1,45 +1,18 @@
+use std::cmp;
+
 fn main() {
     let mut sc = Scanner::new();
     let n: usize = sc.read();
-    let k: usize = sc.read();
+    let a: usize = sc.read();
+    let b: usize = sc.read();
+    let x: Vec<usize> = (0..n).map(|_| sc.read()).collect();
 
-    let mut p = vec![vec![vec![-1.0; 2]; k + 1]; n + 1];
-    println!("{}", rec(n, k, false, &mut p));
-}
-
-fn rec(rest: usize, taking: usize, have_max: bool, p: &mut Vec<Vec<Vec<f64>>>) -> f64 {
-    if rest == 0 {
-        return if have_max { 1.0 } else { 0.0 };
+    let mut ans = 0;
+    for i in 1..n {
+        let distance = x[i] - x[i - 1];
+        ans += cmp::min(a * distance, b);
     }
-
-    let have_max = if have_max { 1 } else { 0 };
-    if p[rest][taking][have_max] >= 0.0 {
-        return p[rest][taking][have_max];
-    }
-
-    let total = p.len() - 1;
-    let turn = total - rest + 1;
-    let current_max = 1.0 / (turn as f64);
-
-    let result = (1.0 - current_max) * rec(rest - 1, taking, have_max == 1, p)
-        + current_max * if taking > 0 {
-            max(
-                rec(rest - 1, taking - 1, true, p),
-                rec(rest - 1, taking, false, p),
-            )
-        } else {
-            rec(rest - 1, taking, false, p)
-        };
-    p[rest][taking][have_max] = result;
-    return result;
-}
-
-fn max(a: f64, b: f64) -> f64 {
-    if a > b {
-        a
-    } else {
-        b
-    }
+    println!("{}", ans);
 }
 
 struct Scanner {

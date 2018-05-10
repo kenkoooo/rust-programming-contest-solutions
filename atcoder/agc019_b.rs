@@ -3,16 +3,18 @@ fn main() {
     let s: Vec<char> = sc.read::<String>().chars().collect();
     let mut count = vec![0; 26];
     for &c in &s {
-        count[(c as u8 - 'a' as u8) as usize] += 1;
+        let t = (c as u8) - ('a' as u8);
+        count[t as usize] += 1;
     }
 
     let n = s.len();
     let mut ans = n * (n - 1) / 2;
     for &c in &count {
-        if c == 0 { continue; }
+        if c == 0 {
+            continue;
+        }
         ans -= c * (c - 1) / 2;
     }
-
     println!("{}", ans + 1);
 }
 
@@ -25,7 +27,12 @@ struct Scanner {
 
 impl Scanner {
     fn new() -> Scanner {
-        Scanner { ptr: 0, length: 0, buf: vec![0; 1024], small_cache: vec![0; 1024] }
+        Scanner {
+            ptr: 0,
+            length: 0,
+            buf: vec![0; 1024],
+            small_cache: vec![0; 1024],
+        }
     }
 
     fn load(&mut self) {
@@ -48,9 +55,15 @@ impl Scanner {
         return self.buf[self.ptr - 1];
     }
 
-    fn is_space(b: u8) -> bool { b == b'\n' || b == b'\r' || b == b'\t' || b == b' ' }
+    fn is_space(b: u8) -> bool {
+        b == b'\n' || b == b'\r' || b == b'\t' || b == b' '
+    }
 
-    fn read<T>(&mut self) -> T where T: std::str::FromStr, T::Err: std::fmt::Debug, {
+    fn read<T>(&mut self) -> T
+    where
+        T: std::str::FromStr,
+        T::Err: std::fmt::Debug,
+    {
         let mut b = self.byte();
         while Scanner::is_space(b) {
             b = self.byte();
@@ -60,7 +73,9 @@ impl Scanner {
             self.small_cache[pos] = b;
             b = self.byte();
             if Scanner::is_space(b) {
-                return String::from_utf8_lossy(&self.small_cache[0..(pos + 1)]).parse().unwrap();
+                return String::from_utf8_lossy(&self.small_cache[0..(pos + 1)])
+                    .parse()
+                    .unwrap();
             }
         }
 
@@ -72,4 +87,3 @@ impl Scanner {
         return String::from_utf8_lossy(&v).parse().unwrap();
     }
 }
-

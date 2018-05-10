@@ -1,45 +1,26 @@
 fn main() {
     let mut sc = Scanner::new();
-    let n: usize = sc.read();
     let k: usize = sc.read();
-
-    let mut p = vec![vec![vec![-1.0; 2]; k + 1]; n + 1];
-    println!("{}", rec(n, k, false, &mut p));
-}
-
-fn rec(rest: usize, taking: usize, have_max: bool, p: &mut Vec<Vec<Vec<f64>>>) -> f64 {
-    if rest == 0 {
-        return if have_max { 1.0 } else { 0.0 };
+    let n = 50;
+    let mut p = vec![0; n];
+    for i in 0..n {
+        p[i] = k / n;
+    }
+    for i in 0..(k % n) {
+        p[i] += 1;
     }
 
-    let have_max = if have_max { 1 } else { 0 };
-    if p[rest][taking][have_max] >= 0.0 {
-        return p[rest][taking][have_max];
+    let mut a = vec![0; n];
+    for i in 0..n {
+        a[i] = n - 1 + (n + 1) * p[i] - k;
+        assert!(a[i] <= 10_000_000_000_001_000);
     }
 
-    let total = p.len() - 1;
-    let turn = total - rest + 1;
-    let current_max = 1.0 / (turn as f64);
-
-    let result = (1.0 - current_max) * rec(rest - 1, taking, have_max == 1, p)
-        + current_max * if taking > 0 {
-            max(
-                rec(rest - 1, taking - 1, true, p),
-                rec(rest - 1, taking, false, p),
-            )
-        } else {
-            rec(rest - 1, taking, false, p)
-        };
-    p[rest][taking][have_max] = result;
-    return result;
-}
-
-fn max(a: f64, b: f64) -> f64 {
-    if a > b {
-        a
-    } else {
-        b
+    println!("{}", n);
+    for i in 0..n {
+        print!("{} ", a[i]);
     }
+    println!("");
 }
 
 struct Scanner {
