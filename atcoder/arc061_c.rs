@@ -1,65 +1,63 @@
-use std::collections::BTreeMap;
-use std::collections::VecDeque;
+use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
-const BASE: u32 = 0;
+const OUTSIDE: usize = 0;
+const MAX_DIST: usize = 1_000_000;
 
 fn main() {
     let mut sc = Scanner::new();
     let n: usize = sc.read();
     let m: usize = sc.read();
+    let mut graph = BTreeMap::new();
+    check(&mut graph, (0, OUTSIDE));
 
-    let mut graph: BTreeMap<(usize, u32), Vec<(usize, u32, usize)>> = BTreeMap::new();
+    let mut vertices = BTreeSet::new();
+
     for _ in 0..m {
         let p = sc.read::<usize>() - 1;
         let q = sc.read::<usize>() - 1;
-        let company: u32 = sc.read();
+        let c = sc.read::<usize>();
 
-        add(&mut graph, (p, BASE));
-        add(&mut graph, (q, BASE));
-        add(&mut graph, (p, company));
-        add(&mut graph, (q, company));
+        check(&mut graph, (p, c));
+        check(&mut graph, (q, c));
+        check(&mut graph, (p, OUTSIDE));
+        check(&mut graph, (q, OUTSIDE));
 
-        if graph[&(p, company)].is_empty() {
-            graph.get_mut(&(p, company)).unwrap().push((p, BASE, 0));
-            graph.get_mut(&(p, BASE)).unwrap().push((p, company, 1));
-        }
-        if graph[&(q, company)].is_empty() {
-            graph.get_mut(&(q, company)).unwrap().push((q, BASE, 0));
-            graph.get_mut(&(q, BASE)).unwrap().push((q, company, 1));
-        }
+        graph.get_mut(&(p, c)).unwrap().push((q, c, 0));
+        graph.get_mut(&(q, c)).unwrap().push((p, c, 0));
 
-        graph.get_mut(&(p, company)).unwrap().push((q, company, 0));
-        graph.get_mut(&(q, company)).unwrap().push((p, company, 0));
+        vertices.insert((p, c));
+        vertices.insert((q, c));
     }
 
-    let start = 0;
-    let goal = n - 1;
+    for &(v, train) in &vertices {
+        graph.get_mut(&(v, train)).unwrap().push((v, OUTSIDE, 0));
+        graph.get_mut(&(v, OUTSIDE)).unwrap().push((v, train, 1));
+    }
 
-    add(&mut graph, (start, BASE));
-    add(&mut graph, (goal, BASE));
-
-    let mut queue: VecDeque<(usize, u32)> = VecDeque::new();
     let mut dist = BTreeMap::new();
-    dist.insert((start, BASE), 0);
-    queue.push_front((start, BASE));
-    while !queue.is_empty() {
-        let (v, company) = queue.pop_front().unwrap();
-        let &v_dist = dist.get(&(v, company)).unwrap();
-        if v == goal && company == BASE {
-            println!("{}", v_dist);
+    let mut queue = VecDeque::new();
+    dist.insert((0, OUTSIDE), 0);
+    queue.push_back((0, OUTSIDE));
+    while let Some((v, train)) = queue.pop_front() {
+        if v == n - 1 {
+            println!("{}", dist[&(v, train)]);
             return;
         }
 
-        for &(to, next_company, edge_cost) in &graph[&(v, company)] {
-            let &to_dist = dist.get(&(to, next_company)).unwrap_or(&std::usize::MAX);
-            if v_dist + edge_cost >= to_dist {
+        for &(next_v, next_train, cost) in &graph[&(v, train)] {
+            let cur_dist = match dist.get(&(next_v, next_train)) {
+                Some(&d) => d,
+                _ => MAX_DIST,
+            };
+            let next_dist = dist[&(v, train)] + cost;
+            if cur_dist <= next_dist {
                 continue;
             }
-            dist.insert((to, next_company), v_dist + edge_cost);
-            if edge_cost == 0 {
-                queue.push_front((to, next_company));
+            dist.insert((next_v, next_train), next_dist);
+            if cost == 0 {
+                queue.push_front((next_v, next_train));
             } else {
-                queue.push_back((to, next_company));
+                queue.push_back((next_v, next_train));
             }
         }
     }
@@ -67,12 +65,9 @@ fn main() {
     println!("-1");
 }
 
-fn add<K, T>(map: &mut BTreeMap<K, Vec<T>>, key: K)
-where
-    K: std::cmp::Ord,
-{
-    if !map.contains_key(&key) {
-        map.insert(key, Vec::new());
+fn check(graph: &mut BTreeMap<(usize, usize), Vec<(usize, usize, usize)>>, to: (usize, usize)) {
+    if !graph.contains_key(&to) {
+        graph.insert(to, Vec::new());
     }
 }
 

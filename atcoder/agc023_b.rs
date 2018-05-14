@@ -4,24 +4,22 @@ fn main() {
     let s: Vec<Vec<char>> = (0..n)
         .map(|_| sc.read::<String>().chars().collect())
         .collect();
-
     let mut ans = 0;
     for a in 0..n {
         let mut ok = true;
         for i in 0..n {
             for j in 0..n {
-                if s[(i + a) % n][j] != s[(j + a) % n][i] {
+                if s[i][(j + a) % n] != s[j][(i + a) % n] {
                     ok = false;
                 }
             }
         }
-
         if ok {
-            ans += 1;
+            ans += n;
         }
     }
 
-    println!("{}", ans * n);
+    println!("{}", ans);
 }
 
 struct Scanner {

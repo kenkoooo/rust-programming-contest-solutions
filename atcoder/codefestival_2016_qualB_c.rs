@@ -1,70 +1,42 @@
-const MOD: usize = 1_000_000_007;
-
 fn main() {
     let mut sc = Scanner::new();
-    let n: usize = sc.read();
-    if n == 2 {
-        println!("1");
-        return;
-    }
+    let w: usize = sc.read();
+    let h: usize = sc.read();
 
-    let comb = Combination::new(n, MOD);
-    let mut fact = vec![1; n];
-    for i in 1..n {
-        fact[i] = (fact[i - 1] * i) % MOD;
+    let mut edges = Vec::new();
+    for _ in 0..w {
+        let c: usize = sc.read();
+        edges.push((c, true));
     }
+    for _ in 0..h {
+        let c: usize = sc.read();
+        edges.push((c, false));
+    }
+    edges.sort();
+
+    let h = h + 1;
+    let w = w + 1;
 
     let mut ans = 0;
-    let mut sum = 0;
-    for k in 2..n {
-        let mut pausing = n - 1 - k;
-        if k - 1 < pausing {
-            continue;
+    let mut count_h = 0;
+    let mut count_v = 0;
+    for &(cost, horizontal) in &edges {
+        if horizontal {
+            if count_v >= h {
+                continue;
+            }
+            ans += cost * (h - count_v);
+            count_h += 1;
+        } else {
+            if count_h >= w {
+                continue;
+            }
+            ans += cost * (w - count_h);
+            count_v += 1;
         }
-        let c = comb.get(k - 1, pausing);
-        let c = (((c * fact[k]) % MOD) * fact[pausing]) % MOD;
-        let c = c + MOD - sum;
-        sum = (sum + c) % MOD;
-        ans = (ans + k * c) % MOD;
     }
 
     println!("{}", ans);
-}
-
-pub struct Combination {
-    fact: Vec<usize>,
-    inv_fact: Vec<usize>,
-    modulo: usize,
-}
-
-impl Combination {
-    pub fn new(max: usize, modulo: usize) -> Combination {
-        let mut inv = vec![0; max + 1];
-        let mut fact = vec![0; max + 1];
-        let mut inv_fact = vec![0; max + 1];
-        inv[1] = 1;
-        for i in 2..(max + 1) {
-            inv[i] = inv[modulo % i] * (modulo - modulo / i) % modulo;
-        }
-        fact[0] = 1;
-        inv_fact[0] = 1;
-        for i in 0..max {
-            fact[i + 1] = fact[i] * (i + 1) % modulo;
-        }
-        for i in 0..max {
-            inv_fact[i + 1] = inv_fact[i] * inv[i + 1] % modulo;
-        }
-        Combination {
-            fact: fact,
-            inv_fact: inv_fact,
-            modulo: modulo,
-        }
-    }
-
-    pub fn get(&self, x: usize, y: usize) -> usize {
-        assert!(x >= y);
-        self.fact[x] * self.inv_fact[y] % self.modulo * self.inv_fact[x - y] % self.modulo
-    }
 }
 
 struct Scanner {

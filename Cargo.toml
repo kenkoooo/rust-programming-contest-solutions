@@ -300,3 +300,15 @@ path = "atcoder/arc067_c.rs"
 [[bin]]
 name = "arc067_b"
 path = "atcoder/arc067_b.rs"
+[[bin]]
+name = "codefestival_2016_qualB_c"
+path = "atcoder/codefestival_2016_qualB_c.rs"
+[[bin]]
+name = "arc064_b"
+path = "atcoder/arc064_b.rs"
+[[bin]]
+name = "arc097_b"
+path = "atcoder/arc097_b.rs"
+[[bin]]
+name = "arc097_c"
+path = "atcoder/arc097_c.rs"
