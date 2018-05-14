@@ -1,32 +1,38 @@
 use std::collections::BTreeMap;
+
 const MOD: usize = 1_000_000_007;
+
 fn main() {
     let mut sc = Scanner::new();
     let n: usize = sc.read();
-    let mut dp = BTreeMap::new();
 
+    let mut dp = BTreeMap::new();
     println!("{}", rec(n, n, &mut dp));
 }
 
-fn rec(sum: usize, xor: usize, dp: &mut BTreeMap<(usize, usize), usize>) -> usize {
+fn rec(xor: usize, sum: usize, dp: &mut BTreeMap<(usize, usize), usize>) -> usize {
     if sum == 0 {
         return 1;
     }
-
-    if dp.contains_key(&(sum, xor)) {
-        return dp[&(sum, xor)];
+    if dp.contains_key(&(xor, sum)) {
+        return dp[&(xor, sum)];
     }
 
-    let even_even = rec(sum >> 1, xor >> 1, dp);
-    let odd_even = rec((sum - 1) >> 1, (xor - 1) >> 1, dp);
-    let odd_odd = if sum >= 2 {
-        rec((sum - 2) >> 1, xor >> 1, dp)
+    // odd & odd
+    let mut result = if sum >= 2 {
+        rec(xor >> 1, (sum - 2) >> 1, dp)
     } else {
         0
     };
 
-    let result = (even_even + odd_even + odd_odd) % MOD;
-    dp.insert((sum, xor), result);
+    // odd & even
+    result += rec((xor - 1) >> 1, (sum - 1) >> 1, dp);
+
+    // even & even
+    result += rec(xor >> 1, sum >> 1, dp);
+    result %= MOD;
+
+    dp.insert((xor, sum), result);
     return result;
 }
 
