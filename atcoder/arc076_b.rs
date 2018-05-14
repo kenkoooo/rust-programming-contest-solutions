@@ -1,20 +1,7 @@
+use std::collections::BTreeMap;
+
 fn main() {
     let mut sc = Scanner::new();
-    let s: Vec<char> = sc.read::<String>().chars().collect();
-    let n = s.len();
-    if s[0] != s[n - 1] {
-        if n % 2 == 0 {
-            println!("Second");
-        } else {
-            println!("First");
-        }
-    } else {
-        if n % 2 != 0 {
-            println!("Second");
-        } else {
-            println!("First");
-        }
-    }
 }
 
 struct Scanner {

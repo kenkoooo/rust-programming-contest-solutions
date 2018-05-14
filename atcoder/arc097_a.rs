@@ -1,20 +1,50 @@
+use std::cmp::Ordering;
+use std::collections::{BTreeSet, BinaryHeap};
+#[derive(Clone, Eq, PartialEq)]
+struct State {
+    s: String,
+    i: usize,
+}
+
+impl Ord for State {
+    fn cmp(&self, other: &State) -> Ordering {
+        other.s.cmp(&self.s)
+    }
+}
+
+impl PartialOrd for State {
+    fn partial_cmp(&self, other: &State) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
 fn main() {
     let mut sc = Scanner::new();
-    let s: Vec<char> = sc.read::<String>().chars().collect();
-    let n = s.len();
-    if s[0] != s[n - 1] {
-        if n % 2 == 0 {
-            println!("Second");
-        } else {
-            println!("First");
+    let x: Vec<char> = sc.read::<String>().chars().collect();
+    let k: usize = sc.read();
+    let n = x.len();
+    let mut set = BTreeSet::new();
+    let mut q = BinaryHeap::new();
+    for i in 0..n {
+        let mut t = String::new();
+        t.push(x[i]);
+        q.push(State { s: t, i: i });
+    }
+    while let Some(State { s, i }) = q.pop() {
+        if set.len() >= k {
+            break;
         }
-    } else {
-        if n % 2 != 0 {
-            println!("Second");
-        } else {
-            println!("First");
+        let mut t = s.clone();
+        set.insert(s);
+        let l = t.len();
+        if i + l < n {
+            t.push(x[i + l]);
+            q.push(State { s: t, i: i });
         }
     }
+
+    let t: Vec<String> = set.iter().map(|s| s.to_owned()).collect();
+    println!("{}", t[k - 1]);
 }
 
 struct Scanner {

@@ -2,22 +2,16 @@ fn main() {
     let mut sc = Scanner::new();
     let n: usize = sc.read();
     let m: usize = sc.read();
-
-    let mut count = vec![0; n + 1];
+    let mut count = vec![0; n];
     for _ in 0..m {
-        let p: usize = sc.read();
-        let q: usize = sc.read();
-        let (p, q) = if p > q { (q, p) } else { (p, q) };
-        if p != 1 {
-            count[p] += 1;
-            count[q] += 1;
-        } else {
-            count[q] += 1;
-        }
+        let a = sc.read::<usize>() - 1;
+        let b = sc.read::<usize>() - 1;
+        count[a] += 1;
+        count[b] += 1;
     }
 
     for &c in &count {
-        if c % 2 != 0 {
+        if c % 2 == 1 {
             println!("NO");
             return;
         }
