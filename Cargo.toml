@@ -271,12 +271,6 @@ path = "atcoder/arc064_c.rs"
 name = "arc066_b"
 path = "atcoder/arc066_b.rs"
 [[bin]]
-name = "agc023_c"
-path = "atcoder/agc023_c.rs"
-[[bin]]
-name = "agc023_a"
-path = "atcoder/agc023_a.rs"
-[[bin]]
 name = "agc023_b"
 path = "atcoder/agc023_b.rs"
 [[bin]]
