@@ -1,20 +1,13 @@
+use std::collections::VecDeque;
 fn main() {
     let mut sc = Scanner::new();
-    let s: Vec<char> = sc.read::<String>().chars().collect();
-    let mut count = vec![0; 26];
-    for &s in &s {
-        count[(s as usize - 'a' as usize)] += 1;
+    let n: usize = sc.read();
+    let a: Vec<i64> = (0..n).map(|_| sc.read()).collect();
+    let mut sum = a[i];
+    let mut queue = VecDeque::new();
+    for i in 0..n {
+        
     }
-
-    let n = s.len();
-    let mut ans = n * (n - 1) / 2;
-    for &c in &count {
-        if c == 0 {
-            continue;
-        }
-        ans -= c * (c - 1) / 2;
-    }
-    println!("{}", ans + 1);
 }
 
 struct Scanner {
