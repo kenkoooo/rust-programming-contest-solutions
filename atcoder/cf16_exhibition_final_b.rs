@@ -1,24 +1,35 @@
 fn main() {
     let mut sc = Scanner::new();
-    let (x1, y1): (f64, f64) = (sc.read(), sc.read());
-    let (x2, y2): (f64, f64) = (sc.read(), sc.read());
-    let (x3, y3): (f64, f64) = (sc.read(), sc.read());
-    let a = dist(x1, y1, x2, y2);
-    let b = dist(x1, y1, x3, y3);
-    let c = dist(x2, y2, x3, y3);
-    let s = (a + b + c) / 2.0;
-    let t = (s * (s - a) * (s - b) * (s - c)).sqrt();
-    let r = t * 2.0 / (a + b + c);
-    let mut max = if a > b { a } else { b };
-    max = if max > c { max } else { c };
+    let a: (f64, f64) = (sc.read(), sc.read());
+    let b: (f64, f64) = (sc.read(), sc.read());
+    let c: (f64, f64) = (sc.read(), sc.read());
 
-    let x = max * r / (2.0 * r + max);
+    let ab = dist(a, b);
+    let bc = dist(b, c);
+    let ca = dist(c, a);
+
+    let s = (ab + bc + ca) / 2.0;
+    let t = (s * (s - ab) * (s - bc) * (s - ca)).sqrt();
+    let r = t / s;
+
+    let m = max(ab, max(bc, ca));
+    let x = r / (2.0 * r / m + 1.0);
     println!("{}", x);
 }
 
-fn dist(x1: f64, y1: f64, x2: f64, y2: f64) -> f64 {
-    let dx = x1 - x2;
-    let dy = y1 - y2;
+fn max(a: f64, b: f64) -> f64 {
+    if a > b {
+        a
+    } else {
+        b
+    }
+}
+
+fn dist(a: (f64, f64), b: (f64, f64)) -> f64 {
+    let (x, y) = a;
+    let (z, w) = b;
+    let dx = x - z;
+    let dy = y - w;
     (dx * dx + dy * dy).sqrt()
 }
 
@@ -31,7 +42,12 @@ struct Scanner {
 
 impl Scanner {
     fn new() -> Scanner {
-        Scanner { ptr: 0, length: 0, buf: vec![0; 1024], small_cache: vec![0; 1024] }
+        Scanner {
+            ptr: 0,
+            length: 0,
+            buf: vec![0; 1024],
+            small_cache: vec![0; 1024],
+        }
     }
 
     fn load(&mut self) {
@@ -54,9 +70,15 @@ impl Scanner {
         return self.buf[self.ptr - 1];
     }
 
-    fn is_space(b: u8) -> bool { b == b'\n' || b == b'\r' || b == b'\t' || b == b' ' }
+    fn is_space(b: u8) -> bool {
+        b == b'\n' || b == b'\r' || b == b'\t' || b == b' '
+    }
 
-    fn read<T>(&mut self) -> T where T: std::str::FromStr, T::Err: std::fmt::Debug, {
+    fn read<T>(&mut self) -> T
+    where
+        T: std::str::FromStr,
+        T::Err: std::fmt::Debug,
+    {
         let mut b = self.byte();
         while Scanner::is_space(b) {
             b = self.byte();
@@ -66,7 +88,9 @@ impl Scanner {
             self.small_cache[pos] = b;
             b = self.byte();
             if Scanner::is_space(b) {
-                return String::from_utf8_lossy(&self.small_cache[0..(pos + 1)]).parse().unwrap();
+                return String::from_utf8_lossy(&self.small_cache[0..(pos + 1)])
+                    .parse()
+                    .unwrap();
             }
         }
 
@@ -78,4 +102,3 @@ impl Scanner {
         return String::from_utf8_lossy(&v).parse().unwrap();
     }
 }
-

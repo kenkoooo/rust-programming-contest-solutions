@@ -1,28 +1,40 @@
 fn main() {
     let mut sc = Scanner::new();
     let n: usize = sc.read();
-    let a: Vec<usize> = (0..n).map(|_| sc.read()).collect();
-    let mut b: Vec<usize> = (0..n).map(|_| sc.read()).collect();
+    let a: Vec<u64> = (0..n).map(|_| sc.read()).collect();
+    let mut b: Vec<u64> = (0..n).map(|_| sc.read()).collect();
 
     let mut ans = 0;
-    for k in (0..30).rev() {
-        ans *= 2;
-        let t = 1 << k;
-        let t2 = t * 2;
-        let t2m = t2 - 1;
-        b.sort_by_key(|&bi| bi & t2m);
+    for pos in (0..32).rev() {
+        ans <<= 1;
+        let t = 1 << pos;
+        let t2 = t << 1;
+        let mask = t2 - 1;
 
-        let mut ans_i = 0;
+        b.sort_by_key(|k| (k & mask));
+
+        let mut cur = 0;
         for &a in &a {
-            let a = a & t2m;
-            let s1 = b.binary_search_by_key(&(1 * t * 2 - 1), |&b| ((b & t2m) + a) * 2).err().unwrap();
-            let s2 = b.binary_search_by_key(&(2 * t * 2 - 1), |&b| ((b & t2m) + a) * 2).err().unwrap();
-            let s3 = b.binary_search_by_key(&(3 * t * 2 - 1), |&b| ((b & t2m) + a) * 2).err().unwrap();
-
-            let q = n - s3 + s2 - s1;
-            ans_i = ans_i ^ (q % 2);
+            let a = a & mask;
+            let i1 = b.binary_search_by_key(&(1 * t * 2 - 1), |&b| {
+                let b = b & mask;
+                (a + b) * 2
+            }).err()
+                .unwrap();
+            let i2 = b.binary_search_by_key(&(2 * t * 2 - 1), |&b| {
+                let b = b & mask;
+                (a + b) * 2
+            }).err()
+                .unwrap();
+            let i3 = b.binary_search_by_key(&(3 * t * 2 - 1), |&b| {
+                let b = b & mask;
+                (a + b) * 2
+            }).err()
+                .unwrap();
+            let count = n - i3 + i2 - i1;
+            cur ^= count & 1;
         }
-        ans += ans_i;
+        ans += cur;
     }
 
     println!("{}", ans);
@@ -70,9 +82,9 @@ impl Scanner {
     }
 
     fn read<T>(&mut self) -> T
-        where
-            T: std::str::FromStr,
-            T::Err: std::fmt::Debug,
+    where
+        T: std::str::FromStr,
+        T::Err: std::fmt::Debug,
     {
         let mut b = self.byte();
         while Scanner::is_space(b) {

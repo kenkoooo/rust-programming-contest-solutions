@@ -1,39 +1,18 @@
-use std::collections::BTreeMap;
-
-const MOD: usize = 1_000_000_007;
+use std::cmp;
 
 fn main() {
     let mut sc = Scanner::new();
     let n: usize = sc.read();
+    let a: usize = sc.read();
+    let b: usize = sc.read();
+    let x: Vec<usize> = (0..n).map(|_| sc.read()).collect();
 
-    let mut dp = BTreeMap::new();
-    println!("{}", rec(n, n, &mut dp));
-}
-
-fn rec(xor: usize, sum: usize, dp: &mut BTreeMap<(usize, usize), usize>) -> usize {
-    if sum == 0 {
-        return 1;
+    let mut ans = 0;
+    for i in 1..n {
+        let distance = x[i] - x[i - 1];
+        ans += cmp::min(a * distance, b);
     }
-    if dp.contains_key(&(xor, sum)) {
-        return dp[&(xor, sum)];
-    }
-
-    // odd & odd
-    let mut result = if sum >= 2 {
-        rec(xor >> 1, (sum - 2) >> 1, dp)
-    } else {
-        0
-    };
-
-    // odd & even
-    result += rec((xor - 1) >> 1, (sum - 1) >> 1, dp);
-
-    // even & even
-    result += rec(xor >> 1, sum >> 1, dp);
-    result %= MOD;
-
-    dp.insert((xor, sum), result);
-    return result;
+    println!("{}", ans);
 }
 
 struct Scanner {

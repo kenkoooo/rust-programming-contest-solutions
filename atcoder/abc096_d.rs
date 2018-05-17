@@ -1,39 +1,45 @@
-use std::collections::BTreeMap;
-
-const MOD: usize = 1_000_000_007;
+const MAX_P: usize = 100_000;
 
 fn main() {
     let mut sc = Scanner::new();
     let n: usize = sc.read();
 
-    let mut dp = BTreeMap::new();
-    println!("{}", rec(n, n, &mut dp));
-}
-
-fn rec(xor: usize, sum: usize, dp: &mut BTreeMap<(usize, usize), usize>) -> usize {
-    if sum == 0 {
-        return 1;
-    }
-    if dp.contains_key(&(xor, sum)) {
-        return dp[&(xor, sum)];
+    if n <= 5 {
+        let t = vec![2, 3, 5, 7, 11];
+        for i in 0..n {
+            print!("{} ", t[i]);
+        }
+        println!();
+        return;
     }
 
-    // odd & odd
-    let mut result = if sum >= 2 {
-        rec(xor >> 1, (sum - 2) >> 1, dp)
-    } else {
-        0
-    };
+    let mut is_prime = vec![true; MAX_P];
+    for p in 3..MAX_P {
+        if !is_prime[p] {
+            continue;
+        }
+        for i in 2..(MAX_P / p) {
+            is_prime[p * i] = false;
+        }
+    }
 
-    // odd & even
-    result += rec((xor - 1) >> 1, (sum - 1) >> 1, dp);
+    let mut ans = Vec::new();
+    let mut cur = 7;
+    loop {
+        ans.push(cur);
+        if ans.len() == n {
+            break;
+        }
+        cur += 10;
+        while !is_prime[cur] {
+            cur += 10;
+        }
+    }
 
-    // even & even
-    result += rec(xor >> 1, sum >> 1, dp);
-    result %= MOD;
-
-    dp.insert((xor, sum), result);
-    return result;
+    for &p in &ans {
+        print!("{} ", p);
+    }
+    println!();
 }
 
 struct Scanner {

@@ -1,58 +1,70 @@
 use std::cmp;
-const MAX_D: usize = 13;
 
 fn main() {
     let mut sc = Scanner::new();
     let n: usize = sc.read();
-    let mut count = vec![0; MAX_D];
-    count[0] = 1;
-    for _ in 0..n {
-        let d: usize = sc.read();
-        count[d] += 1;
-    }
-
-    for i in 0..MAX_D {
-        if count[i] >= 3 {
-            println!("0");
-            return;
+    let mut black_place = vec![0; n];
+    let mut white_place = vec![0; n];
+    for i in 0..(2 * n) {
+        let c = sc.read::<String>();
+        let a: usize = sc.read::<usize>() - 1;
+        if c == "W" {
+            white_place[a] = i;
+        } else {
+            black_place[a] = i;
         }
     }
 
-    let mut max = 0;
-    for mask in 0..(1 << MAX_D) {
-        let mut v = Vec::new();
-
-        // construct
-        for i in 0..MAX_D {
-            if count[i] == 2 {
-                v.push(12 - i);
-                v.push(12 + i);
-            } else if count[i] == 1 {
-                if (mask >> i) & 1 != 0 {
-                    v.push(12 - i);
-                } else {
-                    v.push(12 + i);
+    let back = |place: &Vec<usize>| {
+        let mut min_back = vec![0; n];
+        for i in 0..n {
+            for j in 0..i {
+                if place[i] < place[j] {
+                    min_back[i] += 1;
                 }
             }
         }
+        min_back
+    };
 
-        // check
-        v.sort();
-        let mut min = 30;
-        for i in 0..v.len() {
-            let from = v[i];
-            for j in (i + 1)..v.len() {
-                let to = v[j];
-                let d = to - from;
-                let d = cmp::min(d, 24 - d);
-                min = cmp::min(min, d);
+    let min_back_w = back(&white_place);
+    let min_back_b = back(&black_place);
+
+    let calc_cost = |place: &Vec<usize>, min_back: &Vec<usize>, other_place: &Vec<usize>| {
+        let mut cost = vec![vec![0; n + 1]; n];
+        for a in 0..n {
+            let back = min_back[a];
+            let place = place[a];
+            cost[a][0] = back;
+            for b in 0..n {
+                cost[a][b + 1] = cost[a][b];
+                if other_place[b] > place {
+                    cost[a][b + 1] += 1;
+                }
             }
         }
+        cost
+    };
 
-        max = cmp::max(max, min);
+    let cost_w = calc_cost(&white_place, &min_back_w, &black_place);
+    let cost_b = calc_cost(&black_place, &min_back_b, &white_place);
+
+    let mut dp = vec![vec![std::usize::MAX; n + 1]; n + 1];
+    dp[0][0] = 0;
+    for i in 0..(n + 1) {
+        for j in 0..(n + 1) {
+            if i < n {
+                let white_place = white_place[i] + cost_w[i][j] - (i + j);
+                dp[i + 1][j] = cmp::min(dp[i + 1][j], dp[i][j] + white_place);
+            }
+
+            if j < n {
+                let black_place = black_place[j] + cost_b[j][i] - (i + j);
+                dp[i][j + 1] = cmp::min(dp[i][j + 1], dp[i][j] + black_place);
+            }
+        }
     }
-
-    println!("{}", max);
+    println!("{}", dp[n][n]);
 }
 
 struct Scanner {

@@ -276,3 +276,51 @@ path = "atcoder/agc023_c.rs"
 [[bin]]
 name = "agc023_a"
 path = "atcoder/agc023_a.rs"
+[[bin]]
+name = "agc023_b"
+path = "atcoder/agc023_b.rs"
+[[bin]]
+name = "agc023_c"
+path = "atcoder/agc023_c.rs"
+[[bin]]
+name = "agc014_b"
+path = "atcoder/agc014_b.rs"
+[[bin]]
+name = "arc059_b"
+path = "atcoder/arc059_b.rs"
+[[bin]]
+name = "abc096_d"
+path = "atcoder/abc096_d.rs"
+[[bin]]
+name = "arc079_c"
+path = "atcoder/arc079_c.rs"
+[[bin]]
+name = "arc079_b"
+path = "atcoder/arc079_b.rs"
+[[bin]]
+name = "arc067_c"
+path = "atcoder/arc067_c.rs"
+[[bin]]
+name = "arc067_b"
+path = "atcoder/arc067_b.rs"
+[[bin]]
+name = "codefestival_2016_qualB_c"
+path = "atcoder/codefestival_2016_qualB_c.rs"
+[[bin]]
+name = "arc064_b"
+path = "atcoder/arc064_b.rs"
+[[bin]]
+name = "arc097_b"
+path = "atcoder/arc097_b.rs"
+[[bin]]
+name = "arc097_c"
+path = "atcoder/arc097_c.rs"
+[[bin]]
+name = "arc069_b"
+path = "atcoder/arc069_b.rs"
+[[bin]]
+name = "arc076_b"
+path = "atcoder/arc076_b.rs"
+[[bin]]
+name = "arc097_a"
+path = "atcoder/arc097_a.rs"

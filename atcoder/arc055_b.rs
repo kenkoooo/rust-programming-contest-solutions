@@ -2,42 +2,45 @@ fn main() {
     let mut sc = Scanner::new();
     let n: usize = sc.read();
     let k: usize = sc.read();
-    let mut dp = vec![vec![vec![0.0; 2]; k + 1]; n + 1];
-    let mut vis = vec![vec![vec![false; 2]; k + 1]; n + 1];
-    println!("{}", search(&mut dp, &mut vis, false, n, k));
+
+    let mut p = vec![vec![vec![-1.0; 2]; k + 1]; n + 1];
+    println!("{}", rec(n, k, false, &mut p));
 }
 
-fn search(
-    dp: &mut Vec<Vec<Vec<f64>>>,
-    vis: &mut Vec<Vec<Vec<bool>>>,
-    have_max: bool,
-    rest: usize, taking: usize) -> f64 {
+fn rec(rest: usize, taking: usize, have_max: bool, p: &mut Vec<Vec<Vec<f64>>>) -> f64 {
     if rest == 0 {
         return if have_max { 1.0 } else { 0.0 };
     }
+
     let have_max = if have_max { 1 } else { 0 };
-    if vis[rest][taking][have_max] {
-        return dp[rest][taking][have_max];
+    if p[rest][taking][have_max] >= 0.0 {
+        return p[rest][taking][have_max];
     }
 
-    let n = dp.len() - 1;
-    let turn = n - rest + 1;
-    let max_appear = 1.0 / (turn as f64);
+    let total = p.len() - 1;
+    let turn = total - rest + 1;
+    let current_max = 1.0 / (turn as f64);
 
-    let p = if taking > 0 {
-        max_appear * max(
-            search(dp, vis, true, rest - 1, taking - 1),
-            search(dp, vis, false, rest - 1, taking),
-        )
-    } else { 0.0 } + (1.0 - max_appear) * search(dp, vis, have_max == 1, rest - 1, taking);
-
-    vis[rest][taking][have_max] = true;
-    dp[rest][taking][have_max] = p;
-
-    return p;
+    let result = (1.0 - current_max) * rec(rest - 1, taking, have_max == 1, p)
+        + current_max * if taking > 0 {
+            max(
+                rec(rest - 1, taking - 1, true, p),
+                rec(rest - 1, taking, false, p),
+            )
+        } else {
+            rec(rest - 1, taking, false, p)
+        };
+    p[rest][taking][have_max] = result;
+    return result;
 }
 
-fn max(x: f64, y: f64) -> f64 { if x > y { x } else { y } }
+fn max(a: f64, b: f64) -> f64 {
+    if a > b {
+        a
+    } else {
+        b
+    }
+}
 
 struct Scanner {
     ptr: usize,
@@ -81,9 +84,9 @@ impl Scanner {
     }
 
     fn read<T>(&mut self) -> T
-        where
-            T: std::str::FromStr,
-            T::Err: std::fmt::Debug,
+    where
+        T: std::str::FromStr,
+        T::Err: std::fmt::Debug,
     {
         let mut b = self.byte();
         while Scanner::is_space(b) {

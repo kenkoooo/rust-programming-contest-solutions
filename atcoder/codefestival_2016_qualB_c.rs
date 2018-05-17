@@ -1,39 +1,42 @@
-use std::collections::BTreeMap;
-
-const MOD: usize = 1_000_000_007;
-
 fn main() {
     let mut sc = Scanner::new();
-    let n: usize = sc.read();
+    let w: usize = sc.read();
+    let h: usize = sc.read();
 
-    let mut dp = BTreeMap::new();
-    println!("{}", rec(n, n, &mut dp));
-}
-
-fn rec(xor: usize, sum: usize, dp: &mut BTreeMap<(usize, usize), usize>) -> usize {
-    if sum == 0 {
-        return 1;
+    let mut edges = Vec::new();
+    for _ in 0..w {
+        let c: usize = sc.read();
+        edges.push((c, true));
     }
-    if dp.contains_key(&(xor, sum)) {
-        return dp[&(xor, sum)];
+    for _ in 0..h {
+        let c: usize = sc.read();
+        edges.push((c, false));
+    }
+    edges.sort();
+
+    let h = h + 1;
+    let w = w + 1;
+
+    let mut ans = 0;
+    let mut count_h = 0;
+    let mut count_v = 0;
+    for &(cost, horizontal) in &edges {
+        if horizontal {
+            if count_v >= h {
+                continue;
+            }
+            ans += cost * (h - count_v);
+            count_h += 1;
+        } else {
+            if count_h >= w {
+                continue;
+            }
+            ans += cost * (w - count_h);
+            count_v += 1;
+        }
     }
 
-    // odd & odd
-    let mut result = if sum >= 2 {
-        rec(xor >> 1, (sum - 2) >> 1, dp)
-    } else {
-        0
-    };
-
-    // odd & even
-    result += rec((xor - 1) >> 1, (sum - 1) >> 1, dp);
-
-    // even & even
-    result += rec(xor >> 1, sum >> 1, dp);
-    result %= MOD;
-
-    dp.insert((xor, sum), result);
-    return result;
+    println!("{}", ans);
 }
 
 struct Scanner {

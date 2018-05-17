@@ -1,32 +1,40 @@
 fn main() {
     let mut sc = Scanner::new();
     let n: usize = sc.read();
-    let a: Vec<u32> = (0..n).map(|_| sc.read()).collect();
+    let a: Vec<u64> = (0..n).map(|_| sc.read()).collect();
 
-
-    let mut xor_sum = 0;
+    let mut grundy = 0;
     for &a in &a {
-        xor_sum ^= a;
+        grundy ^= a;
     }
 
-    let mut ans = 0;
-    for bit in (0..30).rev() {
-        if ((1 << bit) & xor_sum) == 0 { continue; }
-        let x = (1 << (bit + 1)) - 1;
-        for &a in &a {
-            let y = a ^ (a - 1);
-            if y == x {
-                xor_sum ^= y;
-                ans += 1;
+    let mut used = vec![false; n];
+    for pos in (0..32).rev() {
+        if grundy & (1 << pos) == 0 {
+            continue;
+        }
+        for i in 0..n {
+            if used[i] {
+                continue;
+            }
+
+            let tmp = a[i] ^ (a[i] - 1);
+            let check = (1 << (pos + 1)) - 1;
+            if tmp == check {
+                grundy ^= tmp;
+                used[i] = true;
                 break;
             }
         }
     }
 
-    if xor_sum != 0 {
-        println!("-1");
+    if grundy == 0 {
+        println!(
+            "{}",
+            used.iter().map(|&b| if b { 1 } else { 0 }).sum::<usize>()
+        );
     } else {
-        println!("{}", ans);
+        println!("-1");
     }
 }
 
@@ -39,7 +47,12 @@ struct Scanner {
 
 impl Scanner {
     fn new() -> Scanner {
-        Scanner { ptr: 0, length: 0, buf: vec![0; 1024], small_cache: vec![0; 1024] }
+        Scanner {
+            ptr: 0,
+            length: 0,
+            buf: vec![0; 1024],
+            small_cache: vec![0; 1024],
+        }
     }
 
     fn load(&mut self) {
@@ -62,9 +75,15 @@ impl Scanner {
         return self.buf[self.ptr - 1];
     }
 
-    fn is_space(b: u8) -> bool { b == b'\n' || b == b'\r' || b == b'\t' || b == b' ' }
+    fn is_space(b: u8) -> bool {
+        b == b'\n' || b == b'\r' || b == b'\t' || b == b' '
+    }
 
-    fn read<T>(&mut self) -> T where T: std::str::FromStr, T::Err: std::fmt::Debug, {
+    fn read<T>(&mut self) -> T
+    where
+        T: std::str::FromStr,
+        T::Err: std::fmt::Debug,
+    {
         let mut b = self.byte();
         while Scanner::is_space(b) {
             b = self.byte();
@@ -74,7 +93,9 @@ impl Scanner {
             self.small_cache[pos] = b;
             b = self.byte();
             if Scanner::is_space(b) {
-                return String::from_utf8_lossy(&self.small_cache[0..(pos + 1)]).parse().unwrap();
+                return String::from_utf8_lossy(&self.small_cache[0..(pos + 1)])
+                    .parse()
+                    .unwrap();
             }
         }
 
@@ -86,4 +107,3 @@ impl Scanner {
         return String::from_utf8_lossy(&v).parse().unwrap();
     }
 }
-

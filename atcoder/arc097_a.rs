@@ -1,39 +1,50 @@
-use std::collections::BTreeMap;
+use std::cmp::Ordering;
+use std::collections::{BTreeSet, BinaryHeap};
+#[derive(Clone, Eq, PartialEq)]
+struct State {
+    s: String,
+    i: usize,
+}
 
-const MOD: usize = 1_000_000_007;
+impl Ord for State {
+    fn cmp(&self, other: &State) -> Ordering {
+        other.s.cmp(&self.s)
+    }
+}
+
+impl PartialOrd for State {
+    fn partial_cmp(&self, other: &State) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
 
 fn main() {
     let mut sc = Scanner::new();
-    let n: usize = sc.read();
-
-    let mut dp = BTreeMap::new();
-    println!("{}", rec(n, n, &mut dp));
-}
-
-fn rec(xor: usize, sum: usize, dp: &mut BTreeMap<(usize, usize), usize>) -> usize {
-    if sum == 0 {
-        return 1;
+    let x: Vec<char> = sc.read::<String>().chars().collect();
+    let k: usize = sc.read();
+    let n = x.len();
+    let mut set = BTreeSet::new();
+    let mut q = BinaryHeap::new();
+    for i in 0..n {
+        let mut t = String::new();
+        t.push(x[i]);
+        q.push(State { s: t, i: i });
     }
-    if dp.contains_key(&(xor, sum)) {
-        return dp[&(xor, sum)];
+    while let Some(State { s, i }) = q.pop() {
+        if set.len() >= k {
+            break;
+        }
+        let mut t = s.clone();
+        set.insert(s);
+        let l = t.len();
+        if i + l < n {
+            t.push(x[i + l]);
+            q.push(State { s: t, i: i });
+        }
     }
 
-    // odd & odd
-    let mut result = if sum >= 2 {
-        rec(xor >> 1, (sum - 2) >> 1, dp)
-    } else {
-        0
-    };
-
-    // odd & even
-    result += rec((xor - 1) >> 1, (sum - 1) >> 1, dp);
-
-    // even & even
-    result += rec(xor >> 1, sum >> 1, dp);
-    result %= MOD;
-
-    dp.insert((xor, sum), result);
-    return result;
+    let t: Vec<String> = set.iter().map(|s| s.to_owned()).collect();
+    println!("{}", t[k - 1]);
 }
 
 struct Scanner {

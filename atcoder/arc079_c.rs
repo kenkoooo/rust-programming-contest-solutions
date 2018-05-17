@@ -1,39 +1,40 @@
-use std::collections::BTreeMap;
-
-const MOD: usize = 1_000_000_007;
-
 fn main() {
     let mut sc = Scanner::new();
     let n: usize = sc.read();
+    let mut a: Vec<i64> = (0..n).map(|_| sc.read()).collect();
 
-    let mut dp = BTreeMap::new();
-    println!("{}", rec(n, n, &mut dp));
-}
+    let mut ans = 0;
+    loop {
+        let mut s = 0;
+        for i in 0..n {
+            let n = n as i64;
+            if a[i] > n - 1 {
+                let t = (a[i] - (n - 1) + n - 1) / n;
+                s += t;
+            }
+        }
+        for i in 0..n {
+            let n = n as i64;
+            let t = (a[i] - (n - 1) + n - 1) / n;
+            a[i] = a[i] + s - t - t * n;
+        }
 
-fn rec(xor: usize, sum: usize, dp: &mut BTreeMap<(usize, usize), usize>) -> usize {
-    if sum == 0 {
-        return 1;
+        ans += s;
+
+        let mut ok = true;
+        for i in 0..n {
+            let n = n as i64;
+            if a[i] > n - 1 {
+                ok = false;
+                break;
+            }
+        }
+
+        if ok {
+            println!("{}", ans);
+            return;
+        }
     }
-    if dp.contains_key(&(xor, sum)) {
-        return dp[&(xor, sum)];
-    }
-
-    // odd & odd
-    let mut result = if sum >= 2 {
-        rec(xor >> 1, (sum - 2) >> 1, dp)
-    } else {
-        0
-    };
-
-    // odd & even
-    result += rec((xor - 1) >> 1, (sum - 1) >> 1, dp);
-
-    // even & even
-    result += rec(xor >> 1, sum >> 1, dp);
-    result %= MOD;
-
-    dp.insert((xor, sum), result);
-    return result;
 }
 
 struct Scanner {

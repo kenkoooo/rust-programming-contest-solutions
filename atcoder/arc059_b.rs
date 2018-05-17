@@ -1,39 +1,20 @@
-use std::collections::BTreeMap;
-
-const MOD: usize = 1_000_000_007;
-
 fn main() {
     let mut sc = Scanner::new();
-    let n: usize = sc.read();
-
-    let mut dp = BTreeMap::new();
-    println!("{}", rec(n, n, &mut dp));
-}
-
-fn rec(xor: usize, sum: usize, dp: &mut BTreeMap<(usize, usize), usize>) -> usize {
-    if sum == 0 {
-        return 1;
+    let s: Vec<char> = sc.read::<String>().chars().collect();
+    let n = s.len();
+    for i in 1..n {
+        if s[i - 1] == s[i] {
+            println!("{} {}", i, i + 1);
+            return;
+        }
     }
-    if dp.contains_key(&(xor, sum)) {
-        return dp[&(xor, sum)];
+    for i in 2..n {
+        if s[i - 2] == s[i] {
+            println!("{} {}", i - 1, i + 1);
+            return;
+        }
     }
-
-    // odd & odd
-    let mut result = if sum >= 2 {
-        rec(xor >> 1, (sum - 2) >> 1, dp)
-    } else {
-        0
-    };
-
-    // odd & even
-    result += rec((xor - 1) >> 1, (sum - 1) >> 1, dp);
-
-    // even & even
-    result += rec(xor >> 1, sum >> 1, dp);
-    result %= MOD;
-
-    dp.insert((xor, sum), result);
-    return result;
+    println!("-1 -1");
 }
 
 struct Scanner {
