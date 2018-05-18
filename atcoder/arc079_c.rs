@@ -1,40 +1,21 @@
 fn main() {
     let mut sc = Scanner::new();
     let n: usize = sc.read();
-    let mut a: Vec<i64> = (0..n).map(|_| sc.read()).collect();
+    let mut a: Vec<usize> = (0..n).map(|_| sc.read()).collect();
 
     let mut ans = 0;
     loop {
-        let mut s = 0;
-        for i in 0..n {
-            let n = n as i64;
-            if a[i] > n - 1 {
-                let t = (a[i] - (n - 1) + n - 1) / n;
-                s += t;
-            }
+        let s: usize = a.iter().map(|&a| a / n).sum();
+        if s == 0 {
+            break;
         }
         for i in 0..n {
-            let n = n as i64;
-            let t = (a[i] - (n - 1) + n - 1) / n;
-            a[i] = a[i] + s - t - t * n;
+            let t = a[i] / n;
+            a[i] = a[i] + s - t - n * t;
         }
-
         ans += s;
-
-        let mut ok = true;
-        for i in 0..n {
-            let n = n as i64;
-            if a[i] > n - 1 {
-                ok = false;
-                break;
-            }
-        }
-
-        if ok {
-            println!("{}", ans);
-            return;
-        }
     }
+    println!("{}", ans);
 }
 
 struct Scanner {

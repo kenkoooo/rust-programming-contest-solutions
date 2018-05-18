@@ -3,27 +3,26 @@ const MOD: usize = 1_000_000_007;
 fn main() {
     let mut sc = Scanner::new();
     let n: usize = sc.read();
-    if n == 2 {
-        println!("1");
-        return;
-    }
 
-    let comb = Combination::new(n, MOD);
-    let mut fact = vec![1; n];
-    for i in 1..n {
+    let mut fact = vec![0; n];
+    fact[0] = 1;
+    fact[1] = 1;
+    for i in 2..n {
         fact[i] = (fact[i - 1] * i) % MOD;
     }
 
-    let mut ans = 0;
-    let mut sum = 0;
-    for k in 2..n {
-        let mut pausing = n - 1 - k;
-        if k - 1 < pausing {
+    let mut ans: usize = 0;
+    let mut sum: usize = 0;
+    let combination = Combination::new(1000000, MOD);
+    for k in 1..n {
+        let non_work = n - 1 - k;
+        if non_work > k - 1 {
             continue;
         }
-        let c = comb.get(k - 1, pausing);
-        let c = (((c * fact[k]) % MOD) * fact[pausing]) % MOD;
-        let c = c + MOD - sum;
+        let mut c = combination.get(k - 1, non_work);
+        c = (c * fact[k]) % MOD;
+        c = (c * fact[non_work]) % MOD;
+        c = (c + MOD - sum) % MOD;
         sum = (sum + c) % MOD;
         ans = (ans + k * c) % MOD;
     }
