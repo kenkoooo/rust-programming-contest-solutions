@@ -3,38 +3,41 @@ use std::cmp;
 fn main() {
     let mut sc = Scanner::new();
     let n: usize = sc.read();
-    let k: usize = sc.read();
-
-    let ab: Vec<(usize, usize)> = (0..n).map(|_| (sc.read(), sc.read())).collect();
+    let k: u32 = sc.read();
+    let mut a: Vec<u32> = vec![0; n];
+    let mut b: Vec<u64> = vec![0; n];
+    for i in 0..n {
+        a[i] = sc.read();
+        b[i] = sc.read();
+    }
 
     let mut ans = 0;
     for pos in 0..32 {
-        if (1 << pos) & k == 0 {
+        if (k >> pos) & 1 == 0 {
             continue;
         }
-        let m = (k >> (pos + 1)) << (pos + 1);
-        let t = (1 << pos) - 1;
-        let k = m + t;
-        assert_eq!((1 << pos) & k, 0);
 
-        let mut sum = 0;
-        for &(a, b) in &ab {
-            if (k | a) <= k {
-                sum += b;
+        let suffix = (1 << pos) - 1;
+        let prefix = (k >> (pos + 1)) << (pos + 1);
+        let x = prefix + suffix;
+
+        let mut value = 0;
+        for i in 0..n {
+            if (a[i] | x) == x {
+                value += b[i];
             }
         }
 
-        ans = cmp::max(ans, sum);
+        ans = cmp::max(ans, value);
     }
-
-    let mut sum = 0;
-    for &(a, b) in &ab {
-        if (k | a) <= k {
-            sum += b;
+    let mut value = 0;
+    for i in 0..n {
+        if (a[i] | k) == k {
+            value += b[i];
         }
     }
-    ans = cmp::max(ans, sum);
 
+    ans = cmp::max(ans, value);
     println!("{}", ans);
 }
 

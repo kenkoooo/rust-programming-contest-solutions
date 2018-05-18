@@ -2,9 +2,8 @@ fn main() {
     let mut sc = Scanner::new();
     let s: Vec<char> = sc.read::<String>().chars().collect();
     let mut count = vec![0; 26];
-    for &c in &s {
-        let t = (c as u8) - ('a' as u8);
-        count[t as usize] += 1;
+    for &s in &s {
+        count[(s as usize - 'a' as usize)] += 1;
     }
 
     let n = s.len();

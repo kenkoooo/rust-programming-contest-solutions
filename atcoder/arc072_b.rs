@@ -1,60 +1,56 @@
 use std::collections::{BTreeMap, BTreeSet};
-
 fn main() {
     let mut sc = Scanner::new();
-
-    let x: i64 = sc.read();
-    let y: i64 = sc.read();
-    if (x - y).abs() <= 1 {
-        println!("Brown");
-    } else {
-        println!("Alice");
-    }
+    let x: u64 = sc.read();
+    let y: u64 = sc.read();
+    let (x, y) = if x > y { (y, x) } else { (x, y) };
+    println!("{}", if y - x <= 1 { "Brown" } else { "Alice" });
+    // exp();
 }
 
 fn exp() {
     let mut map = BTreeMap::new();
-    for z in 0..10000 {
-        for x in 0..(z + 1) {
-            let y = z - x;
-            if y < x { continue; }
-            if grundy(x, y, &mut map) == 0 {
-                println!("{} {} {}", x, y, y - x);
-            }
+    map.insert((0, 0), 0);
+    map.insert((0, 1), 0);
+    map.insert((1, 1), 0);
+
+    for i in 0..1000 {
+        for j in i..1000 {
+            grundy(i, j, &mut map);
         }
     }
 }
 
 fn grundy(x: usize, y: usize, map: &mut BTreeMap<(usize, usize), usize>) -> usize {
-    let (x, y) = norm(x, y);
-    if !map.contains_key(&(x, y)) {
-        let mut set = BTreeSet::new();
-        for i in 1..(x / 2 + 1) {
-            set.insert(grundy(x - 2 * i, y + i, map));
-        }
-        for i in 1..(y / 2 + 1) {
-            set.insert(grundy(x + i, y - 2 * i, map));
-        }
+    let (x, y) = if x > y { (y, x) } else { (x, y) };
 
-        let mut g = 0;
-        loop {
-            if set.contains(&g) {
-                g += 1;
-            } else {
-                break;
-            }
-        }
-        map.insert((x, y), g);
+    if map.contains_key(&(x, y)) {
+        return map[&(x, y)];
     }
 
+    let mut grundy_nums = BTreeSet::new();
+    for x_to_y in 1..(x / 2 + 1) {
+        let next_x = x - x_to_y * 2;
+        let next_y = y + x_to_y;
+        grundy_nums.insert(grundy(next_x, next_y, map));
+    }
+    for y_to_x in 1..(y / 2 + 1) {
+        let next_x = x + y_to_x;
+        let next_y = y - y_to_x * 2;
+        grundy_nums.insert(grundy(next_x, next_y, map));
+    }
 
-    let g: usize = *map.get(&(x, y)).unwrap();
-    return g;
-}
-
-
-fn norm(x: usize, y: usize) -> (usize, usize) {
-    if x >= y { (y, x) } else { (x, y) }
+    let mut g = 0;
+    loop {
+        if !grundy_nums.contains(&g) {
+            map.insert((x, y), g);
+            if g == 0 {
+                println!("{} {}", x, y);
+            }
+            return g;
+        }
+        g += 1;
+    }
 }
 
 struct Scanner {
@@ -66,7 +62,12 @@ struct Scanner {
 
 impl Scanner {
     fn new() -> Scanner {
-        Scanner { ptr: 0, length: 0, buf: vec![0; 1024], small_cache: vec![0; 1024] }
+        Scanner {
+            ptr: 0,
+            length: 0,
+            buf: vec![0; 1024],
+            small_cache: vec![0; 1024],
+        }
     }
 
     fn load(&mut self) {
@@ -89,9 +90,15 @@ impl Scanner {
         return self.buf[self.ptr - 1];
     }
 
-    fn is_space(b: u8) -> bool { b == b'\n' || b == b'\r' || b == b'\t' || b == b' ' }
+    fn is_space(b: u8) -> bool {
+        b == b'\n' || b == b'\r' || b == b'\t' || b == b' '
+    }
 
-    fn read<T>(&mut self) -> T where T: std::str::FromStr, T::Err: std::fmt::Debug, {
+    fn read<T>(&mut self) -> T
+    where
+        T: std::str::FromStr,
+        T::Err: std::fmt::Debug,
+    {
         let mut b = self.byte();
         while Scanner::is_space(b) {
             b = self.byte();
@@ -101,7 +108,9 @@ impl Scanner {
             self.small_cache[pos] = b;
             b = self.byte();
             if Scanner::is_space(b) {
-                return String::from_utf8_lossy(&self.small_cache[0..(pos + 1)]).parse().unwrap();
+                return String::from_utf8_lossy(&self.small_cache[0..(pos + 1)])
+                    .parse()
+                    .unwrap();
             }
         }
 
@@ -113,4 +122,3 @@ impl Scanner {
         return String::from_utf8_lossy(&v).parse().unwrap();
     }
 }
-
