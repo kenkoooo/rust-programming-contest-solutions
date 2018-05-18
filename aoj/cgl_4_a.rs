@@ -1,6 +1,3 @@
-use std::cmp::Ordering;
-use std::ops::{Add, Mul, Sub};
-
 fn main() {
     let mut sc = Scanner::new();
     let n: usize = sc.read();
