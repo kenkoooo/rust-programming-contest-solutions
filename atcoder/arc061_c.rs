@@ -1,7 +1,70 @@
+use std::collections::{BTreeMap, VecDeque};
+
+const BASE: usize = 0;
 
 fn main() {
     let mut sc = Scanner::new();
+    let n: usize = sc.read();
+    let m: usize = sc.read();
 
+    let mut graph = BTreeMap::new();
+
+    for _ in 0..m {
+        let p = sc.read::<usize>() - 1;
+        let q = sc.read::<usize>() - 1;
+        let c = sc.read::<usize>();
+
+        check_exists(&mut graph, (p, c));
+        check_exists(&mut graph, (q, c));
+
+        graph.get_mut(&(p, c)).unwrap().push((q, c, 0));
+        graph.get_mut(&(q, c)).unwrap().push((p, c, 0));
+    }
+
+    let vertices: Vec<(usize, usize)> = graph.keys().map(|&(v, c)| (v, c)).collect();
+    for &(v, c) in &vertices {
+        check_exists(&mut graph, (v, BASE));
+        graph.get_mut(&(v, BASE)).unwrap().push((v, c, 1));
+        graph.get_mut(&(v, c)).unwrap().push((v, BASE, 0));
+    }
+
+    if !graph.contains_key(&(0, BASE)) {
+        println!("-1");
+        return;
+    }
+
+    let mut dist = BTreeMap::new();
+    dist.insert((0, BASE), 0);
+    let mut queue = VecDeque::new();
+    queue.push_back((0, BASE, 0));
+    while let Some((v, c, d)) = queue.pop_front() {
+        if v == n - 1 {
+            println!("{}", d);
+            return;
+        }
+
+        for &(next_v, next_c, cost) in &graph[&(v, c)] {
+            if !dist.contains_key(&(next_v, next_c)) || dist[&(next_v, next_c)] > d + cost {
+                dist.insert((next_v, next_c), d + cost);
+                if cost == 0 {
+                    queue.push_front((next_v, next_c, d));
+                } else {
+                    queue.push_back((next_v, next_c, d + cost));
+                }
+            }
+        }
+    }
+
+    println!("-1");
+}
+
+fn check_exists<T, S>(map: &mut BTreeMap<T, Vec<S>>, key: T)
+where
+    T: Ord,
+{
+    if !map.contains_key(&key) {
+        map.insert(key, Vec::new());
+    }
 }
 
 struct Scanner {
