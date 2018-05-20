@@ -1,74 +1,7 @@
-use std::collections::{BTreeMap, BTreeSet, VecDeque};
-
-const OUTSIDE: usize = 0;
-const MAX_DIST: usize = 1_000_000;
 
 fn main() {
     let mut sc = Scanner::new();
-    let n: usize = sc.read();
-    let m: usize = sc.read();
-    let mut graph = BTreeMap::new();
-    check(&mut graph, (0, OUTSIDE));
 
-    let mut vertices = BTreeSet::new();
-
-    for _ in 0..m {
-        let p = sc.read::<usize>() - 1;
-        let q = sc.read::<usize>() - 1;
-        let c = sc.read::<usize>();
-
-        check(&mut graph, (p, c));
-        check(&mut graph, (q, c));
-        check(&mut graph, (p, OUTSIDE));
-        check(&mut graph, (q, OUTSIDE));
-
-        graph.get_mut(&(p, c)).unwrap().push((q, c, 0));
-        graph.get_mut(&(q, c)).unwrap().push((p, c, 0));
-
-        vertices.insert((p, c));
-        vertices.insert((q, c));
-    }
-
-    for &(v, train) in &vertices {
-        graph.get_mut(&(v, train)).unwrap().push((v, OUTSIDE, 0));
-        graph.get_mut(&(v, OUTSIDE)).unwrap().push((v, train, 1));
-    }
-
-    let mut dist = BTreeMap::new();
-    let mut queue = VecDeque::new();
-    dist.insert((0, OUTSIDE), 0);
-    queue.push_back((0, OUTSIDE));
-    while let Some((v, train)) = queue.pop_front() {
-        if v == n - 1 {
-            println!("{}", dist[&(v, train)]);
-            return;
-        }
-
-        for &(next_v, next_train, cost) in &graph[&(v, train)] {
-            let cur_dist = match dist.get(&(next_v, next_train)) {
-                Some(&d) => d,
-                _ => MAX_DIST,
-            };
-            let next_dist = dist[&(v, train)] + cost;
-            if cur_dist <= next_dist {
-                continue;
-            }
-            dist.insert((next_v, next_train), next_dist);
-            if cost == 0 {
-                queue.push_front((next_v, next_train));
-            } else {
-                queue.push_back((next_v, next_train));
-            }
-        }
-    }
-
-    println!("-1");
-}
-
-fn check(graph: &mut BTreeMap<(usize, usize), Vec<(usize, usize, usize)>>, to: (usize, usize)) {
-    if !graph.contains_key(&to) {
-        graph.insert(to, Vec::new());
-    }
 }
 
 struct Scanner {
