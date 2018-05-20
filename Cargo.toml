@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["kenkoooo <kenkou.n@gmail.com>"]
 
 [dependencies]
-rand = "0.4"
+rand = "0.5.0-pre.1"
 
 # AOJ
 [[bin]]
@@ -327,3 +327,18 @@ path = "atcoder/agc021_b.rs"
 [[bin]]
 name = "arc081_c"
 path = "atcoder/arc081_c.rs"
+[[bin]]
+name = "apc001_d"
+path = "atcoder/apc001_d.rs"
+[[bin]]
+name = "agc024_a"
+path = "atcoder/agc024_a.rs"
+[[bin]]
+name = "agc024_b"
+path = "atcoder/agc024_b.rs"
+[[bin]]
+name = "agc024_c"
+path = "atcoder/agc024_c.rs"
+[[bin]]
+name = "agc024_d"
+path = "atcoder/agc024_d.rs"
