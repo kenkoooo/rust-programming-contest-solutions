@@ -96,6 +96,7 @@ fn solve(a: &Vec<usize>, b: &Vec<Vec<usize>>, z: usize) -> usize {
 
     return ans;
 }
+
 pub struct Combination {
     fact: Vec<usize>,
     inv_fact: Vec<usize>,

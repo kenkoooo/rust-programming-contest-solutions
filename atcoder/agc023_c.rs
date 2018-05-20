@@ -1,131 +1,67 @@
 use std::cmp;
+const MOD: usize = 1_000_000_007;
 fn main() {
     let mut sc = Scanner::new();
-    for n in 2..10 {
-        println!("{}", n);
-        solve(n);
+    let n: usize = sc.read();
+
+    let mut fact = vec![0; n];
+    fact[0] = 1;
+    fact[1] = 1;
+    for i in 2..n {
+        fact[i] = (fact[i - 1] * i) % MOD;
     }
-}
 
-fn solve(n: usize) {
-    let mut p = (0..n).collect::<Vec<usize>>();
-    let mut p = p.as_mut_slice();
-
-    let mut ans = Vec::new();
-    ans.push((n, p.to_vec().clone()));
-    while p.next_permutation() {
-        let mut used = vec![false; n + 1];
-        for pos in 0..n {
-            let i = p[pos];
-            used[i] = true;
-            used[i + 1] = true;
-
-            let mut ok = true;
-            for &b in &used {
-                if !b {
-                    ok = false;
-                }
-            }
-            if ok {
-                ans.push((pos + 1, p.to_vec().clone()));
-                break;
-            }
+    let mut ans: usize = 0;
+    let mut sum: usize = 0;
+    let combination = Combination::new(1000000, MOD);
+    for k in 1..n {
+        let non_work = n - 1 - k;
+        if non_work > k - 1 {
+            continue;
         }
-    }
-
-    let mut count = vec![0; n + 1];
-    ans.sort();
-    for &(p, ref v) in &ans {
-        count[p] += 1;
-        // println!("{} {:?}", p, v);
-    }
-
-    let mut sum = 0;
-    for i in 0..(n + 1) {
-        if count[i] > 0 {
-            println!("{}: {}", i, count[i]);
-            sum += i * count[i];
-        }
+        let mut c = combination.get(k - 1, non_work);
+        c = (c * fact[k]) % MOD;
+        c = (c * fact[non_work]) % MOD;
+        c = (c + MOD - sum) % MOD;
+        sum = (sum + c) % MOD;
+        ans = (ans + k * c) % MOD;
     }
     println!("sum: {}", sum);
 }
 
-pub trait LexicalPermutation {
-    /// Return `true` if the slice was permuted, `false` if it is already
-    /// at the last ordered permutation.
-    fn next_permutation(&mut self) -> bool;
-    /// Return `true` if the slice was permuted, `false` if it is already
-    /// at the first ordered permutation.
-    fn prev_permutation(&mut self) -> bool;
+pub struct Combination {
+    fact: Vec<usize>,
+    inv_fact: Vec<usize>,
+    modulo: usize,
 }
 
-impl<T> LexicalPermutation for [T]
-where
-    T: Ord,
-{
-    /// Original author in Rust: Thomas Backman <serenity@exscape.org>
-    fn next_permutation(&mut self) -> bool {
-        // These cases only have 1 permutation each, so we can't do anything.
-        if self.len() < 2 {
-            return false;
+impl Combination {
+    pub fn new(max: usize, modulo: usize) -> Combination {
+        let mut inv = vec![0; max + 1];
+        let mut fact = vec![0; max + 1];
+        let mut inv_fact = vec![0; max + 1];
+        inv[1] = 1;
+        for i in 2..(max + 1) {
+            inv[i] = inv[modulo % i] * (modulo - modulo / i) % modulo;
         }
-
-        // Step 1: Identify the longest, rightmost weakly decreasing part of the vector
-        let mut i = self.len() - 1;
-        while i > 0 && self[i - 1] >= self[i] {
-            i -= 1;
+        fact[0] = 1;
+        inv_fact[0] = 1;
+        for i in 0..max {
+            fact[i + 1] = fact[i] * (i + 1) % modulo;
         }
-
-        // If that is the entire vector, this is the last-ordered permutation.
-        if i == 0 {
-            return false;
+        for i in 0..max {
+            inv_fact[i + 1] = inv_fact[i] * inv[i + 1] % modulo;
         }
-
-        // Step 2: Find the rightmost element larger than the pivot (i-1)
-        let mut j = self.len() - 1;
-        while j >= i && self[j] <= self[i - 1] {
-            j -= 1;
+        Combination {
+            fact: fact,
+            inv_fact: inv_fact,
+            modulo: modulo,
         }
-
-        // Step 3: Swap that element with the pivot
-        self.swap(j, i - 1);
-
-        // Step 4: Reverse the (previously) weakly decreasing part
-        self[i..].reverse();
-
-        true
     }
 
-    fn prev_permutation(&mut self) -> bool {
-        // These cases only have 1 permutation each, so we can't do anything.
-        if self.len() < 2 {
-            return false;
-        }
-
-        // Step 1: Identify the longest, rightmost weakly increasing part of the vector
-        let mut i = self.len() - 1;
-        while i > 0 && self[i - 1] <= self[i] {
-            i -= 1;
-        }
-
-        // If that is the entire vector, this is the first-ordered permutation.
-        if i == 0 {
-            return false;
-        }
-
-        // Step 2: Reverse the weakly increasing part
-        self[i..].reverse();
-
-        // Step 3: Find the rightmost element equal to or bigger than the pivot (i-1)
-        let mut j = self.len() - 1;
-        while j >= i && self[j - 1] < self[i - 1] {
-            j -= 1;
-        }
-
-        // Step 4: Swap that element with the pivot
-        self.swap(i - 1, j);
-
-        true
+    pub fn get(&self, x: usize, y: usize) -> usize {
+        assert!(x >= y);
+        self.fact[x] * self.inv_fact[y] % self.modulo * self.inv_fact[x - y] % self.modulo
     }
 }
 
