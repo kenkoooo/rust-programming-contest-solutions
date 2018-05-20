@@ -1,52 +1,62 @@
-const LETTER_NUM: usize = 26;
 fn main() {
     let mut sc = Scanner::new();
-    let s: Vec<usize> = sc.read::<String>()
+    let a: Vec<usize> = sc.read::<String>()
         .chars()
-        .map(|c| ((c as u8) - ('a' as u8)) as usize)
+        .map(|c| (c as usize) - ('a' as usize))
         .collect();
-    let mut indices = vec![vec![]; LETTER_NUM];
-    for i in 0..s.len() {
-        indices[s[i]].push(i + 1);
+    let mut pos = vec![vec![]; 26];
+    let n = a.len();
+    for i in 0..n {
+        pos[a[i]].push(i + 1);
     }
 
-    let mut cur = Vec::new();
-    for depth in 1..1000 {
-        if dfs(&indices, &mut cur, depth) {
-            for &c in &cur {
-                let c = (c as u8 + ('a' as u8)) as char;
-                print!("{}", c);
+    let mut k = vec![0; n + 2];
+    let mut vis = vec![false; 26];
+
+    for i in (0..n).rev() {
+        let j = i + 1;
+        vis[a[i]] = true;
+
+        let mut ok = true;
+        for &b in &vis {
+            ok = ok && b;
+        }
+        if ok {
+            for i in 0..vis.len() {
+                vis[i] = false;
             }
-            println!();
-            return;
+            k[j - 1] = k[j] + 1;
+        } else {
+            k[j - 1] = k[j];
         }
     }
-}
 
-fn dfs(indices: &Vec<Vec<usize>>, cur: &mut Vec<usize>, max_depth: usize) -> bool {
-    if cur.len() == max_depth {
-        let mut cur_i = 0;
-        for &cur in cur.iter() {
-            let next_index = match indices[cur].binary_search(&(cur_i + 1)) {
-                Ok(i) => i,
-                Err(i) => i,
+    let mut cur_pos = 0;
+    let mut ans: Vec<usize> = Vec::new();
+    for _ in 0..(k[0] + 1) {
+        for c in 0..26 {
+            let p: usize = match pos[c].binary_search(&(cur_pos + 1)) {
+                Ok(p) => pos[c][p],
+                Err(p) => if p < pos[c].len() {
+                    pos[c][p]
+                } else {
+                    n
+                },
             };
-            if next_index == indices[cur].len() {
-                return true;
+
+            if p == n || k[cur_pos] == k[p] + 1 {
+                cur_pos = p;
+                ans.push(c);
+                break;
             }
-            cur_i = indices[cur][next_index];
         }
-        return false;
     }
 
-    for i in 0..LETTER_NUM {
-        cur.push(i);
-        if dfs(indices, cur, max_depth) {
-            return true;
-        }
-        cur.pop();
+    for &a in &ans {
+        let c = ((a as u8) + ('a' as u8)) as char;
+        print!("{}", c);
     }
-    return false;
+    println!();
 }
 
 struct Scanner {
