@@ -49,15 +49,32 @@ fn main() {
     let other_b = calc_right_other(&pos_b, &pos_w);
     let other_w = calc_right_other(&pos_w, &pos_b);
 
-    let inf = n * n;
+    let inf = std::usize::MAX;
     let mut dp = vec![vec![inf; n + 1]; n + 1];
     dp[0][0] = 0;
 
-    for i in 0..n {
-        for j in 0..n {
-            dp[i + 1][j] = cmp::min(dp[i + 1][j], dp[i][j] + 1);
+    for i in 0..(n + 1) {
+        for j in 0..(n + 1) {
+            if dp[i][j] == inf {
+                continue;
+            }
+            if i + 1 <= n {
+                dp[i + 1][j] = cmp::min(
+                    dp[i + 1][j],
+                    dp[i][j] + pos_b[i] + right_b[i] + other_b[i][j] - (i + j),
+                );
+            }
+
+            if j + 1 <= n {
+                dp[i][j + 1] = cmp::min(
+                    dp[i][j + 1],
+                    dp[i][j] + pos_w[j] + right_w[j] + other_w[j][i] - (i + j),
+                );
+            }
         }
     }
+
+    println!("{}", dp[n][n]);
 }
 
 struct Scanner {
