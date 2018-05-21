@@ -1,3 +1,12 @@
+fn main() {
+    let mut sc = Scanner::new();
+    let n: usize = sc.read();
+    let k: i64 = sc.read();
+    let a: Vec<i64> = (0..n).map(|_| sc.read::<i64>() - k).collect();
+
+    let mut sum = 0;
+}
+
 struct Scanner {
     ptr: usize,
     length: usize,
@@ -5,7 +14,6 @@ struct Scanner {
     small_cache: Vec<u8>,
 }
 
-#[allow(dead_code)]
 impl Scanner {
     fn new() -> Scanner {
         Scanner {
