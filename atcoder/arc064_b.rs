@@ -1,15 +1,14 @@
 fn main() {
     let mut sc = Scanner::new();
     let s: Vec<char> = sc.read::<String>().chars().collect();
-    let n = s.len();
-    if s[0] != s[n - 1] {
-        if n % 2 == 0 {
-            println!("Second");
-        } else {
+    if s[0] == s[s.len() - 1] {
+        if s.len() % 2 == 0 {
             println!("First");
+        } else {
+            println!("Second");
         }
     } else {
-        if n % 2 != 0 {
+        if s.len() % 2 == 0 {
             println!("Second");
         } else {
             println!("First");

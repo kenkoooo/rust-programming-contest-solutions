@@ -3,68 +3,61 @@ use std::cmp;
 fn main() {
     let mut sc = Scanner::new();
     let n: usize = sc.read();
-    let mut black_place = vec![0; n];
-    let mut white_place = vec![0; n];
+    let pos_b = vec![0; n];
+    let pos_w = vec![0; n];
     for i in 0..(2 * n) {
         let c = sc.read::<String>();
-        let a: usize = sc.read::<usize>() - 1;
+        let a = sc.read::<usize>() - 1;
         if c == "W" {
-            white_place[a] = i;
+            pos_w[a] = i;
         } else {
-            black_place[a] = i;
+            pos_b[a] = i;
         }
     }
 
-    let back = |place: &Vec<usize>| {
-        let mut min_back = vec![0; n];
+    let calc_right = |pos: &Vec<usize>| {
+        let right = vec![0; n];
         for i in 0..n {
+            let mut sum = 0;
             for j in 0..i {
-                if place[i] < place[j] {
-                    min_back[i] += 1;
+                if pos[i] < pos[j] {
+                    sum += 1;
                 }
             }
+            right[i] = sum;
         }
-        min_back
+        right
     };
 
-    let min_back_w = back(&white_place);
-    let min_back_b = back(&black_place);
+    let right_b = calc_right(&pos_b);
+    let right_w = calc_right(&pos_w);
 
-    let calc_cost = |place: &Vec<usize>, min_back: &Vec<usize>, other_place: &Vec<usize>| {
-        let mut cost = vec![vec![0; n + 1]; n];
-        for a in 0..n {
-            let back = min_back[a];
-            let place = place[a];
-            cost[a][0] = back;
-            for b in 0..n {
-                cost[a][b + 1] = cost[a][b];
-                if other_place[b] > place {
-                    cost[a][b + 1] += 1;
+    let calc_right_other = |pos: &Vec<usize>, other: &Vec<usize>| {
+        let right = vec![vec![0; n + 1]; n];
+        for i in 0..n {
+            let mut sum = 0;
+            for j in 0..n {
+                if pos[i] < other[j] {
+                    sum += 1;
                 }
+                right[i][j + 1] = sum;
             }
         }
-        cost
+        right
     };
 
-    let cost_w = calc_cost(&white_place, &min_back_w, &black_place);
-    let cost_b = calc_cost(&black_place, &min_back_b, &white_place);
+    let other_b = calc_right_other(&pos_b, &pos_w);
+    let other_w = calc_right_other(&pos_w, &pos_b);
 
-    let mut dp = vec![vec![std::usize::MAX; n + 1]; n + 1];
+    let inf = n * n;
+    let mut dp = vec![vec![inf; n + 1]; n + 1];
     dp[0][0] = 0;
-    for i in 0..(n + 1) {
-        for j in 0..(n + 1) {
-            if i < n {
-                let white_place = white_place[i] + cost_w[i][j] - (i + j);
-                dp[i + 1][j] = cmp::min(dp[i + 1][j], dp[i][j] + white_place);
-            }
 
-            if j < n {
-                let black_place = black_place[j] + cost_b[j][i] - (i + j);
-                dp[i][j + 1] = cmp::min(dp[i][j + 1], dp[i][j] + black_place);
-            }
+    for i in 0..n {
+        for j in 0..n {
+            dp[i + 1][j] = cmp::min(dp[i + 1][j], dp[i][j] + 1);
         }
     }
-    println!("{}", dp[n][n]);
 }
 
 struct Scanner {
