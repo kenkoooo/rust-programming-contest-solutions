@@ -3,8 +3,8 @@ use std::cmp;
 fn main() {
     let mut sc = Scanner::new();
     let n: usize = sc.read();
-    let pos_b = vec![0; n];
-    let pos_w = vec![0; n];
+    let mut pos_b = vec![0; n];
+    let mut pos_w = vec![0; n];
     for i in 0..(2 * n) {
         let c = sc.read::<String>();
         let a = sc.read::<usize>() - 1;
@@ -16,7 +16,7 @@ fn main() {
     }
 
     let calc_right = |pos: &Vec<usize>| {
-        let right = vec![0; n];
+        let mut right = vec![0; n];
         for i in 0..n {
             let mut sum = 0;
             for j in 0..i {
@@ -33,7 +33,7 @@ fn main() {
     let right_w = calc_right(&pos_w);
 
     let calc_right_other = |pos: &Vec<usize>, other: &Vec<usize>| {
-        let right = vec![vec![0; n + 1]; n];
+        let mut right = vec![vec![0; n + 1]; n];
         for i in 0..n {
             let mut sum = 0;
             for j in 0..n {
