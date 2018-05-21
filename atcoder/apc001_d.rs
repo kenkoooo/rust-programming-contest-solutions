@@ -5,78 +5,64 @@ fn main() {
     let n: usize = sc.read();
     let m: usize = sc.read();
     let mut graph = vec![vec![]; n];
-    let mut a: Vec<(u64, usize)> = (0..n).map(|i| (sc.read(), i)).collect();
-    a.sort();
-
-    let mut uf = UnionFind::new(n);
+    let a: Vec<usize> = (0..n).map(|_| sc.read()).collect();
 
     for _ in 0..m {
         let x: usize = sc.read();
         let y: usize = sc.read();
         graph[x].push(y);
         graph[y].push(x);
-        uf.unite(x, y);
     }
 
+    let mut queue = VecDeque::new();
+    let mut used = vec![false; n];
+    let mut groups = Vec::new();
+    for i in 0..n {
+        if used[i] {
+            continue;
+        }
+        queue.push_back(i);
+        used[i] = true;
+        let mut group = vec![a[i]];
+        while let Some(v) = queue.pop_front() {
+            for &to in &graph[v] {
+                if used[to] {
+                    continue;
+                }
+                used[to] = true;
+                queue.push_back(to);
+                group.push(a[to]);
+            }
+        }
+
+        group.sort();
+        groups.push(group);
+    }
+
+    let mut required = (n - 1 - m) * 2;
+    if required == 0 {
+        println!("0");
+        return;
+    }
     let mut ans = 0;
-    let mut left = VecDeque::new();
-    let mut right = VecDeque::new();
-    let (_, root) = a[0];
-    for &(a, i) in &a {
-        if uf.find(i) == uf.find(root) {
-            waiting.push_back((a, i));
-        } else if !waiting.is_empty() {
-
-        } else {
-            let (b, j) = waiting.pop_front().unwrap();
+    let mut rest = Vec::new();
+    for &ref v in &groups {
+        ans += v[0];
+        required -= 1;
+        for i in 1..v.len() {
+            rest.push(v[i]);
         }
     }
-}
-
-struct UnionFind {
-    parent: Vec<usize>,
-    sizes: Vec<usize>,
-    size: usize,
-}
-
-impl UnionFind {
-    fn new(n: usize) -> UnionFind {
-        UnionFind {
-            parent: (0..n).map(|i| i).collect::<Vec<usize>>(),
-            sizes: vec![1; n],
-            size: n,
-        }
+    if required > rest.len() {
+        println!("Impossible");
+        return;
     }
 
-    fn find(&mut self, x: usize) -> usize {
-        if x == self.parent[x] {
-            x
-        } else {
-            let px = self.parent[x];
-            self.parent[x] = self.find(px);
-            self.parent[x]
-        }
+    rest.sort();
+    for i in 0..required {
+        ans += rest[i];
     }
-
-    fn unite(&mut self, x: usize, y: usize) -> bool {
-        let parent_x = self.find(x);
-        let parent_y = self.find(y);
-        if parent_x == parent_y {
-            return false;
-        }
-
-        let (large, small) = if self.sizes[parent_x] < self.sizes[parent_y] {
-            (parent_y, parent_x)
-        } else {
-            (parent_x, parent_y)
-        };
-
-        self.parent[small] = large;
-        self.sizes[large] += self.sizes[small];
-        self.sizes[small] = 0;
-        self.size -= 1;
-        return true;
-    }
+    println!("{}", ans);
 }
 
 struct Scanner {
