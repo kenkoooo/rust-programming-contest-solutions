@@ -1,10 +1,79 @@
+use std::collections::BTreeSet;
+
 fn main() {
     let mut sc = Scanner::new();
     let n: usize = sc.read();
     let k: i64 = sc.read();
-    let a: Vec<i64> = (0..n).map(|_| sc.read::<i64>() - k).collect();
 
-    let mut sum = 0;
+    let a: Vec<i64> = sc.read_vec(n);
+    let mut b = vec![0; n + 1];
+    for i in 0..n {
+        b[i + 1] = b[i] + a[i] - k;
+    }
+
+    let mut set = BTreeSet::new();
+    for &b in &b {
+        set.insert(b);
+    }
+    let set: Vec<i64> = set.iter().map(|&b| b).collect();
+    let mut c = vec![0; n + 1];
+    for i in 0..(n + 1) {
+        c[i] = set.binary_search(&b[i]).unwrap();
+    }
+
+    let mut bit = FenwickTree::new(n + 1);
+
+    let mut ans = 0;
+    bit.add(c[0], 1);
+    for r in 1..(n + 1) {
+        ans += bit.sum_one(c[r] + 1);
+        bit.add(c[r], 1);
+    }
+    println!("{}", ans);
+}
+
+pub struct FenwickTree {
+    n: usize,
+    data: Vec<usize>,
+}
+
+impl FenwickTree {
+    /// Constructs a new `FenwickTree`. The size of `FenwickTree` should be specified by `size`.
+    pub fn new(size: usize) -> FenwickTree {
+        FenwickTree {
+            n: size + 1,
+            data: vec![0; size + 1],
+        }
+    }
+
+    fn add(&mut self, k: usize, value: usize) {
+        let mut x = k;
+        while x < self.n {
+            self.data[x] += value;
+            x |= x + 1;
+        }
+    }
+
+    /// Returns a sum of range `[l, r)`
+    pub fn sum(&self, l: usize, r: usize) -> usize {
+        return self.sum_one(r) - self.sum_one(l);
+    }
+
+    /// Returns a sum of range `[0, k)`
+    pub fn sum_one(&self, k: usize) -> usize {
+        if k >= self.n {
+            panic!("");
+        }
+
+        let mut result = 0;
+        let mut x = k as i32 - 1;
+        while x >= 0 {
+            result += self.data[x as usize];
+            x = (x & (x + 1)) - 1;
+        }
+
+        return result;
+    }
 }
 
 struct Scanner {
@@ -14,6 +83,7 @@ struct Scanner {
     small_cache: Vec<u8>,
 }
 
+#[allow(dead_code)]
 impl Scanner {
     fn new() -> Scanner {
         Scanner {
