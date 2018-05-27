@@ -354,3 +354,6 @@ path = "atcoder/arc075_c.rs"
 [[bin]]
 name = "arc071_c"
 path = "atcoder/arc071_c.rs"
+[[bin]]
+name = "arc070_b"
+path = "atcoder/arc070_b.rs"
