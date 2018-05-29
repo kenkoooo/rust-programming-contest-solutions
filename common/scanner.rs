@@ -5,6 +5,7 @@ struct Scanner {
     small_cache: Vec<u8>,
 }
 
+#[allow(dead_code)]
 impl Scanner {
     fn new() -> Scanner {
         Scanner {

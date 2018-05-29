@@ -1,47 +1,33 @@
-use std::f64::consts::PI;
-use std::ops::{Add, DivAssign, Sub};
 fn main() {
     let mut sc = Scanner::new();
     let n: usize = sc.read();
+    let points = (0..n)
+        .map(|_| Point {
+            x: sc.read(),
+            y: sc.read(),
+        })
+        .collect();
+    let convex_hull = extract_convex_hull(&points, true);
 
-    let mut points = Vec::new();
-    for _ in 0..n {
-        let x = sc.read();
-        let y = sc.read();
-        points.push(Point { x: x, y: y });
-    }
+    let mut ans = vec![0.0; points.len()];
 
-    let mut convex_hull = extract_convex_hull(&points, true);
-    let mut ans = vec![0.0; n];
-    let m = convex_hull.len();
-    for i in 0..m {
-        let p = points[convex_hull[i]].clone();
-        let q = points[convex_hull[(i + 1) % m]].clone();
-        let r = points[convex_hull[(i + 2) % m]].clone();
-        let pq = mid(p, q);
-        // assert_eq!(dot(pq, p - q), 0.0);
-        let qr = mid(q, r);
-        // assert_eq!(dot(qr, q - r), 0.0);
-
-        let radian = ((pq.x * qr.x + pq.y * qr.y) / dist(pq) / dist(qr)).acos();
-        ans[convex_hull[(i + 1) % m]] = radian / 2.0 / PI;
-    }
+    let n = convex_hull.len();
     for i in 0..n {
-        println!("{}", ans[i]);
+        let prev = points[convex_hull[(i + n - 1) % n]];
+        let cur = points[convex_hull[i]];
+        let next = points[convex_hull[(i + 1) % n]];
+
+        let a = next - cur;
+        let b = prev - cur;
+
+        let cos = a.product(&b) / a.abs() / b.abs();
+        let rad = cos.acos();
+        ans[convex_hull[i]] = (1.0 - rad / std::f64::consts::PI) / 2.0;
     }
-}
 
-fn dot(a: Point, b: Point) -> f64 {
-    a.x * b.x + a.y * b.y
-}
-
-fn dist(a: Point) -> f64 {
-    (a.x * a.x + a.y * a.y).sqrt()
-}
-
-fn mid(a: Point, b: Point) -> Point {
-    let c = b - a;
-    Point { x: -c.y, y: c.x }
+    for &a in &ans {
+        println!("{}", a);
+    }
 }
 
 fn extract_convex_hull(points: &Vec<Point>, contain_on_segment: bool) -> Vec<usize> {
@@ -98,17 +84,7 @@ struct Point {
     y: f64,
 }
 
-impl Add for Point {
-    type Output = Point;
-    fn add(self, other: Point) -> Point {
-        Point {
-            x: self.x + other.x,
-            y: self.y + other.y,
-        }
-    }
-}
-
-impl Sub for Point {
+impl std::ops::Sub for Point {
     type Output = Point;
     fn sub(self, other: Point) -> Point {
         Point {
@@ -118,15 +94,17 @@ impl Sub for Point {
     }
 }
 
-impl DivAssign<f64> for Point {
-    fn div_assign(&mut self, rhs: f64) {
-        self.x /= rhs;
-        self.y /= rhs;
-    }
-}
 impl Point {
     fn det(&self, other: &Point) -> f64 {
         self.x * other.y - self.y * other.x
+    }
+
+    fn abs(&self) -> f64 {
+        (self.x * self.x + self.y * self.y).sqrt()
+    }
+
+    fn product(&self, other: &Point) -> f64 {
+        self.x * other.x + self.y * other.y
     }
 }
 
@@ -137,6 +115,7 @@ struct Scanner {
     small_cache: Vec<u8>,
 }
 
+#[allow(dead_code)]
 impl Scanner {
     fn new() -> Scanner {
         Scanner {
@@ -169,6 +148,14 @@ impl Scanner {
 
     fn is_space(b: u8) -> bool {
         b == b'\n' || b == b'\r' || b == b'\t' || b == b' '
+    }
+
+    fn read_vec<T>(&mut self, n: usize) -> Vec<T>
+    where
+        T: std::str::FromStr,
+        T::Err: std::fmt::Debug,
+    {
+        (0..n).map(|_| self.read()).collect()
     }
 
     fn read<T>(&mut self) -> T

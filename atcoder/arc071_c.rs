@@ -1,65 +1,43 @@
 fn main() {
     let mut sc = Scanner::new();
-    let n: usize = sc.read();
-    let m: usize = sc.read();
-    let a: Vec<usize> = sc.read_vec(n);
-    let mut graph = vec![vec![]; n];
-    for _ in 0..m {
-        let x: usize = sc.read();
-        let y: usize = sc.read();
-        graph[x].push(y);
-        graph[y].push(x);
-    }
-
-    let mut vis = vec![false; n];
-    let mut trees = Vec::new();
-    for i in 0..n {
-        if !vis[i] {
-            let mut tree = Vec::new();
-            dfs(i, &mut tree, &mut vis, &graph);
-            tree.sort_by_key(|&i| a[i]);
-            trees.push(tree);
+    let mut get_sum = |sc: &mut Scanner| {
+        let s: Vec<char> = sc.read::<String>().chars().collect();
+        let n = s.len();
+        let mut s_sum_a = vec![0; n + 1];
+        let mut s_sum_b = vec![0; n + 1];
+        for i in 0..n {
+            s_sum_a[i + 1] = s_sum_a[i];
+            s_sum_b[i + 1] = s_sum_b[i];
+            if s[i] == 'A' {
+                s_sum_a[i + 1] += 1;
+            } else {
+                s_sum_b[i + 1] += 1;
+            }
         }
-    }
+        (s_sum_a, s_sum_b)
+    };
+    let (s_sum_a, s_sum_b) = get_sum(&mut sc);
+    let (t_sum_a, t_sum_b) = get_sum(&mut sc);
 
-    let mut used = vec![false; n];
-    let mut ans = 0;
-    for i in 0..trees.len() {
-        ans += a[trees[i][0]];
-        used[trees[i][0]] = true;
-    }
+    let q: usize = sc.read();
+    for _ in 0..q {
+        let a = sc.read::<usize>() - 1;
+        let b = sc.read::<usize>() - 1;
+        let c = sc.read::<usize>() - 1;
+        let d = sc.read::<usize>() - 1;
 
-    let mut rest = Vec::new();
-    for i in 0..n {
-        if !used[i] {
-            rest.push(a[i]);
-        }
-    }
-    rest.sort();
-
-    let needed = (n - 1 - m) * 2;
-    if rest.len() + trees.len() < needed {
-        println!("Impossible");
-        return;
-    }
-    if m == n - 1 {
-        println!("0");
-        return;
-    }
-
-    for i in 0..(needed - trees.len()) {
-        ans += rest[i];
-    }
-    println!("{}", ans);
-}
-
-fn dfs(v: usize, tree: &mut Vec<usize>, vis: &mut Vec<bool>, graph: &Vec<Vec<usize>>) {
-    tree.push(v);
-    vis[v] = true;
-    for &to in &graph[v] {
-        if !vis[to] {
-            dfs(to, tree, vis, graph);
-        }
+        let s_a = (s_sum_a[b + 1] - s_sum_a[a]) % 3;
+        let s_b = (s_sum_b[b + 1] - s_sum_b[a]) % 3;
+        let t_a = (t_sum_a[d + 1] - t_sum_a[c]) % 3;
+        let t_b = (t_sum_b[d + 1] - t_sum_b[c]) % 3;
+        println!(
+            "{}",
+            if (s_a + 3 - s_b) % 3 == (t_a + 3 - t_b) % 3 {
+                "YES"
+            } else {
+                "NO"
+            }
+        );
     }
 }
 

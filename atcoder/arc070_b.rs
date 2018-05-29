@@ -1,66 +1,57 @@
 fn main() {
     let mut sc = Scanner::new();
     let n: usize = sc.read();
-    let m: usize = sc.read();
-    let a: Vec<usize> = sc.read_vec(n);
-    let mut graph = vec![vec![]; n];
-    for _ in 0..m {
-        let x: usize = sc.read();
-        let y: usize = sc.read();
-        graph[x].push(y);
-        graph[y].push(x);
-    }
+    let k: usize = sc.read();
+    let mut a: Vec<usize> = sc.read_vec(n);
+    a.sort();
 
-    let mut vis = vec![false; n];
-    let mut trees = Vec::new();
-    for i in 0..n {
-        if !vis[i] {
-            let mut tree = Vec::new();
-            dfs(i, &mut tree, &mut vis, &graph);
-            tree.sort_by_key(|&i| a[i]);
-            trees.push(tree);
+    let mut low = 0;
+    let mut high = n;
+    while high - low > 1 {
+        let mid = (low + high) / 2;
+        let check = is_needed(&a, mid, k);
+        if is_needed(&a, mid, k) {
+            high = mid;
+        } else {
+            low = mid;
         }
     }
 
-    let mut used = vec![false; n];
-    let mut ans = 0;
-    for i in 0..trees.len() {
-        ans += a[trees[i][0]];
-        used[trees[i][0]] = true;
-    }
-
-    let mut rest = Vec::new();
-    for i in 0..n {
-        if !used[i] {
-            rest.push(a[i]);
-        }
-    }
-    rest.sort();
-
-    let needed = (n - 1 - m) * 2;
-    if rest.len() + trees.len() < needed {
-        println!("Impossible");
-        return;
-    }
-    if m == n - 1 {
+    if is_needed(&a, 0, k) {
         println!("0");
-        return;
+    } else {
+        println!("{}", low + 1);
     }
-
-    for i in 0..(needed - trees.len()) {
-        ans += rest[i];
-    }
-    println!("{}", ans);
 }
 
-fn dfs(v: usize, tree: &mut Vec<usize>, vis: &mut Vec<bool>, graph: &Vec<Vec<usize>>) {
-    tree.push(v);
-    vis[v] = true;
-    for &to in &graph[v] {
-        if !vis[to] {
-            dfs(to, tree, vis, graph);
+fn is_needed(a: &Vec<usize>, mid: usize, k: usize) -> bool {
+    if a[mid] >= k {
+        return true;
+    }
+
+    let mut ok = vec![false; k + 1];
+    ok[0] = true;
+
+    for i in 0..a.len() {
+        if i == mid {
+            continue;
+        }
+        for j in (0..k).rev() {
+            if j + a[i] > k {
+                continue;
+            }
+            if ok[j] {
+                ok[j + a[i]] = true;
+            }
         }
     }
+
+    for i in 0..k {
+        if ok[i] && i + a[mid] >= k {
+            return true;
+        }
+    }
+    return false;
 }
 
 struct Scanner {

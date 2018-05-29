@@ -1,65 +1,84 @@
+const MOD: usize = 1_000_000_007;
+
 fn main() {
     let mut sc = Scanner::new();
     let n: usize = sc.read();
-    let m: usize = sc.read();
-    let a: Vec<usize> = sc.read_vec(n);
-    let mut graph = vec![vec![]; n];
-    for _ in 0..m {
-        let x: usize = sc.read();
-        let y: usize = sc.read();
-        graph[x].push(y);
-        graph[y].push(x);
+    let a: Vec<usize> = sc.read_vec(n + 1);
+
+    let mut count = vec![0; n];
+    for &a in &a {
+        count[a - 1] += 1;
     }
 
-    let mut vis = vec![false; n];
-    let mut trees = Vec::new();
+    let mut b = 0;
     for i in 0..n {
-        if !vis[i] {
-            let mut tree = Vec::new();
-            dfs(i, &mut tree, &mut vis, &graph);
-            tree.sort_by_key(|&i| a[i]);
-            trees.push(tree);
+        if count[i] == 2 {
+            b = i + 1;
         }
     }
 
-    let mut used = vec![false; n];
-    let mut ans = 0;
-    for i in 0..trees.len() {
-        ans += a[trees[i][0]];
-        used[trees[i][0]] = true;
-    }
+    assert_ne!(b, 0);
 
-    let mut rest = Vec::new();
-    for i in 0..n {
-        if !used[i] {
-            rest.push(a[i]);
+    let mut counting = false;
+    let mut x = 0;
+    for &a in &a {
+        if a == b {
+            counting = !counting;
+        } else if counting {
+            x += 1;
         }
     }
-    rest.sort();
+    // t
+    // (n+1)_C_t
+    // (n+1-2-x)_C_(t-1)
 
-    let needed = (n - 1 - m) * 2;
-    if rest.len() + trees.len() < needed {
-        println!("Impossible");
-        return;
-    }
-    if m == n - 1 {
-        println!("0");
-        return;
-    }
+    let combination = Combination::new(n + 1, MOD);
+    for t in 1..(n + 2) {
+        let all = combination.get(n + 1, t);
 
-    for i in 0..(needed - trees.len()) {
-        ans += rest[i];
+        let duplicated = if n + 1 - 2 - x < t - 1 {
+            0
+        } else {
+            combination.get(n + 1 - 2 - x, t - 1)
+        };
+
+        println!("{}", (all + MOD - duplicated) % MOD);
     }
-    println!("{}", ans);
 }
 
-fn dfs(v: usize, tree: &mut Vec<usize>, vis: &mut Vec<bool>, graph: &Vec<Vec<usize>>) {
-    tree.push(v);
-    vis[v] = true;
-    for &to in &graph[v] {
-        if !vis[to] {
-            dfs(to, tree, vis, graph);
+pub struct Combination {
+    fact: Vec<usize>,
+    inv_fact: Vec<usize>,
+    modulo: usize,
+}
+
+impl Combination {
+    pub fn new(max: usize, modulo: usize) -> Combination {
+        let mut inv = vec![0; max + 1];
+        let mut fact = vec![0; max + 1];
+        let mut inv_fact = vec![0; max + 1];
+        inv[1] = 1;
+        for i in 2..(max + 1) {
+            inv[i] = inv[modulo % i] * (modulo - modulo / i) % modulo;
         }
+        fact[0] = 1;
+        inv_fact[0] = 1;
+        for i in 0..max {
+            fact[i + 1] = fact[i] * (i + 1) % modulo;
+        }
+        for i in 0..max {
+            inv_fact[i + 1] = inv_fact[i] * inv[i + 1] % modulo;
+        }
+        Combination {
+            fact: fact,
+            inv_fact: inv_fact,
+            modulo: modulo,
+        }
+    }
+
+    pub fn get(&self, x: usize, y: usize) -> usize {
+        assert!(x >= y);
+        self.fact[x] * self.inv_fact[y] % self.modulo * self.inv_fact[x - y] % self.modulo
     }
 }
 
@@ -70,7 +89,6 @@ struct Scanner {
     small_cache: Vec<u8>,
 }
 
-#[allow(dead_code)]
 impl Scanner {
     fn new() -> Scanner {
         Scanner {

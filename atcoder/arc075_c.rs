@@ -1,65 +1,78 @@
+use std::collections::BTreeSet;
+
 fn main() {
     let mut sc = Scanner::new();
     let n: usize = sc.read();
-    let m: usize = sc.read();
-    let a: Vec<usize> = sc.read_vec(n);
-    let mut graph = vec![vec![]; n];
-    for _ in 0..m {
-        let x: usize = sc.read();
-        let y: usize = sc.read();
-        graph[x].push(y);
-        graph[y].push(x);
-    }
+    let k: i64 = sc.read();
 
-    let mut vis = vec![false; n];
-    let mut trees = Vec::new();
+    let a: Vec<i64> = sc.read_vec(n);
+    let mut b = vec![0; n + 1];
     for i in 0..n {
-        if !vis[i] {
-            let mut tree = Vec::new();
-            dfs(i, &mut tree, &mut vis, &graph);
-            tree.sort_by_key(|&i| a[i]);
-            trees.push(tree);
-        }
+        b[i + 1] = b[i] + a[i] - k;
     }
 
-    let mut used = vec![false; n];
+    let mut set = BTreeSet::new();
+    for &b in &b {
+        set.insert(b);
+    }
+    let set: Vec<i64> = set.iter().map(|&b| b).collect();
+    let mut c = vec![0; n + 1];
+    for i in 0..(n + 1) {
+        c[i] = set.binary_search(&b[i]).unwrap();
+    }
+
+    let mut bit = FenwickTree::new(n + 1);
+
     let mut ans = 0;
-    for i in 0..trees.len() {
-        ans += a[trees[i][0]];
-        used[trees[i][0]] = true;
-    }
-
-    let mut rest = Vec::new();
-    for i in 0..n {
-        if !used[i] {
-            rest.push(a[i]);
-        }
-    }
-    rest.sort();
-
-    let needed = (n - 1 - m) * 2;
-    if rest.len() + trees.len() < needed {
-        println!("Impossible");
-        return;
-    }
-    if m == n - 1 {
-        println!("0");
-        return;
-    }
-
-    for i in 0..(needed - trees.len()) {
-        ans += rest[i];
+    bit.add(c[0], 1);
+    for r in 1..(n + 1) {
+        ans += bit.sum_one(c[r] + 1);
+        bit.add(c[r], 1);
     }
     println!("{}", ans);
 }
 
-fn dfs(v: usize, tree: &mut Vec<usize>, vis: &mut Vec<bool>, graph: &Vec<Vec<usize>>) {
-    tree.push(v);
-    vis[v] = true;
-    for &to in &graph[v] {
-        if !vis[to] {
-            dfs(to, tree, vis, graph);
+pub struct FenwickTree {
+    n: usize,
+    data: Vec<usize>,
+}
+
+impl FenwickTree {
+    /// Constructs a new `FenwickTree`. The size of `FenwickTree` should be specified by `size`.
+    pub fn new(size: usize) -> FenwickTree {
+        FenwickTree {
+            n: size + 1,
+            data: vec![0; size + 1],
         }
+    }
+
+    fn add(&mut self, k: usize, value: usize) {
+        let mut x = k;
+        while x < self.n {
+            self.data[x] += value;
+            x |= x + 1;
+        }
+    }
+
+    /// Returns a sum of range `[l, r)`
+    pub fn sum(&self, l: usize, r: usize) -> usize {
+        return self.sum_one(r) - self.sum_one(l);
+    }
+
+    /// Returns a sum of range `[0, k)`
+    pub fn sum_one(&self, k: usize) -> usize {
+        if k >= self.n {
+            panic!("");
+        }
+
+        let mut result = 0;
+        let mut x = k as i32 - 1;
+        while x >= 0 {
+            result += self.data[x as usize];
+            x = (x & (x + 1)) - 1;
+        }
+
+        return result;
     }
 }
 
