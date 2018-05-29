@@ -1,6 +1,8 @@
 const MOD: usize = 1_000_000_007;
 
 fn main() {
+    let combination = Combination::new(1000000, MOD);
+
     let mut sc = Scanner::new();
     let n: usize = sc.read();
     let a: usize = sc.read();
@@ -11,30 +13,31 @@ fn main() {
     let mut dp = vec![vec![0; b + 2]; n + 1];
     dp[0][a] = 1;
 
-    let combination = Combination::new(1000000, MOD);
-
     for i in 0..(n + 1) {
         for new_group in a..(b + 1) {
             dp[i][new_group + 1] += dp[i][new_group];
             dp[i][new_group + 1] %= MOD;
 
-            let mut tmp = dp[i][new_group];
+            let mut total = 1;
             for num in 1..(d + 1) {
                 let cur = i + (num - 1) * new_group;
                 if cur + new_group > n {
                     break;
                 }
-                tmp *= combination.get(n - cur, new_group);
-                tmp %= MOD;
+
+                total = (total * combination.get(n - cur, new_group)) % MOD;
 
                 if num < c {
                     continue;
                 }
-                dp[cur + new_group][new_group + 1] += tmp * combination.inv_fact[num];
+
+                dp[cur + new_group][new_group + 1] +=
+                    ((total * dp[i][new_group]) % MOD * combination.inv_fact[num]) % MOD;
                 dp[cur + new_group][new_group + 1] %= MOD;
             }
         }
     }
+
     println!("{}", dp[n][b + 1]);
 }
 
@@ -113,6 +116,14 @@ impl Scanner {
 
     fn is_space(b: u8) -> bool {
         b == b'\n' || b == b'\r' || b == b'\t' || b == b' '
+    }
+
+    fn read_vec<T>(&mut self, n: usize) -> Vec<T>
+    where
+        T: std::str::FromStr,
+        T::Err: std::fmt::Debug,
+    {
+        (0..n).map(|_| self.read()).collect()
     }
 
     fn read<T>(&mut self) -> T

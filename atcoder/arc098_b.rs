@@ -1,59 +1,32 @@
 fn main() {
     let mut sc = Scanner::new();
-    let a: Vec<usize> = sc
-        .read::<String>()
-        .chars()
-        .map(|c| ((c as u8) - ('a' as u8)) as usize)
-        .collect();
-    let n = a.len();
+    let n: usize = sc.read();
+    let a: Vec<usize> = sc.read_vec(n);
 
-    let mut used = vec![false; 26];
-    let mut k = vec![0; n + 1];
-
-    for i in (0..n).rev() {
-        used[a[i]] = true;
-        let mut ok = true;
-        for &b in &used {
-            ok &= b;
-        }
-        if ok {
-            for i in 0..used.len() {
-                used[i] = false;
-            }
-        }
-        k[i] = if ok { k[i + 1] + 1 } else { k[i + 1] };
-    }
-
-    let mut indices = vec![vec![]; 26];
+    let mut sum = vec![0; n + 1];
+    let mut xor_sum = vec![0; n + 1];
     for i in 0..n {
-        indices[a[i]].push(i + 1);
+        sum[i + 1] = sum[i] + a[i];
+        xor_sum[i + 1] = xor_sum[i] ^ a[i];
     }
 
-    let mut ans = Vec::new();
-    let mut cur = 0;
-    for _ in 0..(k[0] + 1) {
-        for i in 0..26 {
-            let t: usize = match indices[i].binary_search(&(cur + 1)) {
-                Ok(t) => indices[i][t],
-                Err(t) => if t == indices[i].len() {
-                    n + 1
-                } else {
-                    indices[i][t]
-                },
-            };
-            if t != n + 1 && k[cur] == k[t] {
-                continue;
+    let mut ans = 0;
+    for l in 0..n {
+        let mut high = n;
+        let mut ok = l;
+        while high - ok > 1 {
+            let r = (high + ok) / 2;
+            let s = sum[r + 1] - sum[l];
+            let x = xor_sum[r + 1] ^ xor_sum[l];
+            if s == x {
+                ok = r;
+            } else {
+                high = r;
             }
-            cur = t;
-            ans.push(i);
-            break;
         }
+        ans += ok - l + 1;
     }
-
-    for &i in &ans {
-        print!("{}", ((i as u8) + ('a' as u8)) as char);
-    }
-    println!();
+    println!("{}", ans);
 }
 
 struct Scanner {

@@ -57,7 +57,9 @@ impl LowestCommonAncestor {
             stack.push_front(v);
             for u in &graph[v] {
                 let u = *u;
-                if depth_vis[u] { continue; }
+                if depth_vis[u] {
+                    continue;
+                }
                 parent[0][u] = v as i32;
                 depth[u] = depth[v] + 1;
                 depth_vis[u] = true;
@@ -65,7 +67,9 @@ impl LowestCommonAncestor {
             }
 
             let head = stack.pop_front().unwrap();
-            if head != v { stack.push_front(head); }
+            if head != v {
+                stack.push_front(head);
+            }
         }
 
         for k in 0..(log_v - 1) {
@@ -78,17 +82,29 @@ impl LowestCommonAncestor {
             }
         }
 
-        LowestCommonAncestor { graph: graph, parent: parent, depth: depth, root: root, log_v: log_v }
+        LowestCommonAncestor {
+            graph: graph,
+            parent: parent,
+            depth: depth,
+            root: root,
+            log_v: log_v,
+        }
     }
 
     fn get_lca(&self, u: usize, v: usize) -> usize {
-        let (mut u, mut v) = if self.depth[u] <= self.depth[v] { (u, v) } else { (v, u) };
+        let (mut u, mut v) = if self.depth[u] <= self.depth[v] {
+            (u, v)
+        } else {
+            (v, u)
+        };
         for k in 0..self.log_v {
             if ((self.depth[v] - self.depth[u]) & (1 << k)) != 0 {
                 v = self.parent[k][v] as usize;
             }
         }
-        if u == v { return u; }
+        if u == v {
+            return u;
+        }
 
         for k in (0..self.log_v).rev() {
             if self.parent[k][u] != self.parent[k][v] {
@@ -114,7 +130,12 @@ struct Scanner {
 
 impl Scanner {
     fn new() -> Scanner {
-        Scanner { ptr: 0, length: 0, buf: vec![0; 1024], small_cache: vec![0; 1024] }
+        Scanner {
+            ptr: 0,
+            length: 0,
+            buf: vec![0; 1024],
+            small_cache: vec![0; 1024],
+        }
     }
 
     fn load(&mut self) {
@@ -137,9 +158,15 @@ impl Scanner {
         return self.buf[self.ptr - 1];
     }
 
-    fn is_space(b: u8) -> bool { b == b'\n' || b == b'\r' || b == b'\t' || b == b' ' }
+    fn is_space(b: u8) -> bool {
+        b == b'\n' || b == b'\r' || b == b'\t' || b == b' '
+    }
 
-    fn read<T>(&mut self) -> T where T: std::str::FromStr, T::Err: std::fmt::Debug, {
+    fn read<T>(&mut self) -> T
+    where
+        T: std::str::FromStr,
+        T::Err: std::fmt::Debug,
+    {
         let mut b = self.byte();
         while Scanner::is_space(b) {
             b = self.byte();
@@ -149,7 +176,9 @@ impl Scanner {
             self.small_cache[pos] = b;
             b = self.byte();
             if Scanner::is_space(b) {
-                return String::from_utf8_lossy(&self.small_cache[0..(pos + 1)]).parse().unwrap();
+                return String::from_utf8_lossy(&self.small_cache[0..(pos + 1)])
+                    .parse()
+                    .unwrap();
             }
         }
 
@@ -161,4 +190,3 @@ impl Scanner {
         return String::from_utf8_lossy(&v).parse().unwrap();
     }
 }
-

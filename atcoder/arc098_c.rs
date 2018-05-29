@@ -1,59 +1,49 @@
+use std::cmp;
+
 fn main() {
     let mut sc = Scanner::new();
-    let a: Vec<usize> = sc
-        .read::<String>()
-        .chars()
-        .map(|c| ((c as u8) - ('a' as u8)) as usize)
-        .collect();
-    let n = a.len();
-
-    let mut used = vec![false; 26];
-    let mut k = vec![0; n + 1];
-
-    for i in (0..n).rev() {
-        used[a[i]] = true;
-        let mut ok = true;
-        for &b in &used {
-            ok &= b;
-        }
-        if ok {
-            for i in 0..used.len() {
-                used[i] = false;
+    let n: usize = sc.read();
+    let k: usize = sc.read();
+    let q: usize = sc.read();
+    let a: Vec<i64> = sc.read_vec(n);
+    let mut ans = std::i64::MAX;
+    for &min in &a {
+        let mut escape = Vec::new();
+        for i in 0..n {
+            if a[i] < min {
+                escape.push(i);
             }
         }
-        k[i] = if ok { k[i + 1] + 1 } else { k[i + 1] };
-    }
+        escape.push(n);
 
-    let mut indices = vec![vec![]; 26];
-    for i in 0..n {
-        indices[a[i]].push(i + 1);
-    }
-
-    let mut ans = Vec::new();
-    let mut cur = 0;
-    for _ in 0..(k[0] + 1) {
-        for i in 0..26 {
-            let t: usize = match indices[i].binary_search(&(cur + 1)) {
-                Ok(t) => indices[i][t],
-                Err(t) => if t == indices[i].len() {
-                    n + 1
-                } else {
-                    indices[i][t]
-                },
-            };
-            if t != n + 1 && k[cur] == k[t] {
-                continue;
+        let extract = |from: usize, to: usize| -> Vec<i64> {
+            if from > to || to - from + 1 < k {
+                return Vec::new();
             }
-            cur = t;
-            ans.push(i);
-            break;
-        }
-    }
 
-    for &i in &ans {
-        print!("{}", ((i as u8) + ('a' as u8)) as char);
+            let mut v = Vec::new();
+            for i in from..(to + 1) {
+                v.push(a[i]);
+            }
+            v.sort();
+            let removable = to - from + 1 - (k - 1);
+            return (0..removable).map(|i| v[i]).collect();
+        };
+
+        let mut max = Vec::new();
+        if escape[0] > 0 {
+            max.append(&mut extract(0, escape[0] - 1));
+        }
+        for i in 0..(escape.len() - 1) {
+            max.append(&mut extract(escape[i] + 1, escape[i + 1] - 1));
+        }
+        max.sort();
+        if max.len() < q {
+            continue;
+        }
+        ans = cmp::min(ans, max[q - 1] - min);
     }
-    println!();
+    println!("{}", ans);
 }
 
 struct Scanner {

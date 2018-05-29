@@ -1,59 +1,23 @@
+use std::cmp;
+
 fn main() {
     let mut sc = Scanner::new();
-    let a: Vec<usize> = sc
-        .read::<String>()
-        .chars()
-        .map(|c| ((c as u8) - ('a' as u8)) as usize)
-        .collect();
-    let n = a.len();
+    let a: Vec<usize> = sc.read_vec(7);
+    let mut ans = 0;
+    ans += a[1];
 
-    let mut used = vec![false; 26];
-    let mut k = vec![0; n + 1];
-
-    for i in (0..n).rev() {
-        used[a[i]] = true;
-        let mut ok = true;
-        for &b in &used {
-            ok &= b;
-        }
-        if ok {
-            for i in 0..used.len() {
-                used[i] = false;
-            }
-        }
-        k[i] = if ok { k[i + 1] + 1 } else { k[i + 1] };
+    if a[3] > 0 && a[4] > 0 && a[0] > 0 {
+        ans += cmp::max(
+            a[3] / 2 * 2 + a[4] / 2 * 2 + a[0] / 2 * 2,
+            (a[3] - 1) / 2 * 2 + (a[4] - 1) / 2 * 2 + (a[0] - 1) / 2 * 2 + 3,
+        );
+    } else {
+        ans += a[3] / 2 * 2;
+        ans += a[4] / 2 * 2;
+        ans += a[0] / 2 * 2;
     }
 
-    let mut indices = vec![vec![]; 26];
-    for i in 0..n {
-        indices[a[i]].push(i + 1);
-    }
-
-    let mut ans = Vec::new();
-    let mut cur = 0;
-    for _ in 0..(k[0] + 1) {
-        for i in 0..26 {
-            let t: usize = match indices[i].binary_search(&(cur + 1)) {
-                Ok(t) => indices[i][t],
-                Err(t) => if t == indices[i].len() {
-                    n + 1
-                } else {
-                    indices[i][t]
-                },
-            };
-            if t != n + 1 && k[cur] == k[t] {
-                continue;
-            }
-            cur = t;
-            ans.push(i);
-            break;
-        }
-    }
-
-    for &i in &ans {
-        print!("{}", ((i as u8) + ('a' as u8)) as char);
-    }
-    println!();
+    println!("{}", ans);
 }
 
 struct Scanner {
