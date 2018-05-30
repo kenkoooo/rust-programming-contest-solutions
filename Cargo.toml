@@ -354,6 +354,7 @@ path = "atcoder/arc098_c.rs"
 [[bin]]
 name = "arc098_b"
 path = "atcoder/arc098_b.rs"
+[[bin]]
 name = "arc077_b"
 path = "atcoder/arc077_b.rs"
 [[bin]]
@@ -365,3 +366,12 @@ path = "atcoder/arc071_c.rs"
 [[bin]]
 name = "arc070_b"
 path = "atcoder/arc070_b.rs"
+[[bin]]
+name = "agc004_c"
+path = "atcoder/agc004_c.rs"
+[[bin]]
+name = "agc005_c"
+path = "atcoder/agc005_c.rs"
+[[bin]]
+name = "codefestival_2016_qualB_d"
+path = "atcoder/codefestival_2016_qualB_d.rs"
