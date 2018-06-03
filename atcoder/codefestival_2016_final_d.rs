@@ -1,82 +1,45 @@
-use std::collections::BTreeSet;
+use std::cmp;
 
 fn main() {
     let mut sc = Scanner::new();
     let n: usize = sc.read();
-    let k: i64 = sc.read();
-    let a: Vec<i64> = sc.read_vec(n);
-
-    let mut set = BTreeSet::new();
-    let mut b = a.clone();
-    for i in 0..n {
-        if i > 0 {
-            b[i] += b[i - 1];
-        }
-        b[i] -= k;
-        set.insert(b[i]);
+    let m: usize = sc.read();
+    let x: Vec<usize> = sc.read_vec(n);
+    let max: usize = x.iter().map(|&x| x).max().unwrap();
+    let mut count = vec![0; max + 1];
+    for &x in &x {
+        count[x] += 1;
     }
 
-    let set: Vec<i64> = set.iter().map(|&c| c).collect();
-    let c: Vec<usize> = b.iter().map(|&b| set.binary_search(&b).unwrap()).collect();
+    let mut mod_count = vec![0; m];
+    let mut pair_count = vec![0; m];
+    for i in 0..(max + 1) {
+        mod_count[i % m] += count[i];
+        pair_count[i % m] += count[i] / 2;
+    }
 
     let mut ans = 0;
-    let mut bit = FenwickTree::new(n);
-    for &c in &c {
-        ans += bit.sum_one(c + 1);
-        bit.add(c, 1);
+    for i in 1..m {
+        if i * 2 == m {
+            continue;
+        }
+        let p = cmp::min(mod_count[i], mod_count[m - i]);
+        ans += p;
+        mod_count[i] -= p;
+        mod_count[m - i] -= p;
     }
 
-    for &b in &b {
-        if b >= 0 {
-            ans += 1;
-        }
+    if m % 2 == 0 {
+        ans += mod_count[m / 2] / 2;
+        mod_count[m / 2] %= 2;
     }
+
+    for i in 1..m {
+        ans += cmp::min(mod_count[i] / 2, pair_count[i]);
+    }
+    ans += mod_count[0] / 2;
 
     println!("{}", ans);
-}
-
-pub struct FenwickTree {
-    n: usize,
-    data: Vec<usize>,
-}
-
-impl FenwickTree {
-    /// Constructs a new `FenwickTree`. The size of `FenwickTree` should be specified by `size`.
-    pub fn new(size: usize) -> FenwickTree {
-        FenwickTree {
-            n: size + 1,
-            data: vec![0; size + 1],
-        }
-    }
-
-    fn add(&mut self, k: usize, value: usize) {
-        let mut x = k;
-        while x < self.n {
-            self.data[x] += value;
-            x |= x + 1;
-        }
-    }
-
-    /// Returns a sum of range `[l, r)`
-    pub fn sum(&self, l: usize, r: usize) -> usize {
-        return self.sum_one(r) - self.sum_one(l);
-    }
-
-    /// Returns a sum of range `[0, k)`
-    pub fn sum_one(&self, k: usize) -> usize {
-        if k >= self.n {
-            panic!("");
-        }
-
-        let mut result = 0;
-        let mut x = k as i32 - 1;
-        while x >= 0 {
-            result += self.data[x as usize];
-            x = (x & (x + 1)) - 1;
-        }
-
-        return result;
-    }
 }
 
 struct Scanner {
