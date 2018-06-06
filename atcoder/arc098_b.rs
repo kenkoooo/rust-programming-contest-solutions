@@ -1,30 +1,32 @@
 fn main() {
     let mut sc = Scanner::new();
     let n: usize = sc.read();
-    let a: Vec<usize> = sc.read_vec(n);
+    let a: Vec<u64> = sc.read_vec(n);
 
     let mut sum = vec![0; n + 1];
-    let mut xor_sum = vec![0; n + 1];
+    let mut xor = vec![0; n + 1];
     for i in 0..n {
         sum[i + 1] = sum[i] + a[i];
-        xor_sum[i + 1] = xor_sum[i] ^ a[i];
+        xor[i + 1] = xor[i] ^ a[i];
     }
 
     let mut ans = 0;
-    for l in 0..n {
-        let mut high = n;
-        let mut ok = l;
-        while high - ok > 1 {
-            let r = (high + ok) / 2;
-            let s = sum[r + 1] - sum[l];
-            let x = xor_sum[r + 1] ^ xor_sum[l];
-            if s == x {
-                ok = r;
+    for from in 0..n {
+        let mut ok = from;
+        let mut ng = n;
+        while ng - ok > 1 {
+            let m = (ok + ng) / 2;
+
+            let sum = sum[m + 1] - sum[from];
+            let xor = xor[m + 1] ^ xor[from];
+            if sum == xor {
+                ok = m;
             } else {
-                high = r;
+                ng = m;
             }
         }
-        ans += ok - l + 1;
+
+        ans += ok - from + 1;
     }
     println!("{}", ans);
 }
@@ -36,6 +38,7 @@ struct Scanner {
     small_cache: Vec<u8>,
 }
 
+#[allow(dead_code)]
 impl Scanner {
     fn new() -> Scanner {
         Scanner {
