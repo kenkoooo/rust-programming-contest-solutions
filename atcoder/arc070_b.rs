@@ -1,3 +1,5 @@
+use std::cmp;
+
 fn main() {
     let mut sc = Scanner::new();
     let n: usize = sc.read();
@@ -5,49 +7,45 @@ fn main() {
     let mut a: Vec<usize> = sc.read_vec(n);
     a.sort();
 
-    let mut low = 0;
-    let mut high = n;
-    while high - low > 1 {
-        let mid = (low + high) / 2;
-        let check = is_needed(&a, mid, k);
-        if is_needed(&a, mid, k) {
-            high = mid;
+    let mut needed = n;
+    let mut no_need = 0;
+    while needed - no_need > 1 {
+        let m = (no_need + needed) / 2;
+        if is_needed(&a, k, m) {
+            needed = m;
         } else {
-            low = mid;
+            no_need = m;
         }
     }
 
-    if is_needed(&a, 0, k) {
+    if is_needed(&a, k, 0) {
         println!("0");
     } else {
-        println!("{}", low + 1);
+        println!("{}", no_need + 1);
     }
 }
 
-fn is_needed(a: &Vec<usize>, mid: usize, k: usize) -> bool {
-    if a[mid] >= k {
+fn is_needed(a: &Vec<usize>, k: usize, pos: usize) -> bool {
+    if a[pos] >= k {
         return true;
     }
 
-    let mut ok = vec![false; k + 1];
-    ok[0] = true;
-
+    let mut reachable = vec![false; k + 1];
+    reachable[0] = true;
     for i in 0..a.len() {
-        if i == mid {
+        if i == pos {
             continue;
         }
-        for j in (0..k).rev() {
-            if j + a[i] > k {
+        for from in (0..reachable.len()).rev() {
+            if !reachable[from] {
                 continue;
             }
-            if ok[j] {
-                ok[j + a[i]] = true;
-            }
+            reachable[cmp::min(from + a[i], k)] = true;
         }
     }
 
-    for i in 0..k {
-        if ok[i] && i + a[mid] >= k {
+    for i in (k - a[pos])..k {
+        if reachable[i] {
             return true;
         }
     }
