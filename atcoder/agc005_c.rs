@@ -1,87 +1,41 @@
-use std::cmp;
 fn main() {
     let mut sc = Scanner::new();
     let n: usize = sc.read();
     let a: Vec<usize> = sc.read_vec(n);
-    let max: usize = a.iter().map(|&i| i).max().unwrap();
 
-    if n > 2 && max == 1 {
-        println!("Impossible");
-        return;
-    }
-
+    let max = a.iter().map(|&a| a).max().unwrap();
     let mut count = vec![0; max + 1];
     for &a in &a {
         count[a] += 1;
     }
 
-    for i in 0..(max + 1) {
-        if i < (max + 1) / 2 {
-            if count[i] > 0 {
-                println!("Impossible");
-                return;
-            }
+    println!(
+        "{}",
+        if is_possible(&count) {
+            "Possible"
         } else {
-            if i * 2 != max && count[i] < 2 {
-                println!("Impossible");
-                return;
-            } else if i * 2 == max && count[i] != 1 {
-                println!("Impossible");
-                return;
-            } else if max % 2 == 1 && i == (max + 1) / 2 && count[i] != 2 {
-                println!("Impossible");
-                return;
-            }
+            "Impossible"
         }
-    }
-
-    // let mut tree = vec![vec![]; n];
-    // {
-    //     let mut count = count.clone();
-    //     for i in 0..max {
-    //         tree[i].push(i + 1);
-    //         tree[i + 1].push(i);
-    //     }
-    //     for i in 0..(max + 1) {
-    //         count[max_dist(&tree, i, n, 0)] -= 1;
-    //     }
-
-    //     let mut t = max + 1;
-    //     for d in 0..(max + 1) {
-    //         for _ in 0..count[d] {
-    //             tree[d - 1].push(t);
-    //             tree[t].push(d - 1);
-    //             t += 1;
-    //         }
-    //     }
-    //     assert_eq!(t, n);
-    // }
-    // {
-    //     let mut check = vec![0; max + 1];
-    //     for i in 0..n {
-    //         check[max_dist(&tree, i, n, 0)] += 1;
-    //     }
-
-    //     for i in 0..(max + 1) {
-    //         assert_eq!(count[i], check[i]);
-    //     }
-    // }
-
-    println!("Possible");
+    );
 }
 
-fn max_dist(tree: &Vec<Vec<usize>>, v: usize, p: usize, depth: usize) -> usize {
-    if tree[v].len() == 1 && tree[v][0] == p {
-        return depth;
-    }
-    let mut max = 0;
-    for &to in &tree[v] {
-        if to == p {
-            continue;
+fn is_possible(count: &Vec<usize>) -> bool {
+    let diameter = count.len() - 1;
+    for dist in 0..(diameter + 1) {
+        if dist * 2 == diameter && count[dist] != 1 {
+            return false;
         }
-        max = cmp::max(max_dist(tree, to, v, depth + 1), max);
+        if dist * 2 < diameter && count[dist] > 0 {
+            return false;
+        }
+        if dist * 2 > diameter && count[dist] < 2 {
+            return false;
+        }
+        if dist * 2 == diameter + 1 && count[dist] != 2 {
+            return false;
+        }
     }
-    return max;
+    return true;
 }
 
 struct Scanner {
