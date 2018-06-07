@@ -5,44 +5,54 @@ fn main() {
     let n: usize = sc.read();
     let k: usize = sc.read();
     let q: usize = sc.read();
-    let a: Vec<i64> = sc.read_vec(n);
-    let mut ans = std::i64::MAX;
-    for &min in &a {
-        let mut escape = Vec::new();
+    let a: Vec<u64> = sc.read_vec(n);
+
+    if n == 1 {
+        println!("0");
+        return;
+    }
+
+    let mut ans = std::u64::MAX;
+    for &y in &a {
+        let mut unremovable = vec![];
         for i in 0..n {
-            if a[i] < min {
-                escape.push(i);
+            if a[i] < y {
+                unremovable.push(i);
             }
         }
-        escape.push(n);
+        unremovable.push(n);
 
-        let extract = |from: usize, to: usize| -> Vec<i64> {
-            if from > to || to - from + 1 < k {
+        let remove = |from: usize, to: usize| -> Vec<u64> {
+            if from >= to || to - from + 1 < k {
                 return Vec::new();
             }
-
-            let mut v = Vec::new();
+            let mut x = vec![];
             for i in from..(to + 1) {
-                v.push(a[i]);
+                x.push(a[i]);
             }
-            v.sort();
-            let removable = to - from + 1 - (k - 1);
-            return (0..removable).map(|i| v[i]).collect();
+            x.sort();
+            let count = x.len() - k + 1;
+            (0..count).map(|i| x[i]).collect()
         };
 
-        let mut max = Vec::new();
-        if escape[0] > 0 {
-            max.append(&mut extract(0, escape[0] - 1));
+        let mut removed = vec![];
+        if unremovable[0] > 0 {
+            removed.append(&mut remove(0, unremovable[0] - 1));
         }
-        for i in 0..(escape.len() - 1) {
-            max.append(&mut extract(escape[i] + 1, escape[i + 1] - 1));
+        for i in 0..(unremovable.len() - 1) {
+            let from = unremovable[i] + 1;
+            let to = unremovable[i + 1] - 1;
+            removed.append(&mut remove(from, to));
         }
-        max.sort();
-        if max.len() < q {
+        removed.sort();
+
+        if removed.len() < q {
             continue;
         }
-        ans = cmp::min(ans, max[q - 1] - min);
+        let x = removed[q - 1];
+        ans = cmp::min(ans, x - y);
     }
+
     println!("{}", ans);
 }
 
@@ -53,6 +63,7 @@ struct Scanner {
     small_cache: Vec<u8>,
 }
 
+#[allow(dead_code)]
 impl Scanner {
     fn new() -> Scanner {
         Scanner {
