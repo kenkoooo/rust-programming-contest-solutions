@@ -3,61 +3,62 @@ const MAX_K: usize = 51;
 fn main() {
     let mut sc = Scanner::new();
     let n: usize = sc.read();
+    let a: Vec<usize> = sc.read_vec(n);
+    let b: Vec<usize> = sc.read_vec(n);
 
-    let a: Vec<usize> = (0..n).map(|_| sc.read()).collect();
-    let b: Vec<usize> = (0..n).map(|_| sc.read()).collect();
+    let mut can_use = vec![true; MAX_K];
+    for i in (1..MAX_K).rev() {
+        can_use[i] = false;
 
-    let mut ans: Vec<usize> = Vec::new();
-
-    for k in (0..(MAX_K + 1)).rev() {
-        let mut ok = vec![vec![false; MAX_K + 1]; MAX_K + 1];
-        for i in 0..(MAX_K + 1) {
-            ok[i][i] = true;
+        let mut reachable = vec![vec![false; MAX_K]; MAX_K];
+        for i in 0..MAX_K {
+            reachable[i][i] = true;
         }
 
-        for from in 0..(MAX_K + 1) {
-            for i in 1..k {
-                let to = from % i;
-                ok[from][to] = true;
+        for from in 0..MAX_K {
+            for k in 1..MAX_K {
+                if !can_use[k] {
+                    continue;
+                }
+                let to = from % k;
+                reachable[from][to] = true;
             }
         }
-        for from in 0..(MAX_K + 1) {
-            for &i in &ans {
-                let to = from % i;
-                ok[from][to] = true;
-            }
-        }
-        for k in 0..(MAX_K + 1) {
-            for i in 0..(MAX_K + 1) {
-                for j in 0..(MAX_K + 1) {
-                    ok[i][j] = ok[i][j] || (ok[i][k] && ok[k][j]);
+
+        for k in 0..MAX_K {
+            for i in 0..MAX_K {
+                for j in 0..MAX_K {
+                    reachable[i][j] |= (reachable[i][k] && reachable[k][j]);
                 }
             }
         }
 
-        let mut check = true;
+        let mut ok = true;
         for i in 0..n {
-            if !ok[a[i]][b[i]] {
-                check = false;
+            if !reachable[a[i]][b[i]] {
+                ok = false;
                 break;
             }
         }
+        if !ok {
+            can_use[i] = true;
+        }
 
-        if !check {
-            if k == 51 {
-                println!("-1");
-                return;
-            }
-
-            ans.push(k);
+        if i == MAX_K - 1 && !ok {
+            println!("-1");
+            return;
         }
     }
 
-    let mut cost = 0;
-    for &a in &ans {
-        cost += ((1 as usize) << a);
+    let mut ans: u64 = 0;
+    for i in (0..MAX_K).rev() {
+        ans *= 2;
+        if i > 0 && can_use[i] {
+            ans += 1;
+        }
     }
-    println!("{}", cost);
+
+    println!("{}", ans);
 }
 
 struct Scanner {
@@ -67,9 +68,15 @@ struct Scanner {
     small_cache: Vec<u8>,
 }
 
+#[allow(dead_code)]
 impl Scanner {
     fn new() -> Scanner {
-        Scanner { ptr: 0, length: 0, buf: vec![0; 1024], small_cache: vec![0; 1024] }
+        Scanner {
+            ptr: 0,
+            length: 0,
+            buf: vec![0; 1024],
+            small_cache: vec![0; 1024],
+        }
     }
 
     fn load(&mut self) {
@@ -92,9 +99,23 @@ impl Scanner {
         return self.buf[self.ptr - 1];
     }
 
-    fn is_space(b: u8) -> bool { b == b'\n' || b == b'\r' || b == b'\t' || b == b' ' }
+    fn is_space(b: u8) -> bool {
+        b == b'\n' || b == b'\r' || b == b'\t' || b == b' '
+    }
 
-    fn read<T>(&mut self) -> T where T: std::str::FromStr, T::Err: std::fmt::Debug, {
+    fn read_vec<T>(&mut self, n: usize) -> Vec<T>
+    where
+        T: std::str::FromStr,
+        T::Err: std::fmt::Debug,
+    {
+        (0..n).map(|_| self.read()).collect()
+    }
+
+    fn read<T>(&mut self) -> T
+    where
+        T: std::str::FromStr,
+        T::Err: std::fmt::Debug,
+    {
         let mut b = self.byte();
         while Scanner::is_space(b) {
             b = self.byte();
@@ -104,7 +125,9 @@ impl Scanner {
             self.small_cache[pos] = b;
             b = self.byte();
             if Scanner::is_space(b) {
-                return String::from_utf8_lossy(&self.small_cache[0..(pos + 1)]).parse().unwrap();
+                return String::from_utf8_lossy(&self.small_cache[0..(pos + 1)])
+                    .parse()
+                    .unwrap();
             }
         }
 
@@ -116,4 +139,3 @@ impl Scanner {
         return String::from_utf8_lossy(&v).parse().unwrap();
     }
 }
-

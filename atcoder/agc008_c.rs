@@ -1,23 +1,15 @@
-use std::cmp;
-
 fn main() {
     let mut sc = Scanner::new();
     let a: Vec<usize> = sc.read_vec(7);
-    let mut ans = 0;
-    ans += a[1];
 
-    if a[3] > 0 && a[4] > 0 && a[0] > 0 {
-        ans += cmp::max(
-            a[3] / 2 * 2 + a[4] / 2 * 2 + a[0] / 2 * 2,
-            (a[3] - 1) / 2 * 2 + (a[4] - 1) / 2 * 2 + (a[0] - 1) / 2 * 2 + 3,
-        );
+    let ans1 = if a[0] > 0 && a[3] > 0 && a[4] > 0 {
+        a[1] + (a[0] - 1) / 2 * 2 + (a[3] - 1) / 2 * 2 + (a[4] - 1) / 2 * 2 + 3
     } else {
-        ans += a[3] / 2 * 2;
-        ans += a[4] / 2 * 2;
-        ans += a[0] / 2 * 2;
-    }
+        0
+    };
+    let ans2 = a[1] + a[0] / 2 * 2 + a[3] / 2 * 2 + a[4] / 2 * 2;
 
-    println!("{}", ans);
+    println!("{}", if ans1 > ans2 { ans1 } else { ans2 });
 }
 
 struct Scanner {
@@ -27,6 +19,7 @@ struct Scanner {
     small_cache: Vec<u8>,
 }
 
+#[allow(dead_code)]
 impl Scanner {
     fn new() -> Scanner {
         Scanner {
