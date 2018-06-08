@@ -1,17 +1,23 @@
+use std::collections::BTreeMap;
+
 fn main() {
     let mut sc = Scanner::new();
+    let y: usize = sc.read();
+    let w: usize = sc.read();
     let n: usize = sc.read();
+    let m: usize = sc.read();
+    let d: usize = sc.read();
     let a: Vec<usize> = sc.read_vec(n);
-    let mut ans = a[0] - 1;
-    let mut cur = 2;
-    for i in 1..n {
-        if a[i] == cur {
-            cur += 1;
-        } else {
-            ans += (a[i] - 1) / cur;
-        }
+    let b = vec![0; m];
+    let c = vec![0; m];
+    for i in 0..m {
+        let bi: usize = sc.read();
+        let ci: usize = sc.read();
+        b[i] = bi;
+        c[i] = ci;
     }
-    println!("{}", ans);
+
+    assert_eq!(n, 0);
 }
 
 struct Scanner {

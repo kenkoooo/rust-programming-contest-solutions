@@ -390,3 +390,6 @@ path = "atcoder/bitflyer2018_qual_b.rs"
 [[bin]]
 name = "codefestival_2016_final_d"
 path = "atcoder/codefestival_2016_final_d.rs"
+[[bin]]
+name = "bitflyer2018_qual_e"
+path = "atcoder/bitflyer2018_qual_e.rs"
