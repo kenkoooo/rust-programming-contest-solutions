@@ -411,3 +411,9 @@ path = "atcoder/abc099_b.rs"
 [[bin]]
 name = "abc099_a"
 path = "atcoder/abc099_a.rs"
+[[bin]]
+name = "agc014_c"
+path = "atcoder/agc014_c.rs"
+[[bin]]
+name = "agc013_c"
+path = "atcoder/agc013_c.rs"
