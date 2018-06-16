@@ -1,27 +1,27 @@
 fn main() {
     let mut sc = Scanner::new();
-    let n: usize = sc.read();
-    let m: usize = sc.read();
-
-    let mut intervals: Vec<(usize, usize, usize)> = vec![];
-    for _ in 0..n {
-        let l: usize = sc.read();
-        let r: usize = sc.read();
-        let d = r - l + 1;
-        intervals.push((d, l, r));
-    }
+    let n = sc.usize_read();
+    let m = sc.usize_read();
+    let mut intervals: Vec<(usize, usize, usize)> = (0..n)
+        .map(|_| {
+            let l = sc.usize_read();
+            let r = sc.usize_read();
+            let d = r - l + 1;
+            (d, l, r)
+        })
+        .collect();
     intervals.sort();
 
-    let mut seg = tree::RangeAddSegmentTree::new();
-    for i in 0..(m + 1) {
+    let mut seg = RangeAddSegmentTree::new();
+    for i in 0..(1 + m) {
         seg.update(i, 0);
     }
 
     let mut head = 0;
-    for cur_d in 1..(m + 1) {
-        while head < intervals.len() {
-            let (d, l, r) = intervals[head];
-            if d < cur_d {
+    for d in 1..(m + 1) {
+        while head < n {
+            let (id, l, r) = intervals[head];
+            if id < d {
                 seg.add(l, r + 1, 1);
                 head += 1;
             } else {
@@ -29,121 +29,115 @@ fn main() {
             }
         }
 
-        let rest = (intervals.len() - head) as i64;
-        let mut ans = rest;
-        for i in 0..m {
-            if i * cur_d + 1 > m + 1 {
-                break;
-            }
-            ans += seg.get_max(i * cur_d, i * cur_d + 1);
+        let mut ans = (n - head) as i64;
+        let mut cur = 0;
+        while cur <= m {
+            ans += seg.get_min(cur, cur + 1);
+            cur += d;
         }
+
         println!("{}", ans);
     }
 }
+use std::cmp;
+const NUM: usize = 1 << 20;
+const INF: i64 = 1 << 60;
 
-mod tree {
-    use std::cmp;
-    const NUM: usize = 1 << 20;
-    const INF: i64 = 1 << 60;
-
-    pub struct RangeAddSegmentTree {
-        seg_min: Vec<i64>,
-        seg_max: Vec<i64>,
-        seg_add: Vec<i64>,
-    }
-
-    impl RangeAddSegmentTree {
-        pub fn new() -> Self {
-            RangeAddSegmentTree {
-                seg_min: vec![INF; NUM * 2],
-                seg_max: vec![-INF; NUM * 2],
-                seg_add: vec![0; NUM * 2],
-            }
-        }
-
-        /// add to [a, b)
-        pub fn add(&mut self, a: usize, b: usize, value: i64) {
-            self.add_to_range(a, b, value, 0, 0, NUM);
-        }
-
-        fn add_to_range(
-            &mut self,
-            a: usize,
-            b: usize,
-            value: i64,
-            k: usize,
-            left: usize,
-            right: usize,
-        ) {
-            if b <= left || right <= a {
-                return;
-            }
-            if a <= left && right <= b {
-                let mut k = k;
-                self.seg_add[k] += value;
-                while k > 0 {
-                    k = (k - 1) / 2;
-                    self.seg_min[k] = cmp::min(
-                        self.seg_min[k * 2 + 1] + self.seg_add[k * 2 + 1],
-                        self.seg_min[k * 2 + 2] + self.seg_add[k * 2 + 2],
-                    );
-                    self.seg_max[k] = cmp::max(
-                        self.seg_max[k * 2 + 1] + self.seg_add[k * 2 + 1],
-                        self.seg_max[k * 2 + 2] + self.seg_add[k * 2 + 2],
-                    );
-                }
-            } else {
-                self.add_to_range(a, b, value, k * 2 + 1, left, (left + right) / 2);
-                self.add_to_range(a, b, value, k * 2 + 2, (left + right) / 2, right);
-            }
-        }
-
-        pub fn update(&mut self, pos: usize, value: i64) {
-            let mut k = pos + NUM - 1;
-            self.seg_min[k] = value;
-            self.seg_max[k] = value;
-            while k > 0 {
-                k = (k - 1) / 2;
-                self.seg_min[k] = cmp::min(self.seg_min[k * 2 + 1], self.seg_min[k * 2 + 2]);
-                self.seg_max[k] = cmp::max(self.seg_max[k * 2 + 1], self.seg_max[k * 2 + 2]);
-            }
-        }
-
-        pub fn get_min(&self, a: usize, b: usize) -> i64 {
-            self.get_min_range(a, b, 0, 0, NUM)
-        }
-
-        fn get_min_range(&self, a: usize, b: usize, k: usize, left: usize, right: usize) -> i64 {
-            if b <= left || right <= a {
-                INF
-            } else if a <= left && right <= b {
-                self.seg_min[k] + self.seg_add[k]
-            } else {
-                let x = self.get_min_range(a, b, k * 2 + 1, left, (left + right) / 2);
-                let y = self.get_min_range(a, b, k * 2 + 2, (left + right) / 2, right);
-                cmp::min(x, y) + self.seg_add[k]
-            }
-        }
-
-        pub fn get_max(&self, a: usize, b: usize) -> i64 {
-            self.get_max_range(a, b, 0, 0, NUM)
-        }
-
-        fn get_max_range(&self, a: usize, b: usize, k: usize, left: usize, right: usize) -> i64 {
-            if b <= left || right <= a {
-                -INF
-            } else if a <= left && right <= b {
-                self.seg_max[k] + self.seg_add[k]
-            } else {
-                let x = self.get_max_range(a, b, k * 2 + 1, left, (left + right) / 2);
-                let y = self.get_max_range(a, b, k * 2 + 2, (left + right) / 2, right);
-                cmp::max(x, y) + self.seg_add[k]
-            }
-        }
-    }
-
+pub struct RangeAddSegmentTree {
+    seg_min: Vec<i64>,
+    seg_max: Vec<i64>,
+    seg_add: Vec<i64>,
 }
 
+impl RangeAddSegmentTree {
+    pub fn new() -> Self {
+        RangeAddSegmentTree {
+            seg_min: vec![INF; NUM * 2],
+            seg_max: vec![-INF; NUM * 2],
+            seg_add: vec![0; NUM * 2],
+        }
+    }
+
+    /// add to [a, b)
+    pub fn add(&mut self, a: usize, b: usize, value: i64) {
+        self.add_to_range(a, b, value, 0, 0, NUM);
+    }
+
+    fn add_to_range(
+        &mut self,
+        a: usize,
+        b: usize,
+        value: i64,
+        k: usize,
+        left: usize,
+        right: usize,
+    ) {
+        if b <= left || right <= a {
+            return;
+        }
+        if a <= left && right <= b {
+            let mut k = k;
+            self.seg_add[k] += value;
+            while k > 0 {
+                k = (k - 1) / 2;
+                self.seg_min[k] = cmp::min(
+                    self.seg_min[k * 2 + 1] + self.seg_add[k * 2 + 1],
+                    self.seg_min[k * 2 + 2] + self.seg_add[k * 2 + 2],
+                );
+                self.seg_max[k] = cmp::max(
+                    self.seg_max[k * 2 + 1] + self.seg_add[k * 2 + 1],
+                    self.seg_max[k * 2 + 2] + self.seg_add[k * 2 + 2],
+                );
+            }
+        } else {
+            self.add_to_range(a, b, value, k * 2 + 1, left, (left + right) / 2);
+            self.add_to_range(a, b, value, k * 2 + 2, (left + right) / 2, right);
+        }
+    }
+
+    pub fn update(&mut self, pos: usize, value: i64) {
+        let mut k = pos + NUM - 1;
+        self.seg_min[k] = value;
+        self.seg_max[k] = value;
+        while k > 0 {
+            k = (k - 1) / 2;
+            self.seg_min[k] = cmp::min(self.seg_min[k * 2 + 1], self.seg_min[k * 2 + 2]);
+            self.seg_max[k] = cmp::max(self.seg_max[k * 2 + 1], self.seg_max[k * 2 + 2]);
+        }
+    }
+
+    pub fn get_min(&self, a: usize, b: usize) -> i64 {
+        self.get_min_range(a, b, 0, 0, NUM)
+    }
+
+    fn get_min_range(&self, a: usize, b: usize, k: usize, left: usize, right: usize) -> i64 {
+        if b <= left || right <= a {
+            INF
+        } else if a <= left && right <= b {
+            self.seg_min[k] + self.seg_add[k]
+        } else {
+            let x = self.get_min_range(a, b, k * 2 + 1, left, (left + right) / 2);
+            let y = self.get_min_range(a, b, k * 2 + 2, (left + right) / 2, right);
+            cmp::min(x, y) + self.seg_add[k]
+        }
+    }
+
+    pub fn get_max(&self, a: usize, b: usize) -> i64 {
+        self.get_max_range(a, b, 0, 0, NUM)
+    }
+
+    fn get_max_range(&self, a: usize, b: usize, k: usize, left: usize, right: usize) -> i64 {
+        if b <= left || right <= a {
+            -INF
+        } else if a <= left && right <= b {
+            self.seg_max[k] + self.seg_add[k]
+        } else {
+            let x = self.get_max_range(a, b, k * 2 + 1, left, (left + right) / 2);
+            let y = self.get_max_range(a, b, k * 2 + 2, (left + right) / 2, right);
+            cmp::max(x, y) + self.seg_add[k]
+        }
+    }
+}
 struct Scanner {
     ptr: usize,
     length: usize,
@@ -192,6 +186,10 @@ impl Scanner {
         T::Err: std::fmt::Debug,
     {
         (0..n).map(|_| self.read()).collect()
+    }
+
+    fn usize_read(&mut self) -> usize {
+        self.read()
     }
 
     fn read<T>(&mut self) -> T
