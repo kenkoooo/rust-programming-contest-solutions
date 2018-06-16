@@ -1,80 +1,41 @@
-use std::cmp;
-
 fn main() {
     let mut sc = Scanner::new();
-    let n: usize = sc.read();
+    let n = sc.usize_read();
     let a: Vec<i64> = sc.read_vec(n);
-
-    let mut odd = 0;
-    let mut even = 0;
-    for i in 0..n {
-        if a[i] < 0 {
-            continue;
-        } else if i % 2 == 0 {
-            even += a[i];
-        } else {
-            odd += a[i];
-        }
-    }
-
-    let ans = cmp::max(odd, even);
-    if ans == 0 {
-        let mut max_pos = 0;
-        for i in 0..n {
-            if a[max_pos] < a[i] {
-                max_pos = i;
-            }
-        }
-        println!("{}", a[max_pos]);
-        println!("{}", n - 1);
-        for i in ((max_pos + 1)..n).rev() {
-            println!("{}", i + 1);
-        }
-        for _ in 0..max_pos {
-            println!("1");
-        }
+    let max = a.iter().map(|&a| a).max().unwrap();
+    let selected: Vec<usize> = if max < 0 {
+        vec![(0..n).filter(|&i| a[i] == max).next().unwrap()]
     } else {
-        println!("{}", ans);
-        let c = construct(&a, ans == even);
-        println!("{}", c.len());
-        for &c in &c {
-            println!("{}", c + 1);
+        let even: Vec<usize> = (0..n).filter(|&i| i % 2 == 0 && a[i] >= 0).collect();
+        let odd: Vec<usize> = (0..n).filter(|&i| i % 2 != 0 && a[i] >= 0).collect();
+        if even.iter().map(|&i| a[i]).sum::<i64>() > odd.iter().map(|&i| a[i]).sum() {
+            even
+        } else {
+            odd
+        }
+    };
+
+    println!("{}", selected.iter().map(|&i| a[i]).sum::<i64>());
+    let mut procedure = vec![];
+    for i in ((selected[selected.len() - 1] + 1)..n).rev() {
+        procedure.push(i);
+    }
+    for i in (1..selected.len()).rev() {
+        let head = selected[i - 1];
+        let tail = selected[i];
+        let num = (tail - head) / 2;
+        for i in (0..num).rev() {
+            procedure.push(head + i + 1);
         }
     }
-}
-
-fn construct(a: &Vec<i64>, is_even: bool) -> Vec<usize> {
-    let n = a.len();
-    let mut indices = vec![];
-    for i in 0..n {
-        if is_even != (i % 2 == 0) {
-            continue;
-        }
-        if a[i] < 0 {
-            continue;
-        }
-        indices.push(i);
+    for _ in 0..selected[0] {
+        procedure.push(0);
     }
 
-    let m = indices.len();
-    let mut ans = vec![];
-    for i in ((indices[m - 1] + 1)..n).rev() {
-        ans.push(i);
+    println!("{}", procedure.len());
+    for &i in &procedure {
+        println!("{}", i + 1);
     }
-
-    for i in (0..(m - 1)).rev() {
-        let front = indices[i];
-        let back = indices[i + 1];
-        let d = back - front;
-        for t in (1..(d / 2 + 1)).rev() {
-            ans.push(front + t);
-        }
-    }
-
-    for _ in 0..indices[0] {
-        ans.push(0);
-    }
-    ans
 }
 
 struct Scanner {
@@ -125,6 +86,10 @@ impl Scanner {
         T::Err: std::fmt::Debug,
     {
         (0..n).map(|_| self.read()).collect()
+    }
+
+    fn usize_read(&mut self) -> usize {
+        self.read()
     }
 
     fn read<T>(&mut self) -> T

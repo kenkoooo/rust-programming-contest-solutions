@@ -1,55 +1,49 @@
-use std::cmp;
-
 fn main() {
     let mut sc = Scanner::new();
-    let n: usize = sc.read();
+    let n = sc.usize_read();
     let k: usize = sc.read();
     let mut a: Vec<usize> = sc.read_vec(n);
     a.sort();
 
-    let mut needed = n;
+    let is_needed = |m: usize| -> bool {
+        let mut ok = vec![false; k];
+        ok[0] = true;
+        for i in 0..n {
+            if i == m {
+                continue;
+            }
+            for t in (0..k).rev() {
+                if ok[t] && t + a[i] < k {
+                    ok[t + a[i]] = true;
+                }
+            }
+        }
+        for a in 0..a[m] {
+            if k < a + 1 {
+                break;
+            }
+            if ok[k - (a + 1)] {
+                return true;
+            }
+        }
+        return false;
+    };
+
     let mut no_need = 0;
-    while needed - no_need > 1 {
-        let m = (no_need + needed) / 2;
-        if is_needed(&a, k, m) {
-            needed = m;
+    let mut need = n;
+    while need - no_need > 1 {
+        let m = (need + no_need) / 2;
+        if is_needed(m) {
+            need = m;
         } else {
             no_need = m;
         }
     }
-
-    if is_needed(&a, k, 0) {
+    if no_need == 0 && is_needed(0) {
         println!("0");
     } else {
-        println!("{}", no_need + 1);
+        println!("{}", need);
     }
-}
-
-fn is_needed(a: &Vec<usize>, k: usize, pos: usize) -> bool {
-    if a[pos] >= k {
-        return true;
-    }
-
-    let mut reachable = vec![false; k + 1];
-    reachable[0] = true;
-    for i in 0..a.len() {
-        if i == pos {
-            continue;
-        }
-        for from in (0..reachable.len()).rev() {
-            if !reachable[from] {
-                continue;
-            }
-            reachable[cmp::min(from + a[i], k)] = true;
-        }
-    }
-
-    for i in (k - a[pos])..k {
-        if reachable[i] {
-            return true;
-        }
-    }
-    return false;
 }
 
 struct Scanner {
@@ -100,6 +94,10 @@ impl Scanner {
         T::Err: std::fmt::Debug,
     {
         (0..n).map(|_| self.read()).collect()
+    }
+
+    fn usize_read(&mut self) -> usize {
+        self.read()
     }
 
     fn read<T>(&mut self) -> T
