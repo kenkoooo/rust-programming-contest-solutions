@@ -1,69 +1,70 @@
 fn main() {
     let mut sc = Scanner::new();
     let n = sc.usize_read();
-    let l = sc.usize_read();
-    let t = sc.usize_read();
-    let xw: Vec<(usize, bool)> = (0..n).map(|_| (sc.read(), sc.usize_read() == 1)).collect();
+    let length: usize = sc.read();
+    let time: usize = sc.read();
+    let xw: Vec<(usize, bool)> = (0..n).map(|_| (sc.read(), sc.read::<i32>() == 1)).collect();
 
     let (first_pos, first_clock) = xw[0];
-    let mut conflict_first = 0;
-    for i in 1..n {
-        let (x, w) = xw[i];
-        if w == first_clock {
+    let mut cross_count = 0;
+    for &(pos, clock) in &xw[1..n] {
+        if clock == first_clock {
             continue;
         }
-        let interval = if first_clock {
-            x - first_pos
+        let initial_distance = if first_clock {
+            pos - first_pos
         } else {
-            l + first_pos - x
+            length + first_pos - pos
         };
-
-        if interval > t * 2 {
+        if time * 2 < initial_distance {
             continue;
         }
-        conflict_first += (2 * t - interval) / l + 1;
-        if (2 * t - interval) % l == 0 && first_clock {
-            conflict_first -= 1;
-        }
+
+        cross_count += (time * 2 - initial_distance + length - 1) / length;
     }
 
-    let mut moved = vec![];
-    for &(x, w) in &xw {
-        if w {
-            let x = (x + t) % l;
-            moved.push(x);
-        } else {
-            let x = (l + x - t % l) % l;
-            moved.push(x);
-        }
-    }
-    moved.sort();
-    let moved_first = if first_clock {
-        (first_pos + t) % l
+    let final_num = if first_clock {
+        cross_count % n
     } else {
-        (l + first_pos - t % l) % l
+        (n - cross_count % n) % n
     };
 
-    let mut moved_first_i = 0;
+    let final_pos = if first_clock {
+        (first_pos + time) % length
+    } else {
+        (first_pos + length - time % length) % length
+    };
+
+    let mut final_states = xw.iter()
+        .map(|&(pos, clock)| {
+            if clock {
+                (pos + time) % length
+            } else {
+                (pos + length - time % length) % length
+            }
+        })
+        .collect::<Vec<_>>();
+    final_states.sort();
+
+    let mut final_i = 0;
     for i in 0..n {
-        if moved_first == moved[i] {
-            moved_first_i = i;
+        if final_states[i] == final_pos {
+            if first_clock || final_states[i] != final_states[(i + 1) % n] {
+                final_i = i;
+            } else {
+                final_i = i + 1;
+            }
             break;
         }
     }
-    let cur_id = if first_clock {
-        conflict_first % n
-    } else {
-        (n - conflict_first % n) % n
-    };
 
     let mut ans = vec![0; n];
     for i in 0..n {
-        ans[(cur_id + i) % n] = moved[(moved_first_i + i) % n];
+        ans[(final_num + i) % n] = final_states[(final_i + i) % n];
     }
 
-    for &ans in &ans {
-        println!("{}", ans);
+    for &a in &ans {
+        println!("{}", a);
     }
 }
 
