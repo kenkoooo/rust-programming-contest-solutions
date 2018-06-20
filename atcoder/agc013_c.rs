@@ -6,22 +6,19 @@ fn main() {
     let xw: Vec<(usize, bool)> = (0..n).map(|_| (sc.read(), sc.read::<i32>() == 1)).collect();
 
     let (first_pos, first_clock) = xw[0];
-    let mut cross_count = 0;
-    for &(pos, clock) in &xw[1..n] {
-        if clock == first_clock {
-            continue;
-        }
-        let initial_distance = if first_clock {
-            pos - first_pos
-        } else {
-            length + first_pos - pos
-        };
-        if time * 2 < initial_distance {
-            continue;
-        }
-
-        cross_count += (time * 2 - initial_distance + length - 1) / length;
-    }
+    let cross_count: usize = xw[1..n]
+        .iter()
+        .filter(|&&(_, clock)| clock != first_clock)
+        .map(|&(pos, _)| {
+            if first_clock {
+                pos - first_pos
+            } else {
+                length + first_pos - pos
+            }
+        })
+        .filter(|&distance| time * 2 >= distance)
+        .map(|distance| (time * 2 - distance + length - 1) / length)
+        .sum();
 
     let final_num = if first_clock {
         cross_count % n
@@ -46,25 +43,21 @@ fn main() {
         .collect::<Vec<_>>();
     final_states.sort();
 
-    let mut final_i = 0;
-    for i in 0..n {
-        if final_states[i] == final_pos {
-            if first_clock || final_states[i] != final_states[(i + 1) % n] {
-                final_i = i;
-            } else {
-                final_i = i + 1;
-            }
-            break;
+    let final_i = {
+        let mut iter = final_states
+            .iter()
+            .enumerate()
+            .filter(|&(_, &pos)| pos == final_pos)
+            .map(|(i, &_)| i);
+        if first_clock {
+            iter.next().unwrap()
+        } else {
+            iter.last().unwrap()
         }
-    }
+    };
 
-    let mut ans = vec![0; n];
     for i in 0..n {
-        ans[(final_num + i) % n] = final_states[(final_i + i) % n];
-    }
-
-    for &a in &ans {
-        println!("{}", a);
+        println!("{}", final_states[(final_i + i + n - final_num) % n]);
     }
 }
 
