@@ -450,3 +450,6 @@ path = "atcoder/arc082_c.rs"
 [[bin]]
 name = "agc018_b"
 path = "atcoder/agc018_b.rs"
+[[bin]]
+name = "ddcc2017_final_b"
+path = "atcoder/ddcc2017_final_b.rs"

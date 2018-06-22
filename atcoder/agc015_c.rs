@@ -1,10 +1,10 @@
 use std::cmp;
 fn main() {
     let mut sc = Scanner::new();
-    let n = sc.usize_read();
-    let m = sc.usize_read();
-    let q = sc.usize_read();
-    let s: Vec<Vec<usize>> = (0..n)
+    let n = sc.read();
+    let m = sc.read();
+    let q = sc.read();
+    let map: Vec<Vec<usize>> = (0..n)
         .map(|_| {
             sc.read::<String>()
                 .chars()
@@ -13,27 +13,30 @@ fn main() {
         })
         .collect();
 
+    let mut horizontal = vec![vec![0; m - 1]; n];
     let mut vertical = vec![vec![0; m]; n - 1];
-    for i in 0..(n - 1) {
+    for i in 0..n {
         for j in 0..m {
-            if s[i][j] == 1 && s[i + 1][j] == 1 {
+            if j < m - 1 && map[i][j] == 1 && map[i][j + 1] == 1 {
+                horizontal[i][j] = 1;
+            }
+            if i < n - 1 && map[i][j] == 1 && map[i + 1][j] == 1 {
                 vertical[i][j] = 1;
             }
         }
     }
 
-    let mut horizontal = vec![vec![0; m - 1]; n];
-    for i in 0..n {
-        for j in 0..(m - 1) {
-            if s[i][j] == 1 && s[i][j + 1] == 1 {
-                horizontal[i][j] = 1;
-            }
-        }
-    }
-
-    let sum_s = CumulativeSum::new(&s);
-    let sum_v = CumulativeSum::new(&vertical);
-    let sum_h = CumulativeSum::new(&horizontal);
+    let map = CumulativeSum::new(&map);
+    let horizontal = if m > 1 {
+        Some(CumulativeSum::new(&horizontal))
+    } else {
+        None
+    };
+    let vertical = if n > 1 {
+        Some(CumulativeSum::new(&vertical))
+    } else {
+        None
+    };
 
     for _ in 0..q {
         let x1 = sc.usize_read() - 1;
@@ -41,19 +44,19 @@ fn main() {
         let x2 = sc.usize_read() - 1;
         let y2 = sc.usize_read() - 1;
 
-        let v = sum_s.get_sum(x1, y1, x2, y2);
-        let edge_h = if y2 >= 1 {
-            sum_h.get_sum(x1, y1, x2, y2 - 1)
-        } else {
-            0
-        };
-        let edge_v = if x2 >= 1 {
-            sum_v.get_sum(x1, y1, x2 - 1, y2)
+        let cells = map.get_sum(x1, y1, x2, y2);
+        let h = if y2 > 0 && horizontal.is_some() {
+            horizontal.as_ref().unwrap().get_sum(x1, y1, x2, y2 - 1)
         } else {
             0
         };
 
-        println!("{}", v - edge_v - edge_h);
+        let v = if x2 > 0 && vertical.is_some() {
+            vertical.as_ref().unwrap().get_sum(x1, y1, x2 - 1, y2)
+        } else {
+            0
+        };
+        println!("{}", cells - h - v);
     }
 }
 
@@ -66,7 +69,7 @@ pub struct CumulativeSum {
 impl CumulativeSum {
     pub fn new(a: &Vec<Vec<usize>>) -> CumulativeSum {
         let ny = a.len();
-        let nx = if ny == 0 { 0 } else { a[0].len() };
+        let nx = a[0].len();
         let mut sum = vec![vec![0; nx + 1]; ny + 1];
         for i in 0..ny {
             for j in 0..nx {
@@ -90,7 +93,6 @@ impl CumulativeSum {
             - self.sum[y2 + 1][x1];
     }
 }
-
 struct Scanner {
     ptr: usize,
     length: usize,
