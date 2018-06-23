@@ -7,21 +7,23 @@ fn main() {
 
     if h % sh == 0 && w % sw == 0 {
         println!("No");
-    } else if h % sh == 0 {
-        let row = create_one(w, sw);
-        println!("Yes");
-        for _ in 0..h {
-            for &r in &row {
-                print!("{} ", r);
+        return;
+    }
+
+    println!("Yes");
+    if w % sw == 0 {
+        let one = create_one(h, sh);
+        for i in 0..h {
+            for _ in 0..w {
+                print!("{} ", one[i]);
             }
             println!();
         }
     } else {
-        let column = create_one(h, sh);
-        println!("Yes");
-        for &c in &column {
-            for _ in 0..w {
-                print!("{} ", c);
+        let one = create_one(w, sw);
+        for _ in 0..h {
+            for j in 0..w {
+                print!("{} ", one[j]);
             }
             println!();
         }
@@ -29,10 +31,12 @@ fn main() {
 }
 
 fn create_one(w: usize, sw: usize) -> Vec<i64> {
-    let mut sum: Vec<i64> = vec![10000000; w + 1];
+    let mut sum = vec![1e6 as i64; w + 1];
     sum[0] = 0;
-    for i in 0..(w + 1 - sw) {
-        sum[i + sw] = sum[i] - 1;
+    for i in 1..(w + 1) {
+        if i >= sw {
+            sum[i] = sum[i - sw] - 1;
+        }
     }
     (0..w).map(|i| sum[i + 1] - sum[i]).collect()
 }
