@@ -1,67 +1,68 @@
-use std::cmp;
-
-#[derive(Debug)]
-enum Query {
-    Rotate(i64),
-    Answer(i64, i64),
+fn s(x: usize) -> usize {
+    let mut x = x;
+    let mut cur = 0;
+    while x > 0 {
+        cur += x % 10;
+        x /= 10;
+    }
+    cur
 }
 
 fn main() {
     let mut sc = Scanner::new();
-    let x: i64 = sc.read();
-    let k = sc.usize_read();
-
-    let mut queries = vec![];
-    for _ in 0..k {
-        let r = sc.read();
-        queries.push(Query::Rotate(r));
+    let mut k = sc.usize_read();
+    for i in 1..10 {
+        println!("{}", i);
+        k -= 1;
+        if k == 0 {
+            return;
+        }
+    }
+    for i in 1..10 {
+        println!("{}9", i);
+        k -= 1;
+        if k == 0 {
+            return;
+        }
+    }
+    for i in 1..10 {
+        println!("{}99", i);
+        k -= 1;
+        if k == 0 {
+            return;
+        }
     }
 
-    let q = sc.usize_read();
-    for _ in 0..q {
-        let t = sc.read();
-        let a = sc.read();
-        queries.push(Query::Answer(t, a));
-    }
-    queries.sort_by_key(|value| match value {
-        &Query::Rotate(time) => time,
-        &Query::Answer(time, _) => time,
-    });
-
-    let mut high = x;
-    let mut low = 0;
-    let mut super_high = x;
-    let mut super_low = 0;
-    let mut decreasing = true;
-    let mut prev = 0;
-    for query in &queries {
-        match query {
-            &Query::Rotate(time) => {
-                let da = if decreasing {
-                    -(time - prev)
-                } else {
-                    (time - prev)
-                };
-                high = cmp::min(x, cmp::max(0, high + da));
-                low = cmp::min(x, cmp::max(0, low + da));
-                super_high = super_high + da;
-                super_low = super_low + da;
-
-                decreasing = !decreasing;
-                prev = time;
+    let mut d = 2;
+    let mut cur = 20;
+    loop {
+        for i in 10..cur {
+            print!("{}", i);
+            for _ in 0..d {
+                print!("9");
             }
-            &Query::Answer(time, amount) => {
-                let da = if decreasing {
-                    -(time - prev)
-                } else {
-                    (time - prev)
-                };
-
-                let super_cur = super_low + da + amount;
-                let high = cmp::min(x, cmp::max(0, high + da));
-                let low = cmp::min(x, cmp::max(0, low + da));
-                println!("{}", cmp::min(high, cmp::max(low, super_cur)));
+            println!();
+            k -= 1;
+            if k == 0 {
+                return;
             }
+        }
+        let s = cur / 10;
+        for i in s..10 {
+            print!("{}9", i);
+            for _ in 0..d {
+                print!("9");
+            }
+            println!();
+            k -= 1;
+            if k == 0 {
+                return;
+            }
+        }
+        d += 1;
+        cur += 10;
+        if cur == 110 {
+            cur = 10;
         }
     }
 }
