@@ -1,61 +1,51 @@
 use std::cmp;
-use std::ops::{Div, MulAssign, RemAssign};
+
 const MOD: usize = 998244353;
 
-fn mod_pow(x: usize, e: usize, modulo: usize) -> usize {
-    let mut result = 1;
+fn mod_pow(x: usize, e: usize) -> usize {
     let mut cur = x;
     let mut e = e;
+    let mut result = 1;
     while e > 0 {
-        if e & 1 == 1 {
-            result *= cur;
-            result %= modulo;
+        if e & 1 != 0 {
+            result = (result * cur) % MOD;
         }
-        cur *= cur;
-        cur %= modulo;
         e >>= 1;
+        cur = (cur * cur) % MOD;
     }
     result
 }
 
 fn main() {
     let mut sc = Scanner::new();
-
-    let n = sc.usize_read();
-    let v: Vec<(i64, i64)> = (0..n).map(|_| (sc.read(), sc.read())).collect();
-
-    let mut ans = mod_pow(2, n, MOD);
-    ans = (ans + MOD - 1 - n) % MOD;
+    let n = sc.read();
+    let vertices: Vec<(i64, i64)> = (0..n).map(|_| (sc.read(), sc.read())).collect();
+    let mut ans = mod_pow(2, n);
+    ans = (ans + MOD - n - 1) % MOD;
     for i in 0..n {
         for j in (i + 1)..n {
-            let (x1, y1) = v[i];
-            let (x2, y2) = v[j];
-            let dx = x1 - x2;
-            let dy = y1 - y2;
-
+            let mut l_id = i;
+            let mut r_id = j;
+            let (lx, ly) = vertices[i];
+            let (rx, ry) = vertices[j];
+            let dx = lx - rx;
+            let dy = ly - ry;
             let mut count = 0;
-            let mut left = i;
-            let mut right = j;
-            for k in 0..n {
-                let (xk, yk) = v[k];
-                let kx = xk - x1;
-                let ky = yk - y1;
-                if dx * ky == kx * dy {
-                    left = cmp::min(left, k);
-                    right = cmp::max(right, k);
+            for (k, &(x, y)) in vertices.iter().enumerate() {
+                let tx = x - rx;
+                let ty = y - ry;
+                if dx * ty == dy * tx {
                     count += 1;
+                    l_id = cmp::min(l_id, k);
+                    r_id = cmp::max(r_id, k);
                 }
             }
-
-            if left != i || right != j {
+            if l_id != i || r_id != j {
                 continue;
             }
-
-            let subset = mod_pow(2, count, MOD);
-            ans = (ans + MOD - subset + count + 1) % MOD;
+            ans = (ans + MOD - mod_pow(2, count) + count + 1) % MOD;
         }
     }
-
     println!("{}", ans);
 }
 
