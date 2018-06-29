@@ -1,34 +1,37 @@
 fn main() {
     let mut sc = Scanner::new();
     let n = sc.read();
-    let a: Vec<u64> = sc.read_vec(n);
-    let mut b: Vec<u64> = sc.read_vec(n);
+    let a: Vec<usize> = sc.read_vec(n);
+    let mut b: Vec<usize> = sc.read_vec(n);
 
     let mut ans = 0;
-    for k in (0..30).rev() {
+    for bit in (1..32).rev() {
         ans <<= 1;
-        let mask = (1 << (k + 1)) - 1;
-        let pop = (mask + 1) >> 1;
+
+        let mask = (1 << bit) - 1;
+        let look = 1 << (bit - 1);
         b.sort_by_key(|&b| b & mask);
 
-        let mut cur = 0;
+        let mut bit_count = 0;
         for &a in &a {
             let a = a & mask;
 
-            let p1 = b.binary_search_by_key(&(1 * pop * 2 - 1), |&b| (a + (b & mask)) * 2)
+            let pos1 = b.binary_search_by_key(&(1 * look * 2 - 1), |&b| (a + (b & mask)) * 2)
                 .err()
                 .unwrap();
-            let p2 = b.binary_search_by_key(&(2 * pop * 2 - 1), |&b| (a + (b & mask)) * 2)
+            let pos2 = b.binary_search_by_key(&(2 * look * 2 - 1), |&b| (a + (b & mask)) * 2)
                 .err()
                 .unwrap();
-            let p3 = b.binary_search_by_key(&(3 * pop * 2 - 1), |&b| (a + (b & mask)) * 2)
+            let pos3 = b.binary_search_by_key(&(3 * look * 2 - 1), |&b| (a + (b & mask)) * 2)
                 .err()
                 .unwrap();
-            let count = p2 - p1 + n - p3;
-            cur ^= count & 1;
+
+            let count = n - pos3 + pos2 - pos1;
+            bit_count ^= count & 1;
         }
-        ans += cur;
+        ans += bit_count;
     }
+
     println!("{}", ans);
 }
 
