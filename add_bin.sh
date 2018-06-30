@@ -5,7 +5,7 @@ path="src/bin/${problem_id}.rs"
 
 # Check archives
 EXISTING=`find ./archives/ | grep -F ${problem_id}.rs | head -n 1`
-if [ -n ${EXISTING} ];then
+if [ -n "${EXISTING}" ];then
     echo "${problem_id}.rs is already existing in ${EXISTING}"
     rm ${EXISTING}
     echo "removed"
