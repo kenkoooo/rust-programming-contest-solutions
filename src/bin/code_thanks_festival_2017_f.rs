@@ -1,19 +1,15 @@
-use std::collections::BTreeMap;
-
-const MOD: usize = 1_000_000_007;
 const MAX_A: usize = 100000;
+const MOD: usize = 1_000_000_007;
 
-fn mod_pow(x: usize, e: usize, modulo: usize) -> usize {
-    let mut result = 1;
+fn mod_pow(x: usize, e: usize) -> usize {
     let mut cur = x;
+    let mut result = 1;
     let mut e = e;
     while e > 0 {
-        if e & 1 == 1 {
-            result *= cur;
-            result %= modulo;
+        if e & 1 != 0 {
+            result = (result * cur) % MOD;
         }
-        cur *= cur;
-        cur %= modulo;
+        cur = (cur * cur) % MOD;
         e >>= 1;
     }
     result
@@ -22,39 +18,36 @@ fn mod_pow(x: usize, e: usize, modulo: usize) -> usize {
 fn main() {
     let mut sc = Scanner::new();
     let n = sc.read();
-    let k: usize = sc.read();
+    let k = sc.usize_read();
     let a: Vec<usize> = sc.read_vec(n);
+
     let mut count = vec![0; MAX_A + 1];
     for &a in &a {
         count[a] += 1;
     }
 
-    let b: Vec<usize> = (0..(MAX_A + 1)).filter(|&i| count[i] > 0).collect();
-
-    let mut state = BTreeMap::new();
-    state.insert(0, 1);
-    for &b in &b {
-        let count = count[b];
-        let mut next = BTreeMap::new();
-        for (&key, &value) in state.iter() {
-            let next_key = key ^ b;
-
-            match next.get(&key) {
-                Some(&v) => next.insert(key, (v + value * mod_pow(2, count - 1, MOD) % MOD)),
-                None => next.insert(key, (value * mod_pow(2, count - 1, MOD)) % MOD),
-            };
-            match next.get(&next_key) {
-                Some(&v) => next.insert(next_key, (v + value * mod_pow(2, count - 1, MOD) % MOD)),
-                None => next.insert(next_key, (value * mod_pow(2, count - 1, MOD)) % MOD),
-            };
+    let set: Vec<usize> = count
+        .iter()
+        .enumerate()
+        .filter(|&(_, &c)| c > 0)
+        .map(|(i, _)| i)
+        .collect();
+    let mut dp = vec![0; MAX_A + 1];
+    dp[0] = 1;
+    for &a in &set {
+        let mut next = vec![0; MAX_A + 1];
+        let count = count[a];
+        for i in (0..(MAX_A + 1)).rev() {
+            if dp[i] == 0 {
+                continue;
+            }
+            next[i ^ a] += (dp[i] * mod_pow(2, count - 1)) % MOD;
+            next[i] += (dp[i] * mod_pow(2, count - 1)) % MOD;
         }
-        state = next;
+        dp = next;
     }
 
-    match state.get(&k) {
-        Some(&v) => println!("{}", v),
-        None => println!("0"),
-    }
+    println!("{}", dp[k]);
 }
 
 struct Scanner {
