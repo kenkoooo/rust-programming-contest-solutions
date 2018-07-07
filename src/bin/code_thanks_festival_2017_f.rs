@@ -1,48 +1,48 @@
-const MAX_A: usize = 100000;
 const MOD: usize = 1_000_000_007;
 
 fn mod_pow(x: usize, e: usize) -> usize {
     let mut cur = x;
-    let mut result = 1;
+    let mut res = 1;
     let mut e = e;
     while e > 0 {
         if e & 1 != 0 {
-            result = (result * cur) % MOD;
+            res = (res * cur) % MOD;
         }
         cur = (cur * cur) % MOD;
         e >>= 1;
     }
-    result
+    res
 }
 
 fn main() {
     let mut sc = Scanner::new();
     let n = sc.read();
-    let k = sc.usize_read();
+    let k: usize = sc.read();
     let a: Vec<usize> = sc.read_vec(n);
-
-    let mut count = vec![0; MAX_A + 1];
+    let mut count = vec![0; 100001];
     for &a in &a {
         count[a] += 1;
     }
 
-    let set: Vec<usize> = count
-        .iter()
-        .enumerate()
-        .filter(|&(_, &c)| c > 0)
-        .map(|(i, _)| i)
-        .collect();
-    let mut dp = vec![0; MAX_A + 1];
+    let mut pairs = vec![];
+    for i in 0..count.len() {
+        if count[i] > 0 {
+            pairs.push((i, count[i]));
+        }
+    }
+
+    let mut dp = vec![0; 100001];
     dp[0] = 1;
-    for &a in &set {
-        let mut next = vec![0; MAX_A + 1];
-        let count = count[a];
-        for i in (0..(MAX_A + 1)).rev() {
+    for &(value, count) in &pairs {
+        let mut next = vec![0; 100001];
+        for i in 0..100001 {
             if dp[i] == 0 {
                 continue;
             }
-            next[i ^ a] += (dp[i] * mod_pow(2, count - 1)) % MOD;
-            next[i] += (dp[i] * mod_pow(2, count - 1)) % MOD;
+            next[i] += dp[i] * mod_pow(2, count - 1);
+            next[i] %= MOD;
+            next[i ^ value] += dp[i] * mod_pow(2, count - 1);
+            next[i ^ value] %= MOD;
         }
         dp = next;
     }
