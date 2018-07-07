@@ -1,53 +1,59 @@
-const MOD: usize = 1_000_000_007;
+const MOD: u32 = 1_000_000_007;
 
-fn mod_pow(x: usize, e: usize) -> usize {
-    let mut cur = x;
-    let mut res = 1;
-    let mut e = e;
-    while e > 0 {
-        if e & 1 != 0 {
-            res = (res * cur) % MOD;
+fn solve_fast(s: &Vec<char>) -> u32 {
+    let n = s.len();
+    let mut count = vec![0; 26];
+    for &s in s {
+        count[((s as u8) - ('a' as u8)) as usize] += 1;
+    }
+    let mut s = vec![];
+    let mut m = 0;
+    for &c in &count {
+        if c == 0 {
+            continue;
         }
-        cur = (cur * cur) % MOD;
-        e >>= 1;
-    }
-    res
-}
-
-fn main() {
-    let mut sc = Scanner::new();
-    let n = sc.read();
-    let k: usize = sc.read();
-    let a: Vec<usize> = sc.read_vec(n);
-    let mut count = vec![0; 100001];
-    for &a in &a {
-        count[a] += 1;
-    }
-
-    let mut pairs = vec![];
-    for i in 0..count.len() {
-        if count[i] > 0 {
-            pairs.push((i, count[i]));
+        for _ in 0..c {
+            s.push(m);
         }
+        m += 1;
     }
 
-    let mut dp = vec![0; 100001];
-    dp[0] = 1;
-    for &(value, count) in &pairs {
-        let mut next = vec![0; 100001];
-        for i in 0..100001 {
-            if dp[i] == 0 {
+    let mut dp = vec![vec![0; m + 1]; 1 << n];
+    dp[0][m] = 1;
+    for mask in 0..(1 << n) {
+        for kind in 0..(m + 1) {
+            if dp[mask][kind] == 0 {
                 continue;
             }
-            next[i] += dp[i] * mod_pow(2, count - 1);
-            next[i] %= MOD;
-            next[i ^ value] += dp[i] * mod_pow(2, count - 1);
-            next[i ^ value] %= MOD;
+            for i in 0..n {
+                if mask & (1 << i) != 0 {
+                    continue;
+                }
+                if i > 0 && mask & (1 << (i - 1)) == 0 && s[i] == s[i - 1] {
+                    continue;
+                }
+                if kind == s[i] {
+                    continue;
+                }
+                dp[mask | (1 << i)][s[i]] += dp[mask][kind];
+                if dp[mask | (1 << i)][s[i]] > MOD {
+                    dp[mask | (1 << i)][s[i]] -= MOD;
+                }
+            }
         }
-        dp = next;
     }
 
-    println!("{}", dp[k]);
+    let mut ans = 0;
+    for i in 0..m {
+        ans = (ans + dp[(1 << n) - 1][i]) % MOD;
+    }
+    ans
+}
+fn main() {
+    let mut sc = Scanner::new();
+    let mut sc = Scanner::new();
+    let s: Vec<char> = sc.read::<String>().chars().collect();
+    println!("{}", solve_fast(&s));
 }
 
 struct Scanner {
