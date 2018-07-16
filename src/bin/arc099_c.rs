@@ -1,86 +1,94 @@
 use std::cmp;
+
 fn main() {
     let mut sc = Scanner::new();
     let n = sc.read();
     let m = sc.read();
-    let mut graph = vec![vec![false; n]; n];
+    let mut inverted_graph = vec![vec![true; n]; n];
     for _ in 0..m {
         let a = sc.usize_read() - 1;
         let b = sc.usize_read() - 1;
-        graph[a][b] = true;
-        graph[b][a] = true;
+        inverted_graph[a][b] = false;
+        inverted_graph[b][a] = false;
     }
 
+    let mut graph = vec![vec![]; n];
     for i in 0..n {
-        graph[i][i] = true;
-    }
-
-    let mut graph2 = vec![vec![]; n];
-    for i in 0..n {
-        for j in 0..n {
-            if !graph[i][j] {
-                graph2[i].push(j);
+        for j in (i + 1)..n {
+            if inverted_graph[i][j] {
+                graph[i].push(j);
+                graph[j].push(i);
             }
         }
     }
 
+    let mut colors = vec![];
     let mut color = vec![0; n];
-    let mut st = vec![];
     for i in 0..n {
         if color[i] != 0 {
             continue;
         }
-        let mut vis = vec![];
+        let mut connected = vec![];
         color[i] = 1;
-        if !dfs(i, &graph2, &mut color, &mut vis) {
+        if !coloring_dfs(i, &mut connected, &graph, &mut color) {
             println!("-1");
             return;
         }
+
         let mut count = 0;
-        for &v in &vis {
-            if color[v] == 1 {
+        for &c in &connected {
+            if color[c] == 1 {
                 count += 1;
             }
         }
-        st.push((vis.len() - count, count));
+        colors.push((count, connected.len() - count));
     }
 
-    let mut ok = vec![false; n + 1];
-    ok[0] = true;
-    for &(s, t) in &st {
+    let mut dp = vec![false; n + 1];
+    dp[0] = true;
+    for &(a, b) in &colors {
         let mut next = vec![false; n + 1];
-        for i in (0..n).rev() {
-            if ok[i] {
-                next[i + s] = true;
-                next[i + t] = true;
+        for i in 0..n {
+            if dp[i] {
+                next[i + a] = true;
+                next[i + b] = true;
             }
         }
-        ok = next;
+        dp = next;
     }
 
-    let mut ans = n * (n - 1) / 2;
-    for i in 1..n {
-        if ok[i] {
+    let mut ans = n;
+    for i in 0..n {
+        if dp[i] {
             let j = n - i;
-            ans = cmp::min(ans, j * (j - 1) / 2 + i * (i - 1) / 2);
+            ans = cmp::min(ans, cmp::max(i, j));
         }
     }
 
-    println!("{}", ans);
+    if ans == n {
+        println!("{}", n * (n - 1) / 2);
+    } else {
+        println!("{}", ans * (ans - 1) / 2 + (n - ans) * (n - ans - 1) / 2);
+    }
 }
 
-fn dfs(v: usize, graph: &Vec<Vec<usize>>, color: &mut Vec<usize>, vis: &mut Vec<usize>) -> bool {
-    vis.push(v);
-    for &to in &graph[v] {
-        if color[to] != 0 && color[to] == color[v] {
-            return false;
-        }
-        if color[to] != 0 {
-            continue;
-        }
-        color[to] = if color[v] == 1 { 2 } else { 1 };
-        if !dfs(to, graph, color, vis) {
-            return false;
+fn coloring_dfs(
+    v: usize,
+    connected: &mut Vec<usize>,
+    graph: &Vec<Vec<usize>>,
+    color: &mut Vec<usize>,
+) -> bool {
+    connected.push(v);
+    for &next in &graph[v] {
+        if color[next] == 0 {
+            color[next] = if color[v] == 1 { 2 } else { 1 };
+            if !coloring_dfs(next, connected, graph, color) {
+                return false;
+            }
+        } else {
+            if color[next] == color[v] {
+                return false;
+            }
         }
     }
     return true;

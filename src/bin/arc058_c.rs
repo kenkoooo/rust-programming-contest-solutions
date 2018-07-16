@@ -1,18 +1,18 @@
-const MOD: usize = 1_000_000_007;
-const MAX: usize = 1 << 17;
+const MOD: usize = (1e9 as usize) + 7;
+const MAX_BIT: usize = 1 << 16;
 
 fn mod_pow(x: usize, e: usize) -> usize {
     let mut cur = x;
-    let mut res = 1;
+    let mut result = 1;
     let mut e = e;
     while e > 0 {
         if e & 1 == 1 {
-            res = (res * cur) % MOD;
+            result = (result * cur) % MOD;
         }
-        e >>= 1;
         cur = (cur * cur) % MOD;
+        e >>= 1;
     }
-    res
+    result
 }
 
 fn main() {
@@ -21,82 +21,78 @@ fn main() {
     let x = sc.usize_read();
     let y = sc.usize_read();
     let z = sc.usize_read();
-    let v_xyz = vec![x, y, z];
 
-    let xyz = x + y + z;
-    let mut dp = vec![0; MAX];
+    let mut dp = vec![0; MAX_BIT];
     dp[0] = 1;
-    for i in 0..n {
-        let mut next = vec![0; MAX];
-        for mask in 0..MAX {
+    for _ in 0..n {
+        let mut next = vec![0; MAX_BIT];
+        for mask in 0..(MAX_BIT) {
             if dp[mask] == 0 {
                 continue;
             }
-            let mut prev_numbers = mask2nums(mask);
-
+            let mut v = mask2vec(mask);
             for a in 1..11 {
-                let mut check = false;
-                let mut tmp_sum = 0;
-                let mut cur_pos = 2;
-                prev_numbers.push(a);
-                for &prev in prev_numbers.iter().rev() {
-                    tmp_sum += prev;
-                    if tmp_sum == v_xyz[cur_pos] {
-                        if cur_pos > 0 {
-                            cur_pos -= 1;
-                            tmp_sum = 0;
-                        } else {
-                            check = true;
-                            break;
-                        }
-                    } else if tmp_sum > v_xyz[cur_pos] {
-                        break;
-                    }
-                }
-
-                if !check {
-                    let mut next_mask = 0;
-                    for &prev in &prev_numbers {
-                        next_mask <<= prev;
-                        next_mask += (1 << (prev - 1));
-                    }
-                    next_mask &= (1 << xyz) - 1;
+                v.push(a);
+                if check(&v, x, y, z) {
+                    let next_mask = vec2mask(&v);
                     next[next_mask] = (next[next_mask] + dp[mask]) % MOD;
                 }
-                prev_numbers.pop();
+                v.pop();
             }
         }
         dp = next;
     }
 
-    let mut sum = 0;
-    for &dp in &dp {
-        sum = (sum + dp) % MOD;
+    let mut ans = mod_pow(10, n);
+    for mask in 0..MAX_BIT {
+        ans = (ans + MOD - dp[mask]) % MOD;
     }
-    let ans = mod_pow(10, n) + MOD - sum;
-    println!("{}", ans % MOD);
+    println!("{}", ans);
 }
 
-fn mask2nums(mask: usize) -> Vec<usize> {
-    let mut prev_numbers = vec![];
-    let mut mask = mask;
-    while mask > 0 {
-        let zeros = trailing_zeros(mask);
-        prev_numbers.push(zeros + 1);
-        mask >>= zeros + 1;
-    }
-    prev_numbers.reverse();
-    prev_numbers
-}
-
-fn trailing_zeros(x: usize) -> usize {
-    assert!(x > 0);
-    for i in 0..64 {
-        if (x >> i) & 1 != 0 {
-            return i;
+fn check(v: &Vec<usize>, x: usize, y: usize, z: usize) -> bool {
+    let mut check = vec![x, y, z];
+    let mut pos = 2;
+    for &v in v.iter().rev() {
+        if check[pos] == v {
+            if pos == 0 {
+                return false;
+            } else {
+                pos -= 1;
+            }
+        } else if check[pos] < v {
+            return true;
+        } else {
+            check[pos] -= v;
         }
     }
-    panic!();
+    return true;
+}
+
+fn vec2mask(v: &Vec<usize>) -> usize {
+    let mut result = 0;
+    for &a in v {
+        result <<= a;
+        result += (1 << (a - 1));
+    }
+    result & (MAX_BIT - 1)
+}
+
+fn mask2vec(mask: usize) -> Vec<usize> {
+    let mut cur = mask;
+    let mut result = vec![];
+    let mut count = 1;
+    while cur > 0 {
+        if cur & 1 == 0 {
+            count += 1;
+        } else {
+            result.push(count);
+            count = 1;
+        }
+        cur >>= 1;
+    }
+    result.reverse();
+    result
 }
 
 struct Scanner {
