@@ -1,53 +1,14 @@
-use std::collections::VecDeque;
-
-const MAX_BIT: usize = 32;
-
 fn main() {
     let mut sc = Scanner::new();
-    let n = sc.read();
-    let x: Vec<usize> = sc.read_vec(n);
-    let l = sc.usize_read();
-    let mut go = vec![vec![0; n]; MAX_BIT];
-    let mut q = VecDeque::new();
-    q.push_back(0);
-
-    for i in 1..n {
-        while !q.is_empty() {
-            let head = q.pop_front().unwrap();
-            let dx = x[i] - x[head];
-            if dx > l {
-                go[0][head] = i - 1;
-            } else {
-                q.push_front(head);
-                break;
-            }
-        }
-        q.push_back(i);
-    }
-    while let Some(head) = q.pop_front() {
-        go[0][head] = n - 1;
-    }
-
-    for b in 1..MAX_BIT {
-        for i in 0..n {
-            go[b][i] = go[b - 1][go[b - 1][i]];
-        }
-    }
-
-    let q = sc.read();
-    for _ in 0..q {
-        let a = sc.usize_read() - 1;
-        let b = sc.usize_read() - 1;
-        let (a, b) = if a > b { (b, a) } else { (a, b) };
-        let mut cur = a;
-        let mut ng = 0;
-        for bit in (0..MAX_BIT).rev() {
-            if go[bit][cur] < b {
-                ng += (1 << bit);
-                cur = go[bit][cur];
-            }
-        }
-        println!("{}", ng + 1);
+    let n = sc.read::<f64>();
+    let m = sc.read::<f64>();
+    let d = sc.read::<f64>();
+    if d == 0.0 {
+        println!("{}", (m - 1.0) / n);
+    } else if n < d {
+        println!("0");
+    } else {
+        println!("{}", (n - d) / n / n * (m - 1.0) * 2.0);
     }
 }
 

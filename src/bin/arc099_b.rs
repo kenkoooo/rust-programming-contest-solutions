@@ -1,50 +1,32 @@
-fn s(n: usize) -> usize {
-    let mut n = n;
+fn s(x: usize) -> usize {
+    let mut s = x;
     let mut result = 0;
-    while n > 0 {
-        result += n % 10;
-        n /= 10;
-    }
-    result
-}
-
-fn next(x: usize) -> usize {
-    let mut result = x + 1;
-    let mut cur = 10;
-    loop {
-        let prefix = x / cur;
-        for i in 0..11 {
-            let candidate = (prefix / 10 * 10 + i) * cur + cur - 1;
-            if candidate <= x {
-                continue;
-            }
-            if candidate * s(result) < s(candidate) * result {
-                result = candidate;
-            }
-        }
-        cur *= 10;
-        if prefix == 0 {
-            break;
-        }
+    while s > 0 {
+        result += s % 10;
+        s /= 10;
     }
     result
 }
 
 fn main() {
     let mut sc = Scanner::new();
-    let mut k = sc.usize_read();
-    for i in 1..10 {
-        println!("{}", i);
-        k -= 1;
-        if k == 0 {
-            return;
-        }
-    }
-    let mut cur = 9;
-    while k > 0 {
-        cur = next(cur);
+    let k = sc.read();
+
+    let mut cur: usize = 1;
+    for _ in 0..k {
         println!("{}", cur);
-        k -= 1;
+        let mut t = 1;
+        let mut candidate = cur + 1;
+        while cur * 100 >= t {
+            for i in 0..10 {
+                let next = (cur / t + i) * t + t - 1;
+                if next > cur && next * s(candidate) < candidate * s(next) {
+                    candidate = next;
+                }
+            }
+            t *= 10;
+        }
+        cur = candidate;
     }
 }
 
