@@ -2,37 +2,40 @@ use std::cmp;
 
 fn main() {
     let mut sc = Scanner::new();
-    let n = sc.read();
+    let n = sc.usize_read();
     let a: Vec<usize> = sc.read_vec(n);
     if n == 2 {
-        println!("{}", if a[0] == a[1] { "YES" } else { "NO" });
+        if a[0] == a[1] {
+            println!("YES");
+        } else {
+            println!("NO");
+        }
         return;
     }
-
     let mut graph = vec![vec![]; n];
     for _ in 0..(n - 1) {
-        let a = sc.usize_read() - 1;
-        let b = sc.usize_read() - 1;
-        graph[a].push(b);
-        graph[b].push(a);
+        let u = sc.usize_read() - 1;
+        let v = sc.usize_read() - 1;
+        graph[u].push(v);
+        graph[v].push(u);
     }
+
     let mut root = 0;
     for i in 0..n {
-        if graph[root].len() < graph[i].len() {
+        if graph[i].len() > 1 {
             root = i;
+            break;
         }
     }
-    assert!(graph[root].len() > 1);
-
     let mut up = vec![0; n];
-    if !dfs(&graph, root, root, &mut up, &a) || up[root] != 0 {
+    if !dfs(root, root, &graph, &mut up, &a) || up[root] != 0 {
         println!("NO");
     } else {
         println!("YES");
     }
 }
 
-fn dfs(graph: &Vec<Vec<usize>>, v: usize, p: usize, up: &mut Vec<usize>, a: &Vec<usize>) -> bool {
+fn dfs(v: usize, p: usize, graph: &Vec<Vec<usize>>, up: &mut Vec<usize>, a: &Vec<usize>) -> bool {
     if graph[v].len() == 1 && graph[v][0] == p {
         up[v] = a[v];
         return true;
@@ -40,25 +43,25 @@ fn dfs(graph: &Vec<Vec<usize>>, v: usize, p: usize, up: &mut Vec<usize>, a: &Vec
 
     let mut sum = 0;
     let mut max = 0;
-    for &next in &graph[v] {
+    for &next in graph[v].iter() {
         if next == p {
             continue;
         }
-        if !dfs(graph, next, v, up, a) {
+        if !dfs(next, v, graph, up, a) {
             return false;
         }
         sum += up[next];
         max = cmp::max(max, up[next]);
     }
-    if 2 * a[v] < sum {
+    if sum < a[v] {
         return false;
     }
-    up[v] = 2 * a[v] - sum;
-    if sum < up[v] || (sum - up[v]) % 2 == 1 {
+    let pair = sum - a[v];
+    if sum < pair * 2 || sum - max < pair {
         return false;
     }
-    let rest = sum - max;
-    (sum - up[v]) / 2 <= cmp::min(rest, sum / 2)
+    up[v] = sum - pair * 2;
+    return true;
 }
 
 struct Scanner {
