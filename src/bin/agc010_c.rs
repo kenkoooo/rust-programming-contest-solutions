@@ -2,95 +2,65 @@ use std::cmp;
 
 fn main() {
     let mut sc = Scanner::new();
-    let n = sc.read();
-    let m = sc.read();
-    let mut inverted_graph = vec![vec![true; n]; n];
-    for _ in 0..m {
-        let a = sc.usize_read() - 1;
-        let b = sc.usize_read() - 1;
-        inverted_graph[a][b] = false;
-        inverted_graph[b][a] = false;
+    let n = sc.usize_read();
+    let a: Vec<usize> = sc.read_vec(n);
+    if n == 2 {
+        if a[0] == a[1] {
+            println!("YES");
+        } else {
+            println!("NO");
+        }
+        return;
     }
-
     let mut graph = vec![vec![]; n];
+    for _ in 0..(n - 1) {
+        let u = sc.usize_read() - 1;
+        let v = sc.usize_read() - 1;
+        graph[u].push(v);
+        graph[v].push(u);
+    }
+
+    let mut root = 0;
     for i in 0..n {
-        for j in (i + 1)..n {
-            if inverted_graph[i][j] {
-                graph[i].push(j);
-                graph[j].push(i);
-            }
+        if graph[i].len() > 1 {
+            root = i;
+            break;
         }
     }
-
-    let mut colors = vec![];
-    let mut color = vec![0; n];
-    for i in 0..n {
-        if color[i] != 0 {
-            continue;
-        }
-        let mut connected = vec![];
-        color[i] = 1;
-        if !coloring_dfs(i, &mut connected, &graph, &mut color) {
-            println!("-1");
-            return;
-        }
-
-        let mut count = 0;
-        for &c in &connected {
-            if color[c] == 1 {
-                count += 1;
-            }
-        }
-        colors.push((count, connected.len() - count));
-    }
-
-    let mut dp = vec![false; n + 1];
-    dp[0] = true;
-    for &(a, b) in &colors {
-        let mut next = vec![false; n + 1];
-        for i in 0..n {
-            if dp[i] {
-                next[i + a] = true;
-                next[i + b] = true;
-            }
-        }
-        dp = next;
-    }
-
-    let mut ans = n;
-    for i in 0..n {
-        if dp[i] {
-            let j = n - i;
-            ans = cmp::min(ans, cmp::max(i, j));
-        }
-    }
-
-    if ans == n {
-        println!("{}", n * (n - 1) / 2);
+    let mut up = vec![0; n];
+    if !dfs(root, root, &graph, &mut up, &a) || up[root] != 0 {
+        println!("NO");
     } else {
-        println!("{}", ans * (ans - 1) / 2 + (n - ans) * (n - ans - 1) / 2);
+        println!("YES");
     }
 }
 
-fn coloring_dfs(
-    v: usize,
-    connected: &mut Vec<usize>,
-    graph: &Vec<Vec<usize>>,
-    color: &mut Vec<usize>,
-) -> bool {
-    connected.push(v);
-    for &next in &graph[v] {
-        if color[next] == 0 {
-            color[next] = if color[v] == 1 { 2 } else { 1 };
-            if !coloring_dfs(next, connected, graph, color) {
-                return false;
-            }
-        } else {
-            if color[next] == color[v] {
-                return false;
-            }
-        }
+fn dfs(v: usize, p: usize, graph: &Vec<Vec<usize>>, up: &mut Vec<usize>, a: &Vec<usize>) -> bool {
+    if graph[v].len() == 1 && graph[v][0] == p {
+        up[v] = a[v];
+        return true;
     }
+
+    let mut sum = 0;
+    let mut max = 0;
+    for &next in graph[v].iter() {
+        if next == p {
+            continue;
+        }
+        if !dfs(next, v, graph, up, a) {
+            return false;
+        }
+        sum += up[next];
+        max = cmp::max(max, up[next]);
+    }
+    if sum < a[v] {
+        return false;
+    }
+    let pair = sum - a[v];
+    if sum < pair * 2 || sum - max < pair {
+        return false;
+    }
+    up[v] = sum - pair * 2;
     return true;
 }
 

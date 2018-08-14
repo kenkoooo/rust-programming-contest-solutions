@@ -1,33 +1,80 @@
-fn s(x: usize) -> usize {
-    let mut s = x;
-    let mut result = 0;
-    while s > 0 {
-        result += s % 10;
-        s /= 10;
+use std::cmp;
+use std::collections::BinaryHeap;
+
+const INF: usize = 1e16 as usize;
+
+#[derive(Eq, PartialEq)]
+struct State {
+    v: usize,
+    cost: usize,
+}
+
+impl Ord for State {
+    fn cmp(&self, other: &State) -> std::cmp::Ordering {
+        other.cost.cmp(&self.cost)
     }
-    result
+}
+
+impl PartialOrd for State {
+    fn partial_cmp(&self, other: &State) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
 fn main() {
     let mut sc = Scanner::new();
-    let k = sc.read();
+    let n = sc.read();
+    let m = sc.read();
+    let s = sc.usize_read() - 1;
+    let t = sc.usize_read() - 1;
 
-    let mut cur: usize = 1;
-    for _ in 0..k {
-        println!("{}", cur);
-        let mut t = 1;
-        let mut candidate = cur + 1;
-        while cur * 100 >= t {
-            for i in 0..10 {
-                let next = (cur / t + i) * t + t - 1;
-                if next > cur && next * s(candidate) < candidate * s(next) {
-                    candidate = next;
-                }
-            }
-            t *= 10;
-        }
-        cur = candidate;
+    let mut graph_a = vec![vec![]; n];
+    let mut graph_b = vec![vec![]; n];
+    for _ in 0..m {
+        let u = sc.usize_read() - 1;
+        let v = sc.usize_read() - 1;
+        let a = sc.read();
+        let b = sc.read();
+        graph_a[u].push((v, a));
+        graph_a[v].push((u, a));
+        graph_b[u].push((v, b));
+        graph_b[v].push((u, b));
     }
+
+    let dist_a = dijkstra(&graph_a, s);
+    let dist_b = dijkstra(&graph_b, t);
+
+    let mut ans = vec![0; n];
+    for i in (0..n).rev() {
+        ans[i] = dist_a[i] + dist_b[i];
+        if i < n - 1 {
+            ans[i] = cmp::min(ans[i], ans[i + 1]);
+        }
+    }
+
+    for &ans in &ans {
+        println!("{}", (1e15 as usize) - ans);
+    }
+}
+
+fn dijkstra(graph: &Vec<Vec<(usize, usize)>>, from: usize) -> Vec<usize> {
+    let n = graph.len();
+    let mut heap = BinaryHeap::new();
+    let mut dist = vec![INF; n];
+    dist[from] = 0;
+    heap.push(State { v: from, cost: 0 });
+    while let Some(State { v, cost: _ }) = heap.pop() {
+        for &(next, weight) in &graph[v] {
+            if dist[next] > dist[v] + weight {
+                dist[next] = dist[v] + weight;
+                heap.push(State {
+                    v: next,
+                    cost: dist[next],
+                });
+            }
+        }
+    }
+    dist
 }
 
 struct Scanner {

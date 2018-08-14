@@ -1,97 +1,28 @@
-use std::cmp;
-
 fn main() {
     let mut sc = Scanner::new();
-    let n = sc.read();
+    let n = sc.usize_read();
     let m = sc.read();
-    let mut inverted_graph = vec![vec![true; n]; n];
+    let mut from = vec![n; n];
     for _ in 0..m {
         let a = sc.usize_read() - 1;
         let b = sc.usize_read() - 1;
-        inverted_graph[a][b] = false;
-        inverted_graph[b][a] = false;
-    }
-
-    let mut graph = vec![vec![]; n];
-    for i in 0..n {
-        for j in (i + 1)..n {
-            if inverted_graph[i][j] {
-                graph[i].push(j);
-                graph[j].push(i);
-            }
+        if from[b] == n || from[b] < a {
+            from[b] = a;
         }
     }
 
-    let mut colors = vec![];
-    let mut color = vec![0; n];
+    let mut ans = 0;
+    let mut last = 0;
     for i in 0..n {
-        if color[i] != 0 {
+        if from[i] == n {
             continue;
         }
-        let mut connected = vec![];
-        color[i] = 1;
-        if !coloring_dfs(i, &mut connected, &graph, &mut color) {
-            println!("-1");
-            return;
-        }
-
-        let mut count = 0;
-        for &c in &connected {
-            if color[c] == 1 {
-                count += 1;
-            }
-        }
-        colors.push((count, connected.len() - count));
-    }
-
-    let mut dp = vec![false; n + 1];
-    dp[0] = true;
-    for &(a, b) in &colors {
-        let mut next = vec![false; n + 1];
-        for i in 0..n {
-            if dp[i] {
-                next[i + a] = true;
-                next[i + b] = true;
-            }
-        }
-        dp = next;
-    }
-
-    let mut ans = n;
-    for i in 0..n {
-        if dp[i] {
-            let j = n - i;
-            ans = cmp::min(ans, cmp::max(i, j));
+        if last <= from[i] {
+            last = i;
+            ans += 1;
         }
     }
-
-    if ans == n {
-        println!("{}", n * (n - 1) / 2);
-    } else {
-        println!("{}", ans * (ans - 1) / 2 + (n - ans) * (n - ans - 1) / 2);
-    }
-}
-
-fn coloring_dfs(
-    v: usize,
-    connected: &mut Vec<usize>,
-    graph: &Vec<Vec<usize>>,
-    color: &mut Vec<usize>,
-) -> bool {
-    connected.push(v);
-    for &next in &graph[v] {
-        if color[next] == 0 {
-            color[next] = if color[v] == 1 { 2 } else { 1 };
-            if !coloring_dfs(next, connected, graph, color) {
-                return false;
-            }
-        } else {
-            if color[next] == color[v] {
-                return false;
-            }
-        }
-    }
-    return true;
+    println!("{}", ans);
 }
 
 struct Scanner {

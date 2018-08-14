@@ -1,97 +1,54 @@
-use std::cmp;
+use std::collections::VecDeque;
+
+const MAX_BIT: usize = 32;
 
 fn main() {
     let mut sc = Scanner::new();
     let n = sc.read();
-    let m = sc.read();
-    let mut inverted_graph = vec![vec![true; n]; n];
-    for _ in 0..m {
+    let x: Vec<usize> = sc.read_vec(n);
+    let l = sc.usize_read();
+    let mut go = vec![vec![0; n]; MAX_BIT];
+    let mut q = VecDeque::new();
+    q.push_back(0);
+
+    for i in 1..n {
+        while !q.is_empty() {
+            let head = q.pop_front().unwrap();
+            let dx = x[i] - x[head];
+            if dx > l {
+                go[0][head] = i - 1;
+            } else {
+                q.push_front(head);
+                break;
+            }
+        }
+        q.push_back(i);
+    }
+    while let Some(head) = q.pop_front() {
+        go[0][head] = n - 1;
+    }
+
+    for b in 1..MAX_BIT {
+        for i in 0..n {
+            go[b][i] = go[b - 1][go[b - 1][i]];
+        }
+    }
+
+    let q = sc.read();
+    for _ in 0..q {
         let a = sc.usize_read() - 1;
         let b = sc.usize_read() - 1;
-        inverted_graph[a][b] = false;
-        inverted_graph[b][a] = false;
-    }
-
-    let mut graph = vec![vec![]; n];
-    for i in 0..n {
-        for j in (i + 1)..n {
-            if inverted_graph[i][j] {
-                graph[i].push(j);
-                graph[j].push(i);
+        let (a, b) = if a > b { (b, a) } else { (a, b) };
+        let mut cur = a;
+        let mut ng = 0;
+        for bit in (0..MAX_BIT).rev() {
+            if go[bit][cur] < b {
+                ng += (1 << bit);
+                cur = go[bit][cur];
             }
         }
+        println!("{}", ng + 1);
     }
-
-    let mut colors = vec![];
-    let mut color = vec![0; n];
-    for i in 0..n {
-        if color[i] != 0 {
-            continue;
-        }
-        let mut connected = vec![];
-        color[i] = 1;
-        if !coloring_dfs(i, &mut connected, &graph, &mut color) {
-            println!("-1");
-            return;
-        }
-
-        let mut count = 0;
-        for &c in &connected {
-            if color[c] == 1 {
-                count += 1;
-            }
-        }
-        colors.push((count, connected.len() - count));
-    }
-
-    let mut dp = vec![false; n + 1];
-    dp[0] = true;
-    for &(a, b) in &colors {
-        let mut next = vec![false; n + 1];
-        for i in 0..n {
-            if dp[i] {
-                next[i + a] = true;
-                next[i + b] = true;
-            }
-        }
-        dp = next;
-    }
-
-    let mut ans = n;
-    for i in 0..n {
-        if dp[i] {
-            let j = n - i;
-            ans = cmp::min(ans, cmp::max(i, j));
-        }
-    }
-
-    if ans == n {
-        println!("{}", n * (n - 1) / 2);
-    } else {
-        println!("{}", ans * (ans - 1) / 2 + (n - ans) * (n - ans - 1) / 2);
-    }
-}
-
-fn coloring_dfs(
-    v: usize,
-    connected: &mut Vec<usize>,
-    graph: &Vec<Vec<usize>>,
-    color: &mut Vec<usize>,
-) -> bool {
-    connected.push(v);
-    for &next in &graph[v] {
-        if color[next] == 0 {
-            color[next] = if color[v] == 1 { 2 } else { 1 };
-            if !coloring_dfs(next, connected, graph, color) {
-                return false;
-            }
-        } else {
-            if color[next] == color[v] {
-                return false;
-            }
-        }
-    }
-    return true;
 }
 
 struct Scanner {

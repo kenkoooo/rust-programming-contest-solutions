@@ -1,32 +1,14 @@
-fn s(x: usize) -> usize {
-    let mut s = x;
-    let mut result = 0;
-    while s > 0 {
-        result += s % 10;
-        s /= 10;
-    }
-    result
-}
-
 fn main() {
     let mut sc = Scanner::new();
-    let k = sc.read();
-
-    let mut cur: usize = 1;
-    for _ in 0..k {
-        println!("{}", cur);
-        let mut t = 1;
-        let mut candidate = cur + 1;
-        while cur * 100 >= t {
-            for i in 0..10 {
-                let next = (cur / t + i) * t + t - 1;
-                if next > cur && next * s(candidate) < candidate * s(next) {
-                    candidate = next;
-                }
-            }
-            t *= 10;
-        }
-        cur = candidate;
+    let n = sc.read::<f64>();
+    let m = sc.read::<f64>();
+    let d = sc.read::<f64>();
+    if d == 0.0 {
+        println!("{}", (m - 1.0) / n);
+    } else if n < d {
+        println!("0");
+    } else {
+        println!("{}", (n - d) / n / n * (m - 1.0) * 2.0);
     }
 }
 
