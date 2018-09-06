@@ -16,91 +16,97 @@ fn main() {
         x.push(t);
     }
 
-    let mut dif = 0;
+    let mut current_difference = 0;
     if x.len() >= 2 && x[1] < 0 {
-        dif -= x[1];
+        current_difference -= x[1];
         x.remove(0);
         for x in x.iter_mut() {
-            *x += dif;
+            *x += current_difference;
         }
     }
 
-    let mut s = BTreeSet::new();
-    let mut candidates = BTreeSet::new();
+    // x[even] < x[odd] > x[even] < x[odd] ...
+
+    let mut index_set = (0..x.len()).collect::<BTreeSet<_>>();
+    let mut edges = BTreeSet::new();
     let mut distance = vec![0; x.len() - 1];
-    for i in 0..x.len() {
-        s.insert(i);
-        if i > 0 {
-            distance[i - 1] = (x[i] - x[i - 1]).abs();
-            dif += distance[i - 1];
-            candidates.insert((distance[i - 1], i - 1));
-        }
+    for i in 1..x.len() {
+        distance[i - 1] = (x[i] - x[i - 1]).abs();
+        current_difference += distance[i - 1];
+        edges.insert((distance[i - 1], i - 1));
     }
 
-    let mut vv = vec![];
+    let mut queries = vec![];
     for i in 0..q {
-        vv.push((sc.read::<i64>(), i));
+        queries.push((sc.read::<i64>(), i));
     }
-    vv.sort();
-    let mut pre = 0;
+    queries.sort();
+
+    let mut prev_query = 0;
     let mut ans = vec![0; q];
-    for &(v_first, v_second) in vv.iter() {
-        while let Some(&(f, t)) = candidates.iter().next() {
-            if f > v_first {
+    for &(query, ans_index) in queries.iter() {
+        while let Some(&(_, edge_idx)) = edges.first() {
+            let edge_length = distance[edge_idx];
+            if edge_length > query {
                 break;
             }
+            edges.remove(&(edge_length, edge_idx));
+            current_difference -= distance[edge_idx] - prev_query;
 
-            assert!(candidates.remove(&(f, t)));
-
-            dif -= distance[t] - pre;
-            let &y = s.range((t + 1)..).next().unwrap();
-            if y < *s.last() {
-                candidates.remove(&(distance[y], y));
-                dif -= distance[y] - pre;
+            let &next_idx = index_set.range((edge_idx + 1)..).next().unwrap();
+            if next_idx < *index_set.last().unwrap() {
+                edges.remove(&(distance[next_idx], next_idx));
+                current_difference -= distance[next_idx] - prev_query;
             }
-            s.remove(&y);
-            let it = s.range((t + 1)..).next().cloned();
+            index_set.remove(&next_idx);
+            let it = index_set.range((edge_idx + 1)..).next().cloned();
             if it.is_none() {
                 continue;
             }
-            let y = it.unwrap();
-            assert!(t % 2 == y % 2);
 
-            if (t % 2 == 0 && x[y] >= x[t]) || (t % 2 == 1 && x[y] <= x[t]) {
-                if y < *s.last() {
-                    candidates.remove(&(distance[y], y));
-                    dif -= distance[y] - pre;
+            let next_next_idx = it.unwrap();
+            assert!(edge_idx % 2 == next_next_idx % 2);
+
+            if (edge_idx % 2 == 0 && x[next_next_idx] >= x[edge_idx])
+                || (edge_idx % 2 == 1 && x[next_next_idx] <= x[edge_idx])
+            {
+                // When next_next_idx is removable,
+                if next_next_idx < *index_set.last().unwrap() {
+                    edges.remove(&(distance[next_next_idx], next_next_idx));
+                    current_difference -= distance[next_next_idx] - prev_query;
                 }
-                s.remove(&y);
+                index_set.remove(&next_next_idx);
 
-                match s.range((t + 1)..).next() {
-                    Some(&it) => {
-                        distance[t] = (x[t] - x[it]).abs();
-                        candidates.insert((distance[t], t));
-                        dif += distance[t] - pre;
+                match index_set.range((edge_idx + 1)..).next() {
+                    Some(&next_idx) => {
+                        distance[edge_idx] = (x[edge_idx] - x[next_idx]).abs();
+                        edges.insert((distance[edge_idx], edge_idx));
+                        current_difference += distance[edge_idx] - prev_query;
                     }
                     _ => {}
                 }
             } else {
-                assert!(s.remove(&t));
-                match s.range(..y).next_back() {
-                    Some(&t) => {
-                        candidates.remove(&(distance[t], t));
-                        dif -= distance[t] - pre;
-                        distance[t] = (x[t] - x[y]).abs();
-                        candidates.insert((distance[t], t));
-                        dif += distance[t] - pre;
+                // When next_next_idx can not be removed,
+                assert!(index_set.remove(&edge_idx));
+                match index_set.range(..next_next_idx).next_back() {
+                    Some(&prev_idx) => {
+                        edges.remove(&(distance[prev_idx], prev_idx));
+                        current_difference -= distance[prev_idx] - prev_query;
+
+                        distance[prev_idx] = (x[prev_idx] - x[next_next_idx]).abs();
+                        edges.insert((distance[prev_idx], prev_idx));
+                        current_difference += distance[prev_idx] - prev_query;
                     }
                     _ => {
-                        dif += (x[t] - x[y]).abs();
+                        current_difference += (x[edge_idx] - x[next_next_idx]).abs();
                     }
                 }
             }
         }
 
-        dif -= (v_first - pre) * candidates.len() as i64;
-        ans[v_second] = dif;
-        pre = v_first;
+        current_difference -= (query - prev_query) * edges.len() as i64;
+        ans[ans_index] = current_difference;
+        prev_query = query;
     }
 
     for &ans in ans.iter() {
@@ -108,17 +114,17 @@ fn main() {
     }
 }
 
-trait LastElement<K> {
-    fn first(&self) -> &K;
-    fn last(&self) -> &K;
+trait FirstLastElement<K> {
+    fn first(&self) -> Option<&K>;
+    fn last(&self) -> Option<&K>;
 }
 
-impl LastElement<usize> for BTreeSet<usize> {
-    fn first(&self) -> &usize {
-        self.iter().next().unwrap()
+impl<K> FirstLastElement<K> for BTreeSet<K> {
+    fn first(&self) -> Option<&K> {
+        self.iter().next()
     }
-    fn last(&self) -> &usize {
-        self.iter().next_back().unwrap()
+    fn last(&self) -> Option<&K> {
+        self.iter().next_back()
     }
 }
 
@@ -165,9 +171,9 @@ impl Scanner {
     }
 
     fn read_vec<T>(&mut self, n: usize) -> Vec<T>
-        where
-            T: std::str::FromStr,
-            T::Err: std::fmt::Debug,
+    where
+        T: std::str::FromStr,
+        T::Err: std::fmt::Debug,
     {
         (0..n).map(|_| self.read()).collect()
     }
@@ -177,9 +183,9 @@ impl Scanner {
     }
 
     fn read<T>(&mut self) -> T
-        where
-            T: std::str::FromStr,
-            T::Err: std::fmt::Debug,
+    where
+        T: std::str::FromStr,
+        T::Err: std::fmt::Debug,
     {
         let mut b = self.byte();
         while Scanner::is_space(b) {
