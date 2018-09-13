@@ -1,212 +1,185 @@
+use std::cmp;
 use std::collections::BTreeSet;
 
-fn main() {
-    let mut sc = Scanner::new();
-    let n = sc.read();
-    let q = sc.read();
-    let mut x: Vec<i64> = vec![0];
-    for _ in 0..n {
-        let t = sc.read::<i64>();
-        if x[x.len() - 1] == t {
-            continue;
-        }
-        if x.len() >= 2 && (x[x.len() - 2] < x[x.len() - 1]) == (x[x.len() - 1] < t) {
-            x.pop();
-        }
-        x.push(t);
-    }
+macro_rules! input {
+    (source = $s:expr, $($r:tt)*) => {
+        let mut iter = $s.split_whitespace();
+        input_inner!{iter, $($r)*}
+    };
+    ($($r:tt)*) => {
+        let mut s = {
+            use std::io::Read;
+            let mut s = String::new();
+            std::io::stdin().read_to_string(&mut s).unwrap();
+            s
+        };
+        let mut iter = s.split_whitespace();
+        input_inner!{iter, $($r)*}
+    };
+}
 
-    let mut current_difference = 0;
+macro_rules! input_inner {
+    ($iter:expr) => {};
+    ($iter:expr, ) => {};
+
+    ($iter:expr, $var:ident : $t:tt $($r:tt)*) => {
+        let $var = read_value!($iter, $t);
+        input_inner!{$iter $($r)*}
+    };
+}
+
+macro_rules! read_value {
+    ($iter:expr, ( $($t:tt),* )) => {
+        ( $(read_value!($iter, $t)),* )
+    };
+
+    ($iter:expr, [ $t:tt ; $len:expr ]) => {
+        (0..$len).map(|_| read_value!($iter, $t)).collect::<Vec<_>>()
+    };
+
+    ($iter:expr, chars) => {
+        read_value!($iter, String).chars().collect::<Vec<char>>()
+    };
+
+    ($iter:expr, usize1) => {
+        read_value!($iter, usize) - 1
+    };
+
+    ($iter:expr, $t:ty) => {
+        $iter.next().unwrap().parse::<$t>().expect("Parse error")
+    };
+}
+
+fn main() {
+    input!{
+        n: usize,
+        q: usize,
+        x: [i64; n],
+        l: [i64; q],
+    }
+    let mut l: Vec<(i64, usize)> = (0..q).map(|i| (l[i], i)).collect();
+    l.sort();
+
+    let mut x = {
+        let mut v: Vec<i64> = vec![0];
+        for &x in x.iter() {
+            while v.len() >= 2 && (v[v.len() - 2] < v[v.len() - 1]) == (v[v.len() - 1] < x) {
+                v.pop();
+            }
+            v.push(x);
+        }
+        v
+    };
+
+    let mut offset = 0;
     if x.len() >= 2 && x[1] < 0 {
-        current_difference -= x[1];
+        offset = -x[1];
         x.remove(0);
         for x in x.iter_mut() {
-            *x += current_difference;
+            *x += offset;
         }
     }
 
-    // x[even] < x[odd] > x[even] < x[odd] ...
+    let mut point_set = BTreeSet::new();
+    for i in 0..x.len() {
+        point_set.insert(i);
+    }
 
-    let mut index_set = (0..x.len()).collect::<BTreeSet<_>>();
-    let mut edges = BTreeSet::new();
-    let mut distance = vec![0; x.len() - 1];
+    let mut edge_set = EdgeSet::new(offset);
     for i in 1..x.len() {
-        distance[i - 1] = (x[i] - x[i - 1]).abs();
-        current_difference += distance[i - 1];
-        edges.insert((distance[i - 1], i - 1));
+        edge_set.insert(i - 1, i, &x);
     }
 
-    let mut queries = vec![];
-    for i in 0..q {
-        queries.push((sc.read::<i64>(), i));
-    }
-    queries.sort();
-
-    let mut prev_query = 0;
     let mut ans = vec![0; q];
-    for &(query, ans_index) in queries.iter() {
-        while let Some(&(_, edge_idx)) = edges.first() {
-            let edge_length = distance[edge_idx];
-            if edge_length > query {
+    for &(length, ans_id) in l.iter() {
+        while let Some(&(distance, i1, i2)) = edge_set.first() {
+            if distance >= length {
                 break;
             }
-            edges.remove(&(edge_length, edge_idx));
-            current_difference -= distance[edge_idx] - prev_query;
 
-            let &next_idx = index_set.range((edge_idx + 1)..).next().unwrap();
-            if next_idx < *index_set.last().unwrap() {
-                edges.remove(&(distance[next_idx], next_idx));
-                current_difference -= distance[next_idx] - prev_query;
+            if edge_set.set.len() == 1 {
+                break;
             }
-            index_set.remove(&next_idx);
-            let it = index_set.range((edge_idx + 1)..).next().cloned();
-            if it.is_none() {
+
+            if i1 == 0 {
+                let &i3 = point_set.range((i2 + 1)..).next().unwrap();
+
+                edge_set.remove(i1, i2, &x);
+                edge_set.remove(i2, i3, &x);
+
+                x[i2] = length;
+                edge_set.insert(i1, i2, &x);
+                edge_set.insert(i2, i3, &x);
                 continue;
             }
 
-            let next_next_idx = it.unwrap();
-            assert!(edge_idx % 2 == next_next_idx % 2);
+            let i3 = point_set.range((i2 + 1)..).next().cloned();
+            if i3.is_none() {
+                edge_set.remove(i1, i2, &x);
+                point_set.remove(&i2);
+                continue;
+            }
 
-            if (edge_idx % 2 == 0 && x[next_next_idx] >= x[edge_idx])
-                || (edge_idx % 2 == 1 && x[next_next_idx] <= x[edge_idx])
-            {
-                // When next_next_idx is removable,
-                if next_next_idx < *index_set.last().unwrap() {
-                    edges.remove(&(distance[next_next_idx], next_next_idx));
-                    current_difference -= distance[next_next_idx] - prev_query;
-                }
-                index_set.remove(&next_next_idx);
+            let &i0 = point_set.range(..i1).next_back().unwrap();
+            let i3 = i3.unwrap();
+            assert!((x[i0] < x[i1]) != (x[i1] < x[i2]));
+            assert!((x[i1] < x[i2]) != (x[i2] < x[i3]));
 
-                match index_set.range((edge_idx + 1)..).next() {
-                    Some(&next_idx) => {
-                        distance[edge_idx] = (x[edge_idx] - x[next_idx]).abs();
-                        edges.insert((distance[edge_idx], edge_idx));
-                        current_difference += distance[edge_idx] - prev_query;
-                    }
-                    _ => {}
-                }
+            // remove i2
+            edge_set.remove(i1, i2, &x);
+            edge_set.remove(i2, i3, &x);
+            point_set.remove(&i2);
+
+            if (x[i0] - x[i1]).abs() > (x[i0] - x[i3]).abs() {
+                // remove i3
+                let &i4 = point_set.range((i3 + 1)..).next_back().unwrap();
+                point_set.remove(&i3);
+                edge_set.remove(i3, i4, &x);
+                edge_set.insert(i1, i4, &x);
             } else {
-                // When next_next_idx can not be removed,
-                assert!(index_set.remove(&edge_idx));
-                match index_set.range(..next_next_idx).next_back() {
-                    Some(&prev_idx) => {
-                        edges.remove(&(distance[prev_idx], prev_idx));
-                        current_difference -= distance[prev_idx] - prev_query;
-
-                        distance[prev_idx] = (x[prev_idx] - x[next_next_idx]).abs();
-                        edges.insert((distance[prev_idx], prev_idx));
-                        current_difference += distance[prev_idx] - prev_query;
-                    }
-                    _ => {
-                        current_difference += (x[edge_idx] - x[next_next_idx]).abs();
-                    }
-                }
+                // remove i1
+                point_set.remove(&i1);
+                edge_set.remove(i0, i1, &x);
+                edge_set.insert(i0, i3, &x);
             }
         }
 
-        current_difference -= (query - prev_query) * edges.len() as i64;
-        ans[ans_index] = current_difference;
-        prev_query = query;
+        ans[ans_id] = cmp::max(0, edge_set.total - (edge_set.set.len() as i64) * length);
     }
-
     for &ans in ans.iter() {
         println!("{}", ans);
     }
 }
 
-trait FirstLastElement<K> {
-    fn first(&self) -> Option<&K>;
-    fn last(&self) -> Option<&K>;
+#[derive(Debug)]
+struct EdgeSet {
+    set: BTreeSet<(i64, usize, usize)>,
+    total: i64,
 }
 
-impl<K> FirstLastElement<K> for BTreeSet<K> {
-    fn first(&self) -> Option<&K> {
-        self.iter().next()
-    }
-    fn last(&self) -> Option<&K> {
-        self.iter().next_back()
-    }
-}
-
-struct Scanner {
-    ptr: usize,
-    length: usize,
-    buf: Vec<u8>,
-    small_cache: Vec<u8>,
-}
-
-#[allow(dead_code)]
-impl Scanner {
-    fn new() -> Scanner {
-        Scanner {
-            ptr: 0,
-            length: 0,
-            buf: vec![0; 1024],
-            small_cache: vec![0; 1024],
+impl EdgeSet {
+    fn new(offset: i64) -> Self {
+        EdgeSet {
+            set: BTreeSet::new(),
+            total: offset,
         }
     }
 
-    fn load(&mut self) {
-        use std::io::Read;
-        let mut s = std::io::stdin();
-        self.length = s.read(&mut self.buf).unwrap();
+    fn insert(&mut self, from: usize, to: usize, x: &Vec<i64>) {
+        assert!(from < to);
+        let distance = (x[from] - x[to]).abs();
+        self.set.insert((distance, from, to));
+        self.total += distance;
     }
 
-    fn byte(&mut self) -> u8 {
-        if self.ptr >= self.length {
-            self.ptr = 0;
-            self.load();
-            if self.length == 0 {
-                self.buf[0] = b'\n';
-                self.length = 1;
-            }
-        }
-
-        self.ptr += 1;
-        return self.buf[self.ptr - 1];
+    fn remove(&mut self, from: usize, to: usize, x: &Vec<i64>) {
+        assert!(from < to);
+        let distance = (x[from] - x[to]).abs();
+        self.set.remove(&(distance, from, to));
+        self.total -= distance;
     }
 
-    fn is_space(b: u8) -> bool {
-        b == b'\n' || b == b'\r' || b == b'\t' || b == b' '
-    }
-
-    fn read_vec<T>(&mut self, n: usize) -> Vec<T>
-    where
-        T: std::str::FromStr,
-        T::Err: std::fmt::Debug,
-    {
-        (0..n).map(|_| self.read()).collect()
-    }
-
-    fn usize_read(&mut self) -> usize {
-        self.read()
-    }
-
-    fn read<T>(&mut self) -> T
-    where
-        T: std::str::FromStr,
-        T::Err: std::fmt::Debug,
-    {
-        let mut b = self.byte();
-        while Scanner::is_space(b) {
-            b = self.byte();
-        }
-
-        for pos in 0..self.small_cache.len() {
-            self.small_cache[pos] = b;
-            b = self.byte();
-            if Scanner::is_space(b) {
-                return String::from_utf8_lossy(&self.small_cache[0..(pos + 1)])
-                    .parse()
-                    .unwrap();
-            }
-        }
-
-        let mut v = self.small_cache.clone();
-        while !Scanner::is_space(b) {
-            v.push(b);
-            b = self.byte();
-        }
-        return String::from_utf8_lossy(&v).parse().unwrap();
+    fn first(&self) -> Option<&(i64, usize, usize)> {
+        self.set.iter().next()
     }
 }
