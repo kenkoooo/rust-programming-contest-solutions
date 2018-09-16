@@ -1,50 +1,102 @@
+use std::cmp;
 use std::collections::BTreeSet;
 
+macro_rules! input {
+    (source = $s:expr, $($r:tt)*) => {
+        let mut iter = $s.split_whitespace();
+        input_inner!{iter, $($r)*}
+    };
+    ($($r:tt)*) => {
+        let mut s = {
+            use std::io::Read;
+            let mut s = String::new();
+            std::io::stdin().read_to_string(&mut s).unwrap();
+            s
+        };
+        let mut iter = s.split_whitespace();
+        input_inner!{iter, $($r)*}
+    };
+}
+
+macro_rules! input_inner {
+    ($iter:expr) => {};
+    ($iter:expr, ) => {};
+
+    ($iter:expr, $var:ident : $t:tt $($r:tt)*) => {
+        let $var = read_value!($iter, $t);
+        input_inner!{$iter $($r)*}
+    };
+}
+
+macro_rules! read_value {
+    ($iter:expr, ( $($t:tt),* )) => {
+        ( $(read_value!($iter, $t)),* )
+    };
+
+    ($iter:expr, [ $t:tt ; $len:expr ]) => {
+        (0..$len).map(|_| read_value!($iter, $t)).collect::<Vec<_>>()
+    };
+
+    ($iter:expr, chars) => {
+        read_value!($iter, String).chars().collect::<Vec<char>>()
+    };
+
+    ($iter:expr, usize1) => {
+        read_value!($iter, usize) - 1
+    };
+
+    ($iter:expr, $t:ty) => {
+        $iter.next().unwrap().parse::<$t>().expect("Parse error")
+    };
+}
+
 fn main() {
-    let mut sc = Scanner::new();
-    let n = sc.usize_read();
-    let q = sc.read();
-
+    input!(n: usize, q: usize, queries: [(usize, usize, usize); q]);
     let mut uf = UnionFind::new(n);
-    let mut edges = vec![BTreeSet::new(); n];
-    let mut lazy_unite = vec![Vec::new(); n];
 
-    for _ in 0..q {
-        let t = sc.usize_read();
-        if t == 1 {
-            let u = sc.usize_read() - 1;
-            let v = sc.usize_read() - 1;
-            edges[u].insert(v);
-            edges[v].insert(u);
-            if uf.find(u) != uf.find(v) {
-                lazy_unite[uf.find(u)].push(uf.find(v));
-                lazy_unite[uf.find(v)].push(uf.find(u));
+    let mut edges = BTreeSet::new();
+    let mut graph = vec![vec![]; n];
+
+    for &(t, u, v) in queries.iter() {
+        match t {
+            1 => {
+                let u = u - 1;
+                let v = v - 1;
+                let (u, v) = (cmp::min(u, v), cmp::max(u, v));
+
+                edges.insert((u, v));
+
+                let u = uf.find(u);
+                let v = uf.find(v);
+                graph[u].push(v);
+                graph[v].push(u);
             }
-        } else if t == 2 {
-            let u = sc.usize_read() - 1;
-            let _ = sc.usize_read();
-            complete_dfs(uf.find(u), &mut uf, &mut lazy_unite);
-        } else {
-            let u = sc.usize_read() - 1;
-            let v = sc.usize_read() - 1;
-            if uf.find(u) == uf.find(v) || edges[u].contains(&v) {
-                println!("Yes");
-            } else {
-                println!("No");
+            2 => {
+                let u = uf.find(u - 1);
+                complete_dfs(u, &mut uf, &mut graph);
             }
+            3 => {
+                let u = u - 1;
+                let v = v - 1;
+                let (u, v) = (cmp::min(u, v), cmp::max(u, v));
+
+                if edges.contains(&(u, v)) || uf.find(u) == uf.find(v) {
+                    println!("Yes");
+                } else {
+                    println!("No");
+                }
+            }
+            _ => unreachable!(),
         }
     }
 }
 
 fn complete_dfs(v: usize, uf: &mut UnionFind, graph: &mut Vec<Vec<usize>>) {
-    let mut tmp = vec![];
-    for &u in graph[v].iter() {
-        tmp.push(u);
-        uf.unite(v, u);
-    }
+    let next = graph[v].clone();
     graph[v].clear();
-    for &u in tmp.iter() {
-        complete_dfs(u, uf, graph);
+    for &next in next.iter() {
+        uf.unite(next, v);
+        complete_dfs(next, uf, graph);
     }
 }
 
@@ -91,88 +143,5 @@ impl UnionFind {
         self.sizes[small] = 0;
         self.size -= 1;
         return true;
-    }
-}
-
-struct Scanner {
-    ptr: usize,
-    length: usize,
-    buf: Vec<u8>,
-    small_cache: Vec<u8>,
-}
-
-#[allow(dead_code)]
-impl Scanner {
-    fn new() -> Scanner {
-        Scanner {
-            ptr: 0,
-            length: 0,
-            buf: vec![0; 1024],
-            small_cache: vec![0; 1024],
-        }
-    }
-
-    fn load(&mut self) {
-        use std::io::Read;
-        let mut s = std::io::stdin();
-        self.length = s.read(&mut self.buf).unwrap();
-    }
-
-    fn byte(&mut self) -> u8 {
-        if self.ptr >= self.length {
-            self.ptr = 0;
-            self.load();
-            if self.length == 0 {
-                self.buf[0] = b'\n';
-                self.length = 1;
-            }
-        }
-
-        self.ptr += 1;
-        return self.buf[self.ptr - 1];
-    }
-
-    fn is_space(b: u8) -> bool {
-        b == b'\n' || b == b'\r' || b == b'\t' || b == b' '
-    }
-
-    fn read_vec<T>(&mut self, n: usize) -> Vec<T>
-    where
-        T: std::str::FromStr,
-        T::Err: std::fmt::Debug,
-    {
-        (0..n).map(|_| self.read()).collect()
-    }
-
-    fn usize_read(&mut self) -> usize {
-        self.read()
-    }
-
-    fn read<T>(&mut self) -> T
-    where
-        T: std::str::FromStr,
-        T::Err: std::fmt::Debug,
-    {
-        let mut b = self.byte();
-        while Scanner::is_space(b) {
-            b = self.byte();
-        }
-
-        for pos in 0..self.small_cache.len() {
-            self.small_cache[pos] = b;
-            b = self.byte();
-            if Scanner::is_space(b) {
-                return String::from_utf8_lossy(&self.small_cache[0..(pos + 1)])
-                    .parse()
-                    .unwrap();
-            }
-        }
-
-        let mut v = self.small_cache.clone();
-        while !Scanner::is_space(b) {
-            v.push(b);
-            b = self.byte();
-        }
-        return String::from_utf8_lossy(&v).parse().unwrap();
     }
 }
