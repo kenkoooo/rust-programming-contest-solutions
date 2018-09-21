@@ -49,66 +49,25 @@ macro_rules! read_value {
     };
 }
 
-use std::cmp;
-use std::collections::{BTreeSet, VecDeque};
-
 fn main() {
-    input!(
-        n: usize,
-        m: usize,
-        edges: [(usize1, usize1); m],
-        q: usize,
-        queries: [(usize1, usize1, usize1); q]
-    );
-
+    input!(n: usize, m: usize, edges: [(usize, usize); m]);
     let mut graph = vec![vec![]; n];
-    for &(u, v) in edges.iter() {
-        graph[u].push(v);
-        graph[v].push(u);
+    for &(a, b) in edges.iter() {
+        graph[a].push(b);
+        graph[b].push(a);
     }
 
-    let mut bridge_detector = BridgeDetector::new(n);
-    bridge_detector.run(&graph);
+    let mut low_link = LowLink::new(n);
+    low_link.run(&graph);
+    low_link.articulations.sort();
+    low_link.bridges.sort();
 
-    let mut bridges = BTreeSet::new();
-    for &(a, b) in bridge_detector.bridges.iter() {
-        bridges.insert((cmp::min(a, b), cmp::max(a, b)));
-    }
-
-    let mut cur = 1;
-    let mut color = vec![0; n];
-    for i in 0..n {
-        if color[i] != 0 {
-            continue;
-        }
-        let mut q = VecDeque::new();
-        q.push_back(i);
-        color[i] = cur;
-        while let Some(v) = q.pop_back() {
-            for &u in graph[v].iter() {
-                if bridges.contains(&(cmp::min(u, v), cmp::max(u, v))) {
-                    continue;
-                }
-                if color[u] != 0 {
-                    continue;
-                }
-                q.push_back(u);
-                color[u] = cur;
-            }
-        }
-        cur += 1;
-    }
-
-    for &(a, b, c) in queries.iter() {
-        if color[a] != color[b] && color[a] == color[c] {
-            println!("NG");
-        } else {
-            println!("OK");
-        }
+    for &(a, b) in low_link.bridges.iter() {
+        println!("{} {}", a, b);
     }
 }
 
-struct BridgeDetector {
+struct LowLink {
     articulations: Vec<usize>,
     bridges: Vec<(usize, usize)>,
     visit: Vec<bool>,
@@ -117,9 +76,9 @@ struct BridgeDetector {
     k: usize,
 }
 
-impl BridgeDetector {
+impl LowLink {
     fn new(n: usize) -> Self {
-        BridgeDetector {
+        LowLink {
             articulations: vec![],
             bridges: vec![],
             visit: vec![false; n],
