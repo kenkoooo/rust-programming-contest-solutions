@@ -18,6 +18,13 @@ do
     done
 done
 
+cat << _EOF
+## CS Academy
+
+| Problem | Solution |
+|:--------|:-------- |
+_EOF
+
 for file in `ls ./archives/csacademy/`
 do
     problem_id=`echo ${file} | sed -e "s/\.rs$//g"`

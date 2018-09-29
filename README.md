@@ -194,6 +194,10 @@
 | [yahoo_procon2018_qual_b](https://beta.atcoder.jp/contests/yahoo-procon2018-qual/tasks/yahoo_procon2018_qual_b) | [yahoo_procon2018_qual_b.rs](./archives/atcoder/yahoo-procon2018-qual/yahoo_procon2018_qual_b.rs) |
 | [yahoo_procon2018_qual_c](https://beta.atcoder.jp/contests/yahoo-procon2018-qual/tasks/yahoo_procon2018_qual_c) | [yahoo_procon2018_qual_c.rs](./archives/atcoder/yahoo-procon2018-qual/yahoo_procon2018_qual_c.rs) |
 | [yahoo_procon2018_qual_d](https://beta.atcoder.jp/contests/yahoo-procon2018-qual/tasks/yahoo_procon2018_qual_d) | [yahoo_procon2018_qual_d.rs](./archives/atcoder/yahoo-procon2018-qual/yahoo_procon2018_qual_d.rs) |
+## CS Academy
+
+| Problem | Solution |
+|:--------|:-------- |
 | [cookie-clicker](https://csacademy.com/contest/archive/task/cookie-clicker) | [cookie-clicker.rs](./archives/csacademy/cookie-clicker.rs) |
 | [growing-segment](https://csacademy.com/contest/archive/task/growing-segment) | [growing-segment.rs](./archives/csacademy/growing-segment.rs) |
 | [palindrome-free-strings](https://csacademy.com/contest/archive/task/palindrome-free-strings) | [palindrome-free-strings.rs](./archives/csacademy/palindrome-free-strings.rs) |
