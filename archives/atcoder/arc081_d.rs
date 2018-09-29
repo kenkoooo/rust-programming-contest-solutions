@@ -1,176 +1,131 @@
-use std::cmp;
-use std::collections::VecDeque;
-
-trait TopQueue<T> {
-    fn top(&self) -> &T;
+/// Thank you tanakh!!!
+/// https://qiita.com/tanakh/items/0ba42c7ca36cd29d0ac8
+macro_rules! input {
+    (source = $s:expr, $($r:tt)*) => {
+        let mut iter = $s.split_whitespace();
+        input_inner!{iter, $($r)*}
+    };
+    ($($r:tt)*) => {
+        let mut s = {
+            use std::io::Read;
+            let mut s = String::new();
+            std::io::stdin().read_to_string(&mut s).unwrap();
+            s
+        };
+        let mut iter = s.split_whitespace();
+        input_inner!{iter, $($r)*}
+    };
 }
 
-impl<T> TopQueue<T> for VecDeque<T> {
-    fn top(&self) -> &T {
-        self.iter().next().unwrap()
-    }
+macro_rules! input_inner {
+    ($iter:expr) => {};
+    ($iter:expr, ) => {};
+
+    ($iter:expr, $var:ident : $t:tt $($r:tt)*) => {
+        let $var = read_value!($iter, $t);
+        input_inner!{$iter $($r)*}
+    };
 }
 
-fn calc_area(height: usize, width: usize) -> usize {
-    (height + 1) * (width + 1)
-}
+macro_rules! read_value {
+    ($iter:expr, ( $($t:tt),* )) => {
+        ( $(read_value!($iter, $t)),* )
+    };
 
-fn calc_max_rectangle(hist: &Vec<usize>) -> usize {
-    let n = hist.len();
-    let mut ans = 0;
-    let mut stack: VecDeque<(usize, usize)> = VecDeque::new();
+    ($iter:expr, [ $t:tt ; $len:expr ]) => {
+        (0..$len).map(|_| read_value!($iter, $t)).collect::<Vec<_>>()
+    };
 
-    for i in 0..n {
-        let mut reachable_min = i;
-        while !stack.is_empty() && stack.top().1 > hist[i] {
-            let (pos, height) = stack.pop_front().unwrap();
-            reachable_min = pos;
+    ($iter:expr, chars) => {
+        read_value!($iter, String).chars().collect::<Vec<char>>()
+    };
 
-            let area = calc_area(height, i - reachable_min);
-            ans = cmp::max(ans, area);
-        }
+    ($iter:expr, usize1) => {
+        read_value!($iter, usize) - 1
+    };
 
-        if stack.is_empty() || stack.top().1 < hist[i] {
-            stack.push_front((reachable_min, hist[i]));
-        }
-    }
-
-    while !stack.is_empty() {
-        let (pos, height) = stack.pop_front().unwrap();
-
-        let area = calc_area(n - pos, height);
-        ans = cmp::max(ans, area);
-    }
-    ans
+    ($iter:expr, $t:ty) => {
+        $iter.next().unwrap().parse::<$t>().expect("Parse error")
+    };
 }
 
 fn main() {
-    let mut sc = Scanner::new();
-    let h = sc.read();
-    let w: usize = sc.read();
-    let a: Vec<Vec<usize>> = (0..h)
-        .map(|_| {
-            sc.read::<String>()
-                .chars()
-                .map(|c| if c == '#' { 1 } else { 0 })
-                .collect()
-        }).collect();
+    input!(h: usize, w: usize, s: [chars; h]);
 
-    let w = w - 1;
-    let h = h - 1;
-    let mut map = vec![vec![false; w]; h];
-
-    for i in 0..h {
-        for j in 0..w {
-            let s = a[i][j] + a[i][j + 1] + a[i + 1][j] + a[i + 1][j + 1];
-            map[i][j] = s % 2 == 0;
+    let mut rectangle = vec![vec![false; w - 1]; h - 1];
+    for i in 0..(h - 1) {
+        for j in 0..(w - 1) {
+            let mut count = 0;
+            for t in 0..2 {
+                for u in 0..2 {
+                    if s[i + t][j + u] == '#' {
+                        count += 1;
+                    }
+                }
+            }
+            rectangle[i][j] = count % 2 == 0;
         }
     }
 
-    let mut hist = vec![vec![0; w]; h];
-    for i in 0..h {
-        for j in 0..w {
-            if !map[i][j] {
-                continue;
-            }
-            if i == 0 {
-                hist[i][j] = 1;
-            } else {
-                hist[i][j] = hist[i - 1][j] + 1;
-            }
-        }
-    }
-
-    let mut ans = cmp::max(w + 1, h + 1);
-    for i in 0..h {
-        ans = cmp::max(ans, calc_max_rectangle(&hist[i]));
-    }
-    println!("{}", ans);
+    let max = max_rectangle::maximize(&rectangle);
+    println!("{}", max);
 }
 
-trait CppDeque<S> {
-    fn top(&mut self) -> S;
-}
+pub mod max_rectangle {
+    use std::cmp;
+    use std::collections::VecDeque;
 
-struct Scanner {
-    ptr: usize,
-    length: usize,
-    buf: Vec<u8>,
-    small_cache: Vec<u8>,
-}
+    fn calc_area(h: usize, w: usize) -> usize {
+        (h + 1) * (w + 1)
+    }
 
-#[allow(dead_code)]
-impl Scanner {
-    fn new() -> Scanner {
-        Scanner {
-            ptr: 0,
-            length: 0,
-            buf: vec![0; 1024],
-            small_cache: vec![0; 1024],
+    fn calc(hist: &Vec<usize>) -> usize {
+        let n = hist.len();
+        let mut ans = 0;
+        let mut q: VecDeque<(usize, usize)> = VecDeque::new();
+
+        for i in 0..n {
+            let mut reachable_min = i;
+            while let Some((pos, height)) = q.pop_front() {
+                if height <= hist[i] {
+                    q.push_front((pos, height));
+                    break;
+                }
+                reachable_min = pos;
+                ans = cmp::max(ans, calc_area((i - reachable_min), height));
+            }
+
+            if q.is_empty() || q.iter().next().unwrap().1 < hist[i] {
+                q.push_front((reachable_min, hist[i]));
+            }
         }
+        while let Some((pos, height)) = q.pop_front() {
+            ans = cmp::max(ans, calc_area((n - pos), height));
+        }
+        ans
     }
 
-    fn load(&mut self) {
-        use std::io::Read;
-        let mut s = std::io::stdin();
-        self.length = s.read(&mut self.buf).unwrap();
-    }
-
-    fn byte(&mut self) -> u8 {
-        if self.ptr >= self.length {
-            self.ptr = 0;
-            self.load();
-            if self.length == 0 {
-                self.buf[0] = b'\n';
-                self.length = 1;
+    pub fn maximize(map: &Vec<Vec<bool>>) -> usize {
+        let h = map.len();
+        let w = map[0].len();
+        let mut hist = vec![vec![0; w]; h];
+        for i in 0..h {
+            for j in 0..w {
+                if !map[i][j] {
+                    continue;
+                }
+                if i == 0 {
+                    hist[i][j] = 1;
+                } else {
+                    hist[i][j] = hist[i - 1][j] + 1;
+                }
             }
         }
 
-        self.ptr += 1;
-        return self.buf[self.ptr - 1];
-    }
-
-    fn is_space(b: u8) -> bool {
-        b == b'\n' || b == b'\r' || b == b'\t' || b == b' '
-    }
-
-    fn read_vec<T>(&mut self, n: usize) -> Vec<T>
-    where
-        T: std::str::FromStr,
-        T::Err: std::fmt::Debug,
-    {
-        (0..n).map(|_| self.read()).collect()
-    }
-
-    fn usize_read(&mut self) -> usize {
-        self.read()
-    }
-
-    fn read<T>(&mut self) -> T
-    where
-        T: std::str::FromStr,
-        T::Err: std::fmt::Debug,
-    {
-        let mut b = self.byte();
-        while Scanner::is_space(b) {
-            b = self.byte();
+        let mut ans = cmp::max(h + 1, w + 1);
+        for i in 0..h {
+            ans = cmp::max(ans, calc(&hist[i]));
         }
-
-        for pos in 0..self.small_cache.len() {
-            self.small_cache[pos] = b;
-            b = self.byte();
-            if Scanner::is_space(b) {
-                return String::from_utf8_lossy(&self.small_cache[0..(pos + 1)])
-                    .parse()
-                    .unwrap();
-            }
-        }
-
-        let mut v = self.small_cache.clone();
-        while !Scanner::is_space(b) {
-            v.push(b);
-            b = self.byte();
-        }
-        return String::from_utf8_lossy(&v).parse().unwrap();
+        ans
     }
 }

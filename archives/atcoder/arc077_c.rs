@@ -1,158 +1,91 @@
+/// Thank you tanakh!!!
+/// https://qiita.com/tanakh/items/0ba42c7ca36cd29d0ac8
+macro_rules! input {
+    (source = $s:expr, $($r:tt)*) => {
+        let mut iter = $s.split_whitespace();
+        input_inner!{iter, $($r)*}
+    };
+    ($($r:tt)*) => {
+        let mut s = {
+            use std::io::Read;
+            let mut s = String::new();
+            std::io::stdin().read_to_string(&mut s).unwrap();
+            s
+        };
+        let mut iter = s.split_whitespace();
+        input_inner!{iter, $($r)*}
+    };
+}
+
+macro_rules! input_inner {
+    ($iter:expr) => {};
+    ($iter:expr, ) => {};
+
+    ($iter:expr, $var:ident : $t:tt $($r:tt)*) => {
+        let $var = read_value!($iter, $t);
+        input_inner!{$iter $($r)*}
+    };
+}
+
+macro_rules! read_value {
+    ($iter:expr, ( $($t:tt),* )) => {
+        ( $(read_value!($iter, $t)),* )
+    };
+
+    ($iter:expr, [ $t:tt ; $len:expr ]) => {
+        (0..$len).map(|_| read_value!($iter, $t)).collect::<Vec<_>>()
+    };
+
+    ($iter:expr, chars) => {
+        read_value!($iter, String).chars().collect::<Vec<char>>()
+    };
+
+    ($iter:expr, usize1) => {
+        read_value!($iter, usize) - 1
+    };
+
+    ($iter:expr, $t:ty) => {
+        $iter.next().unwrap().parse::<$t>().expect("Parse error")
+    };
+}
+
 use std::cmp;
-use std::collections::BinaryHeap;
-
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
-struct Seg {
-    head: usize,
-    tail: usize,
-}
-
-impl Ord for Seg {
-    fn cmp(&self, other: &Seg) -> cmp::Ordering {
-        other.tail.cmp(&self.tail)
-    }
-}
-
-impl PartialOrd for Seg {
-    fn partial_cmp(&self, other: &Seg) -> Option<cmp::Ordering> {
-        Some(self.cmp(other))
-    }
-}
 
 fn main() {
-    let mut sc = Scanner::new();
-    let n = sc.read();
-    let m = sc.read();
-    let a: Vec<usize> = sc.read_vec(n);
-
-    let mut tails: Vec<Vec<usize>> = vec![vec![]; m];
-    let mut total_distance = 0;
-    let mut current_decrease = 0;
-    let mut decreased_segments = BinaryHeap::new();
-    for i in 1..n {
-        let from = a[i - 1] - 1;
-        let to = a[i] - 1;
-        let distance = (to + m - from) % m;
-        total_distance += distance;
-        if from > to {
-            let warped = m - from - 1;
-            current_decrease += warped;
-            decreased_segments.push(Seg {
-                head: from,
-                tail: to,
-            });
-            tails[from].push(to + m);
-        } else {
-            tails[from].push(to);
-        }
+    input!(n: usize, m: usize, a: [usize1; n]);
+    let mut start = vec![vec![]; m];
+    let mut end = vec![vec![]; m];
+    for i in 0..(n - 1) {
+        let from = a[i];
+        let to = a[i + 1];
+        start[from].push(to);
+        end[to].push(from);
     }
 
-    let mut ans = total_distance - current_decrease;
-    for x in 1..m {
-        while let Some(Seg { head, tail }) = decreased_segments.pop() {
-            if tail < x {
-                assert!(tail == x - 1);
-                current_decrease -= (tail + m - head) % m - 1;
+    let mut total = 0;
+    let mut count = 0;
+    for from in 0..m {
+        for &to in start[from].iter() {
+            if from > to {
+                count += 1;
+                total += to + 1;
             } else {
-                decreased_segments.push(Seg {
-                    head: head,
-                    tail: tail,
-                });
-                break;
+                total += to - from;
             }
         }
-        current_decrease += decreased_segments.len();
-        ans = cmp::min(ans, total_distance - current_decrease);
-
-        for &tail in tails[x - 1].iter() {
-            decreased_segments.push(Seg {
-                head: x - 1,
-                tail: tail,
-            });
+    }
+    let mut ans = total;
+    for cur in 1..m {
+        for &from in end[cur - 1].iter() {
+            count -= 1;
+            let to = cur - 1;
+            total += (to + m - from) % m;
+            total -= 1;
         }
+        total -= count;
+
+        ans = cmp::min(ans, total);
+        count += start[cur - 1].len();
     }
     println!("{}", ans);
-}
-
-struct Scanner {
-    ptr: usize,
-    length: usize,
-    buf: Vec<u8>,
-    small_cache: Vec<u8>,
-}
-
-#[allow(dead_code)]
-impl Scanner {
-    fn new() -> Scanner {
-        Scanner {
-            ptr: 0,
-            length: 0,
-            buf: vec![0; 1024],
-            small_cache: vec![0; 1024],
-        }
-    }
-
-    fn load(&mut self) {
-        use std::io::Read;
-        let mut s = std::io::stdin();
-        self.length = s.read(&mut self.buf).unwrap();
-    }
-
-    fn byte(&mut self) -> u8 {
-        if self.ptr >= self.length {
-            self.ptr = 0;
-            self.load();
-            if self.length == 0 {
-                self.buf[0] = b'\n';
-                self.length = 1;
-            }
-        }
-
-        self.ptr += 1;
-        return self.buf[self.ptr - 1];
-    }
-
-    fn is_space(b: u8) -> bool {
-        b == b'\n' || b == b'\r' || b == b'\t' || b == b' '
-    }
-
-    fn read_vec<T>(&mut self, n: usize) -> Vec<T>
-    where
-        T: std::str::FromStr,
-        T::Err: std::fmt::Debug,
-    {
-        (0..n).map(|_| self.read()).collect()
-    }
-
-    fn usize_read(&mut self) -> usize {
-        self.read()
-    }
-
-    fn read<T>(&mut self) -> T
-    where
-        T: std::str::FromStr,
-        T::Err: std::fmt::Debug,
-    {
-        let mut b = self.byte();
-        while Scanner::is_space(b) {
-            b = self.byte();
-        }
-
-        for pos in 0..self.small_cache.len() {
-            self.small_cache[pos] = b;
-            b = self.byte();
-            if Scanner::is_space(b) {
-                return String::from_utf8_lossy(&self.small_cache[0..(pos + 1)])
-                    .parse()
-                    .unwrap();
-            }
-        }
-
-        let mut v = self.small_cache.clone();
-        while !Scanner::is_space(b) {
-            v.push(b);
-            b = self.byte();
-        }
-        return String::from_utf8_lossy(&v).parse().unwrap();
-    }
 }
