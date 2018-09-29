@@ -1,4 +1,4 @@
-# Solutions in Rust to coding problems
+# Rust solutions to coding problems 
 
 ## AtCoder
 
