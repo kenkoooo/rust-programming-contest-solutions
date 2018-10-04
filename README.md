@@ -65,6 +65,7 @@
 | [agc016_c](https://beta.atcoder.jp/contests/agc016/tasks/agc016_c) | [agc016_c.rs](./archives/atcoder/agc016/agc016_c.rs) |
 | [agc018_b](https://beta.atcoder.jp/contests/agc018/tasks/agc018_b) | [agc018_b.rs](./archives/atcoder/agc018/agc018_b.rs) |
 | [agc019_b](https://beta.atcoder.jp/contests/agc019/tasks/agc019_b) | [agc019_b.rs](./archives/atcoder/agc019/agc019_b.rs) |
+| [agc020_a](https://beta.atcoder.jp/contests/agc020/tasks/agc020_a) | [agc020_a.rs](./archives/atcoder/agc020/agc020_a.rs) |
 | [agc020_b](https://beta.atcoder.jp/contests/agc020/tasks/agc020_b) | [agc020_b.rs](./archives/atcoder/agc020/agc020_b.rs) |
 | [agc021_b](https://beta.atcoder.jp/contests/agc021/tasks/agc021_b) | [agc021_b.rs](./archives/atcoder/agc021/agc021_b.rs) |
 | [agc022_a](https://beta.atcoder.jp/contests/agc022/tasks/agc022_a) | [agc022_a.rs](./archives/atcoder/agc022/agc022_a.rs) |
@@ -170,6 +171,7 @@
 | [codefestival_2016_qualB_c](https://beta.atcoder.jp/contests/codefestival-2016-qualB/tasks/codefestival_2016_qualB_c) | [codefestival_2016_qualB_c.rs](./archives/atcoder/codefestival-2016-qualB/codefestival_2016_qualB_c.rs) |
 | [codefestival_2016_qualB_d](https://beta.atcoder.jp/contests/codefestival-2016-qualB/tasks/codefestival_2016_qualB_d) | [codefestival_2016_qualB_d.rs](./archives/atcoder/codefestival-2016-qualB/codefestival_2016_qualB_d.rs) |
 | [code_festival_2017_quala_c](https://beta.atcoder.jp/contests/code-festival-2017-quala/tasks/code_festival_2017_quala_c) | [code_festival_2017_quala_c.rs](./archives/atcoder/code-festival-2017-quala/code_festival_2017_quala_c.rs) |
+| [code_festival_2017_quala_d](https://beta.atcoder.jp/contests/code-festival-2017-quala/tasks/code_festival_2017_quala_d) | [code_festival_2017_quala_d.rs](./archives/atcoder/code-festival-2017-quala/code_festival_2017_quala_d.rs) |
 | [code_festival_2017_qualb_c](https://beta.atcoder.jp/contests/code-festival-2017-qualb/tasks/code_festival_2017_qualb_c) | [code_festival_2017_qualb_c.rs](./archives/atcoder/code-festival-2017-qualb/code_festival_2017_qualb_c.rs) |
 | [code_festival_2017_qualc_c](https://beta.atcoder.jp/contests/code-festival-2017-qualc/tasks/code_festival_2017_qualc_c) | [code_festival_2017_qualc_c.rs](./archives/atcoder/code-festival-2017-qualc/code_festival_2017_qualc_c.rs) |
 | [code_festival_2018_quala_a](https://beta.atcoder.jp/contests/code-festival-2018-quala/tasks/code_festival_2018_quala_a) | [code_festival_2018_quala_a.rs](./archives/atcoder/code-festival-2018-quala/code_festival_2018_quala_a.rs) |
