@@ -1,5 +1,5 @@
 /// Thank you tanakh!!!
-///  https://qiita.com/tanakh/items/0ba42c7ca36cd29d0ac8
+/// https://qiita.com/tanakh/items/0ba42c7ca36cd29d0ac8
 macro_rules! input {
     (source = $s:expr, $($r:tt)*) => {
         let mut iter = $s.split_whitespace();
@@ -52,42 +52,51 @@ macro_rules! read_value {
 use std::collections::VecDeque;
 
 fn main() {
-    input!(n: usize, m: usize, s: chars, edges: [(usize1, usize1); m]);
+    input!(n: usize, m: usize, s: chars, ab: [(usize1, usize1); m]);
 
-    let s: Vec<usize> = s.iter().map(|&c| if c == 'A' { 0 } else { 1 }).collect();
     let mut graph = vec![vec![]; n];
-    let mut count = vec![vec![0; 2]; n];
-    for i in 0..m {
-        let (from, to) = edges[i];
-        graph[from].push(to);
-        graph[to].push(from);
-        count[from][s[to]] += 1;
-        count[to][s[from]] += 1;
+    let mut a = vec![0; n];
+    let mut b = vec![0; n];
+    for &(a, b) in ab.iter() {
+        graph[a].push(b);
+        graph[b].push(a);
     }
 
-    let mut vis = vec![false; n];
-    let mut q = VecDeque::new();
     for i in 0..n {
-        if count[i][0] == 0 || count[i][1] == 0 {
-            vis[i] = true;
-            q.push_back(i);
+        for &next in graph[i].iter() {
+            if s[next] == 'A' {
+                a[i] += 1;
+            } else {
+                b[i] += 1;
+            }
         }
     }
 
-    while let Some(i) = q.pop_front() {
+    let mut visit = vec![false; n];
+    let mut queue = VecDeque::new();
+    for i in 0..n {
+        if a[i] == 0 || b[i] == 0 {
+            queue.push_back(i);
+            visit[i] = true;
+        }
+    }
+
+    while let Some(i) = queue.pop_front() {
         for &next in graph[i].iter() {
-            if vis[next] {
-                continue;
+            if s[i] == 'A' {
+                a[next] -= 1;
+            } else {
+                b[next] -= 1;
             }
-            count[next][s[i]] -= 1;
-            if count[next][s[i]] == 0 {
-                vis[next] = true;
-                q.push_back(next);
+            if (a[next] == 0 || b[next] == 0) && !visit[next] {
+                queue.push_back(next);
+                visit[next] = true;
             }
         }
     }
-    for &vis in vis.iter() {
-        if !vis {
+
+    for i in 0..n {
+        if !visit[i] {
             println!("Yes");
             return;
         }

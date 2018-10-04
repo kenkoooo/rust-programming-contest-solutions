@@ -49,44 +49,43 @@ macro_rules! read_value {
     };
 }
 
-use std::cmp;
-
-const INF: usize = 1e15 as usize;
+use std::collections::BTreeSet;
 
 fn main() {
-    input!(n: usize, p: [usize1; n - 1], x: [usize; n]);
-    let mut graph = vec![vec![]; n];
-    for child in 1..n {
-        let parent = p[child - 1];
-        graph[parent].push(child);
-    }
-    if dfs(0, &graph, &x) != INF {
-        println!("POSSIBLE");
-    } else {
-        println!("IMPOSSIBLE");
-    }
-}
-
-fn dfs(v: usize, graph: &Vec<Vec<usize>>, x: &Vec<usize>) -> usize {
-    let mut dp = vec![INF; x[v] + 1];
-    dp[0] = 0;
-
-    for &child in graph[v].iter() {
-        let mut next = vec![INF; x[v] + 1];
-        let black = x[child];
-        let white = dfs(child, graph, x);
-        for i in 0..(x[v] + 1) {
-            if dp[i] == INF {
-                continue;
-            }
-            if i + black <= x[v] {
-                next[i + black] = cmp::min(next[i + black], dp[i] + white);
-            }
-            if i + white <= x[v] {
-                next[i + white] = cmp::min(next[i + white], dp[i] + black);
+    input!(h: i64, w: i64, n: usize, ab: [(i64, i64); n]);
+    let mut count: Vec<i64> = vec![0; 10];
+    let set = ab.iter().map(|&(a, b)| (a, b)).collect::<BTreeSet<_>>();
+    let mut candidates = BTreeSet::new();
+    for &(a, b) in ab.iter() {
+        for da in (-1)..2 {
+            for db in (-1)..2 {
+                let a = a + da;
+                let b = b + db;
+                if a <= 1 || b <= 1 || a >= h || b >= w {
+                    continue;
+                }
+                candidates.insert((a, b));
             }
         }
-        dp = next;
     }
-    *dp.iter().min().unwrap()
+
+    for &(a, b) in candidates.iter() {
+        let mut c = 0;
+        for da in (-1)..2 {
+            for db in (-1)..2 {
+                let a = a + da;
+                let b = b + db;
+                if set.contains(&(a, b)) {
+                    c += 1;
+                }
+            }
+        }
+        count[c] += 1;
+    }
+
+    let sum = count.iter().sum::<i64>();
+    count[0] = (h - 2) * (w - 2) - sum;
+    for &count in count.iter() {
+        println!("{}", count);
+    }
 }

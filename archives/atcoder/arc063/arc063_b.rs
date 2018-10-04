@@ -50,43 +50,53 @@ macro_rules! read_value {
 }
 
 use std::cmp;
-
-const INF: usize = 1e15 as usize;
+use std::collections::{BTreeMap, BTreeSet};
 
 fn main() {
-    input!(n: usize, p: [usize1; n - 1], x: [usize; n]);
-    let mut graph = vec![vec![]; n];
-    for child in 1..n {
-        let parent = p[child - 1];
-        graph[parent].push(child);
-    }
-    if dfs(0, &graph, &x) != INF {
-        println!("POSSIBLE");
-    } else {
-        println!("IMPOSSIBLE");
-    }
-}
+    input!(n: usize, t: usize, a: [usize; n]);
 
-fn dfs(v: usize, graph: &Vec<Vec<usize>>, x: &Vec<usize>) -> usize {
-    let mut dp = vec![INF; x[v] + 1];
-    dp[0] = 0;
+    let mut value = 0;
+    let mut min = a[0];
+    let mut map = BTreeMap::new();
 
-    for &child in graph[v].iter() {
-        let mut next = vec![INF; x[v] + 1];
-        let black = x[child];
-        let white = dfs(child, graph, x);
-        for i in 0..(x[v] + 1) {
-            if dp[i] == INF {
-                continue;
-            }
-            if i + black <= x[v] {
-                next[i + black] = cmp::min(next[i + black], dp[i] + white);
-            }
-            if i + white <= x[v] {
-                next[i + white] = cmp::min(next[i + white], dp[i] + black);
+    for i in 0..n {
+        let a = a[i];
+        min = cmp::min(min, a);
+        value = cmp::max(value, a - min);
+        (*map.entry(a).or_insert(Vec::new())).push(i);
+    }
+
+    let mut candidates = BTreeSet::new();
+    for &a in a.iter() {
+        let next = a + value;
+        if map.contains_key(&next) {
+            candidates.insert((a, next));
+        }
+    }
+
+    let mut ans = 0;
+    for &(small, large) in candidates.iter() {
+        let small: &Vec<usize> = map.get(&small).unwrap();
+        let large: &Vec<usize> = map.get(&large).unwrap();
+
+        let mut small_count = 0;
+        let mut large_count = 0;
+        let first_small = small[0];
+        let last_large = large[large.len() - 1];
+        for &small in small.iter() {
+            if small < last_large {
+                small_count += 1;
             }
         }
-        dp = next;
+
+        for &large in large.iter() {
+            if large > first_small {
+                large_count += 1;
+            }
+        }
+
+        ans += cmp::min(small_count, large_count);
     }
-    *dp.iter().min().unwrap()
+
+    println!("{}", ans);
 }
