@@ -78,6 +78,7 @@
 | [agc024_c](https://beta.atcoder.jp/contests/agc024/tasks/agc024_c) | [agc024_c.rs](./archives/atcoder/agc024/agc024_c.rs) |
 | [agc024_d](https://beta.atcoder.jp/contests/agc024/tasks/agc024_d) | [agc024_d.rs](./archives/atcoder/agc024/agc024_d.rs) |
 | [agc026_b](https://beta.atcoder.jp/contests/agc026/tasks/agc026_b) | [agc026_b.rs](./archives/atcoder/agc026/agc026_b.rs) |
+| [agc026_c](https://beta.atcoder.jp/contests/agc026/tasks/agc026_c) | [agc026_c.rs](./archives/atcoder/agc026/agc026_c.rs) |
 | [agc027_a](https://beta.atcoder.jp/contests/agc027/tasks/agc027_a) | [agc027_a.rs](./archives/atcoder/agc027/agc027_a.rs) |
 | [agc027_b](https://beta.atcoder.jp/contests/agc027/tasks/agc027_b) | [agc027_b.rs](./archives/atcoder/agc027/agc027_b.rs) |
 | [agc027_c](https://beta.atcoder.jp/contests/agc027/tasks/agc027_c) | [agc027_c.rs](./archives/atcoder/agc027/agc027_c.rs) |
@@ -123,6 +124,7 @@
 | [arc082_d](https://beta.atcoder.jp/contests/arc082/tasks/arc082_d) | [arc082_d.rs](./archives/atcoder/arc082/arc082_d.rs) |
 | [arc083_b](https://beta.atcoder.jp/contests/arc083/tasks/arc083_b) | [arc083_b.rs](./archives/atcoder/arc083/arc083_b.rs) |
 | [arc083_c](https://beta.atcoder.jp/contests/arc083/tasks/arc083_c) | [arc083_c.rs](./archives/atcoder/arc083/arc083_c.rs) |
+| [arc084_b](https://beta.atcoder.jp/contests/arc084/tasks/arc084_b) | [arc084_b.rs](./archives/atcoder/arc084/arc084_b.rs) |
 | [arc085_b](https://beta.atcoder.jp/contests/arc085/tasks/arc085_b) | [arc085_b.rs](./archives/atcoder/arc085/arc085_b.rs) |
 | [arc086_b](https://beta.atcoder.jp/contests/arc086/tasks/arc086_b) | [arc086_b.rs](./archives/atcoder/arc086/arc086_b.rs) |
 | [arc087_b](https://beta.atcoder.jp/contests/arc087/tasks/arc087_b) | [arc087_b.rs](./archives/atcoder/arc087/arc087_b.rs) |
@@ -152,6 +154,7 @@
 | [arc099_b](https://beta.atcoder.jp/contests/arc099/tasks/arc099_b) | [arc099_b.rs](./archives/atcoder/arc099/arc099_b.rs) |
 | [arc099_c](https://beta.atcoder.jp/contests/arc099/tasks/arc099_c) | [arc099_c.rs](./archives/atcoder/arc099/arc099_c.rs) |
 | [arc100_b](https://beta.atcoder.jp/contests/arc100/tasks/arc100_b) | [arc100_b.rs](./archives/atcoder/arc100/arc100_b.rs) |
+| [arc101_b](https://beta.atcoder.jp/contests/arc101/tasks/arc101_b) | [arc101_b.rs](./archives/atcoder/arc101/arc101_b.rs) |
 | [arc103_a](https://beta.atcoder.jp/contests/arc103/tasks/arc103_a) | [arc103_a.rs](./archives/atcoder/arc103/arc103_a.rs) |
 | [arc103_c](https://beta.atcoder.jp/contests/arc103/tasks/arc103_c) | [arc103_c.rs](./archives/atcoder/arc103/arc103_c.rs) |
 | [bcu30_f](https://beta.atcoder.jp/contests/bcu30/tasks/bcu30_f) | [bcu30_f.rs](./archives/atcoder/bcu30/bcu30_f.rs) |
