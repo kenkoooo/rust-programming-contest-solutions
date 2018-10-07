@@ -1,6 +1,5 @@
-use std::cmp;
-use std::collections::BTreeSet;
-
+/// Thank you tanakh!!!
+/// https://qiita.com/tanakh/items/0ba42c7ca36cd29d0ac8
 macro_rules! input {
     (source = $s:expr, $($r:tt)*) => {
         let mut iter = $s.split_whitespace();
@@ -50,136 +49,115 @@ macro_rules! read_value {
     };
 }
 
+use std::collections::BTreeSet;
+
 fn main() {
-    input!{
-        n: usize,
-        q: usize,
-        x: [i64; n],
-        l: [i64; q],
-    }
-    let mut l: Vec<(i64, usize)> = (0..q).map(|i| (l[i], i)).collect();
-    l.sort();
+    input!(n: usize, q: usize, x: [i64; n], l: [i64; q]);
 
-    let mut x = {
-        let mut v: Vec<i64> = vec![0];
-        for &x in x.iter() {
-            while v.len() >= 2 && (v[v.len() - 2] < v[v.len() - 1]) == (v[v.len() - 1] < x) {
-                v.pop();
-            }
-            v.push(x);
+    let mut v: Vec<i64> = vec![0];
+    for &x in x.iter() {
+        while v.len() >= 2 && (v[v.len() - 2] < v[v.len() - 1]) == (v[v.len() - 1] < x) {
+            v.pop();
         }
-        v
-    };
+        v.push(x);
+    }
 
-    let mut offset = 0;
-    if x.len() >= 2 && x[1] < 0 {
-        offset = -x[1];
-        x.remove(0);
-        for x in x.iter_mut() {
-            *x += offset;
+    let mut total = 0;
+    if v.len() >= 2 && v[1] < 0 {
+        let t = -v[1];
+        v.remove(0);
+        for v in v.iter_mut() {
+            *v += t;
         }
+        total += t;
     }
 
-    let mut point_set = BTreeSet::new();
-    for i in 0..x.len() {
-        point_set.insert(i);
-    }
+    let n = v.len();
+    let x = v;
 
-    let mut edge_set = EdgeSet::new(offset);
-    for i in 1..x.len() {
-        edge_set.insert(i - 1, i, &x);
+    let mut set = BTreeSet::new();
+    let mut points = BTreeSet::new();
+    for i in 0..(x.len() - 1) {
+        let d = (x[i + 1] - x[i]).abs();
+        total += d;
+        set.insert((d, i));
+        points.insert(i);
     }
+    points.insert(x.len() - 1);
 
     let mut ans = vec![0; q];
-    for &(length, ans_id) in l.iter() {
-        while let Some(&(distance, i1, i2)) = edge_set.first() {
-            if distance >= length {
+    let mut queries = l
+        .iter()
+        .enumerate()
+        .map(|(i, &l)| (l, i))
+        .collect::<Vec<_>>();
+    queries.sort();
+
+    let mut prev_l = 0;
+    for &(l, q) in queries.iter() {
+        while let Some(&(d, i)) = set.iter().next() {
+            if d > l {
                 break;
             }
 
-            if edge_set.set.len() == 1 {
-                break;
-            }
+            let p1 = i;
+            let p2 = *points.range((p1 + 1)..).next().unwrap();
 
-            if i1 == 0 {
-                let &i3 = point_set.range((i2 + 1)..).next().unwrap();
+            points.remove(&p2);
+            set.remove(&(d, p1));
+            total -= d - prev_l;
 
-                edge_set.remove(i1, i2, &x);
-                edge_set.remove(i2, i3, &x);
-
-                x[i2] = length;
-                edge_set.insert(i1, i2, &x);
-                edge_set.insert(i2, i3, &x);
+            let p3 = points.range((p2 + 1)..).next().cloned();
+            if p3.is_none() {
                 continue;
             }
 
-            let i3 = point_set.range((i2 + 1)..).next().cloned();
-            if i3.is_none() {
-                edge_set.remove(i1, i2, &x);
-                point_set.remove(&i2);
+            let p3 = p3.unwrap();
+            let d = (x[p2] - x[p3]).abs();
+            set.remove(&(d, p2));
+            total -= d - prev_l;
+
+            let p0 = points.range(..p1).next_back().cloned();
+            if p0.is_none() {
+                points.remove(&p1);
+
+                assert!(x[p3] <= x[p1]);
+                total += x[p1] - x[p3];
                 continue;
             }
 
-            let &i0 = point_set.range(..i1).next_back().unwrap();
-            let i3 = i3.unwrap();
-            assert!((x[i0] < x[i1]) != (x[i1] < x[i2]));
-            assert!((x[i1] < x[i2]) != (x[i2] < x[i3]));
+            let p0 = p0.unwrap();
+            if (x[p0] - x[p1]).abs() < (x[p0] - x[p3]).abs() {
+                points.remove(&p1);
 
-            // remove i2
-            edge_set.remove(i1, i2, &x);
-            edge_set.remove(i2, i3, &x);
-            point_set.remove(&i2);
+                let d = (x[p0] - x[p1]).abs();
+                set.remove(&(d, p0));
+                total -= d - prev_l;
 
-            if (x[i0] - x[i1]).abs() > (x[i0] - x[i3]).abs() {
-                // remove i3
-                let &i4 = point_set.range((i3 + 1)..).next_back().unwrap();
-                point_set.remove(&i3);
-                edge_set.remove(i3, i4, &x);
-                edge_set.insert(i1, i4, &x);
+                let d = (x[p0] - x[p3]).abs();
+                set.insert((d, p0));
+                total += d - prev_l;
             } else {
-                // remove i1
-                point_set.remove(&i1);
-                edge_set.remove(i0, i1, &x);
-                edge_set.insert(i0, i3, &x);
+                points.remove(&p3);
+
+                if let Some(&p4) = points.range((p3 + 1)..).next() {
+                    let d = (x[p3] - x[p4]).abs();
+                    set.remove(&(d, p3));
+                    total -= d - prev_l;
+
+                    let d = (x[p1] - x[p4]).abs();
+                    set.insert((d, p1));
+                    total += d - prev_l;
+                }
             }
         }
 
-        ans[ans_id] = cmp::max(0, edge_set.total - (edge_set.set.len() as i64) * length);
+        total -= (l - prev_l) * (set.len() as i64);
+        ans[q] = total;
+        prev_l = l;
     }
+
     for &ans in ans.iter() {
         println!("{}", ans);
-    }
-}
-
-#[derive(Debug)]
-struct EdgeSet {
-    set: BTreeSet<(i64, usize, usize)>,
-    total: i64,
-}
-
-impl EdgeSet {
-    fn new(offset: i64) -> Self {
-        EdgeSet {
-            set: BTreeSet::new(),
-            total: offset,
-        }
-    }
-
-    fn insert(&mut self, from: usize, to: usize, x: &Vec<i64>) {
-        assert!(from < to);
-        let distance = (x[from] - x[to]).abs();
-        self.set.insert((distance, from, to));
-        self.total += distance;
-    }
-
-    fn remove(&mut self, from: usize, to: usize, x: &Vec<i64>) {
-        assert!(from < to);
-        let distance = (x[from] - x[to]).abs();
-        self.set.remove(&(distance, from, to));
-        self.total -= distance;
-    }
-
-    fn first(&self) -> Option<&(i64, usize, usize)> {
-        self.set.iter().next()
     }
 }

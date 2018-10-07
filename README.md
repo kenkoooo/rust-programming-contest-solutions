@@ -156,6 +156,7 @@
 | [arc100_b](https://beta.atcoder.jp/contests/arc100/tasks/arc100_b) | [arc100_b.rs](./archives/atcoder/arc100/arc100_b.rs) |
 | [arc101_b](https://beta.atcoder.jp/contests/arc101/tasks/arc101_b) | [arc101_b.rs](./archives/atcoder/arc101/arc101_b.rs) |
 | [arc103_a](https://beta.atcoder.jp/contests/arc103/tasks/arc103_a) | [arc103_a.rs](./archives/atcoder/arc103/arc103_a.rs) |
+| [arc103_b](https://beta.atcoder.jp/contests/arc103/tasks/arc103_b) | [arc103_b.rs](./archives/atcoder/arc103/arc103_b.rs) |
 | [arc103_c](https://beta.atcoder.jp/contests/arc103/tasks/arc103_c) | [arc103_c.rs](./archives/atcoder/arc103/arc103_c.rs) |
 | [bcu30_f](https://beta.atcoder.jp/contests/bcu30/tasks/bcu30_f) | [bcu30_f.rs](./archives/atcoder/bcu30/bcu30_f.rs) |
 | [bitflyer2018_final_b](https://beta.atcoder.jp/contests/bitflyer2018-final-open/tasks/bitflyer2018_final_b) | [bitflyer2018_final_b.rs](./archives/atcoder/bitflyer2018-final-open/bitflyer2018_final_b.rs) |
