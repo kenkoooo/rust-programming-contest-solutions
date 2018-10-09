@@ -67,6 +67,7 @@
 | [agc019_b](https://beta.atcoder.jp/contests/agc019/tasks/agc019_b) | [agc019_b.rs](./archives/atcoder/agc019/agc019_b.rs) |
 | [agc020_a](https://beta.atcoder.jp/contests/agc020/tasks/agc020_a) | [agc020_a.rs](./archives/atcoder/agc020/agc020_a.rs) |
 | [agc020_b](https://beta.atcoder.jp/contests/agc020/tasks/agc020_b) | [agc020_b.rs](./archives/atcoder/agc020/agc020_b.rs) |
+| [agc020_c](https://beta.atcoder.jp/contests/agc020/tasks/agc020_c) | [agc020_c.rs](./archives/atcoder/agc020/agc020_c.rs) |
 | [agc021_b](https://beta.atcoder.jp/contests/agc021/tasks/agc021_b) | [agc021_b.rs](./archives/atcoder/agc021/agc021_b.rs) |
 | [agc022_a](https://beta.atcoder.jp/contests/agc022/tasks/agc022_a) | [agc022_a.rs](./archives/atcoder/agc022/agc022_a.rs) |
 | [agc022_b](https://beta.atcoder.jp/contests/agc022/tasks/agc022_b) | [agc022_b.rs](./archives/atcoder/agc022/agc022_b.rs) |
@@ -190,6 +191,7 @@
 | [ddcc2017_final_b](https://beta.atcoder.jp/contests/ddcc2017-final/tasks/ddcc2017_final_b) | [ddcc2017_final_b.rs](./archives/atcoder/ddcc2017-final/ddcc2017_final_b.rs) |
 | [icpc2014summer_day4_f](https://beta.atcoder.jp/contests/icpc2014summer-day4/tasks/icpc2014summer_day4_f) | [icpc2014summer_day4_f.rs](./archives/atcoder/icpc2014summer-day4/icpc2014summer_day4_f.rs) |
 | [mujin_pc_2018_c](https://beta.atcoder.jp/contests/mujin-pc-2018/tasks/mujin_pc_2018_c) | [mujin_pc_2018_c.rs](./archives/atcoder/mujin-pc-2018/mujin_pc_2018_c.rs) |
+| [mujin_pc_2018_d](https://beta.atcoder.jp/contests/mujin-pc-2018/tasks/mujin_pc_2018_d) | [mujin_pc_2018_d.rs](./archives/atcoder/mujin-pc-2018/mujin_pc_2018_d.rs) |
 | [soundhound2018_c](https://beta.atcoder.jp/contests/soundhound2018/tasks/soundhound2018_c) | [soundhound2018_c.rs](./archives/atcoder/soundhound2018/soundhound2018_c.rs) |
 | [soundhound2018_d](https://beta.atcoder.jp/contests/soundhound2018/tasks/soundhound2018_d) | [soundhound2018_d.rs](./archives/atcoder/soundhound2018/soundhound2018_d.rs) |
 | [soundhound2018_summer_final_c](https://beta.atcoder.jp/contests/soundhound2018-summer-final/tasks/soundhound2018_summer_final_c) | [soundhound2018_summer_final_c.rs](./archives/atcoder/soundhound2018-summer-final/soundhound2018_summer_final_c.rs) |
