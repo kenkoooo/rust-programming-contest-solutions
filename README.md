@@ -78,6 +78,7 @@
 | [agc024_b](https://beta.atcoder.jp/contests/agc024/tasks/agc024_b) | [agc024_b.rs](./archives/atcoder/agc024/agc024_b.rs) |
 | [agc024_c](https://beta.atcoder.jp/contests/agc024/tasks/agc024_c) | [agc024_c.rs](./archives/atcoder/agc024/agc024_c.rs) |
 | [agc024_d](https://beta.atcoder.jp/contests/agc024/tasks/agc024_d) | [agc024_d.rs](./archives/atcoder/agc024/agc024_d.rs) |
+| [agc025_b](https://beta.atcoder.jp/contests/agc025/tasks/agc025_b) | [agc025_b.rs](./archives/atcoder/agc025/agc025_b.rs) |
 | [agc026_b](https://beta.atcoder.jp/contests/agc026/tasks/agc026_b) | [agc026_b.rs](./archives/atcoder/agc026/agc026_b.rs) |
 | [agc026_c](https://beta.atcoder.jp/contests/agc026/tasks/agc026_c) | [agc026_c.rs](./archives/atcoder/agc026/agc026_c.rs) |
 | [agc027_a](https://beta.atcoder.jp/contests/agc027/tasks/agc027_a) | [agc027_a.rs](./archives/atcoder/agc027/agc027_a.rs) |
@@ -202,6 +203,7 @@
 | [soundhound2018_summer_qual_e](https://beta.atcoder.jp/contests/soundhound2018-summer-qual/tasks/soundhound2018_summer_qual_e) | [soundhound2018_summer_qual_e.rs](./archives/atcoder/soundhound2018-summer-qual/soundhound2018_summer_qual_e.rs) |
 | [tenka1_2017_d](https://beta.atcoder.jp/contests/tenka1-2017/tasks/tenka1_2017_d) | [tenka1_2017_d.rs](./archives/atcoder/tenka1-2017/tenka1_2017_d.rs) |
 | [yahoo_procon2017_qual_c](https://beta.atcoder.jp/contests/yahoo-procon2017-qual/tasks/yahoo_procon2017_qual_c) | [yahoo_procon2017_qual_c.rs](./archives/atcoder/yahoo-procon2017-qual/yahoo_procon2017_qual_c.rs) |
+| [yahoo_procon2018_final_a](https://beta.atcoder.jp/contests/yahoo-procon2018-final/tasks/yahoo_procon2018_final_a) | [yahoo_procon2018_final_a.rs](./archives/atcoder/yahoo-procon2018-final/yahoo_procon2018_final_a.rs) |
 | [yahoo_procon2018_qual_a](https://beta.atcoder.jp/contests/yahoo-procon2018-qual/tasks/yahoo_procon2018_qual_a) | [yahoo_procon2018_qual_a.rs](./archives/atcoder/yahoo-procon2018-qual/yahoo_procon2018_qual_a.rs) |
 | [yahoo_procon2018_qual_b](https://beta.atcoder.jp/contests/yahoo-procon2018-qual/tasks/yahoo_procon2018_qual_b) | [yahoo_procon2018_qual_b.rs](./archives/atcoder/yahoo-procon2018-qual/yahoo_procon2018_qual_b.rs) |
 | [yahoo_procon2018_qual_c](https://beta.atcoder.jp/contests/yahoo-procon2018-qual/tasks/yahoo_procon2018_qual_c) | [yahoo_procon2018_qual_c.rs](./archives/atcoder/yahoo-procon2018-qual/yahoo_procon2018_qual_c.rs) |
