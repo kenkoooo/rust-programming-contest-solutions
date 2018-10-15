@@ -1,5 +1,5 @@
 /// Thank you tanakh!!!
-/// https://qiita.com/tanakh/items/0ba42c7ca36cd29d0ac8
+///  https://qiita.com/tanakh/items/0ba42c7ca36cd29d0ac8
 macro_rules! input {
     (source = $s:expr, $($r:tt)*) => {
         let mut iter = $s.split_whitespace();
@@ -51,46 +51,34 @@ macro_rules! read_value {
 
 use std::cmp;
 
-fn main() {
-    input!(n: usize, m: usize, x: [usize; n]);
-
-    let mut remainder = vec![vec![]; m];
-    for &x in x.iter() {
-        let r = x % m;
-        remainder[r].push(x);
-    }
-
+fn solve(mut a: Vec<i64>) -> usize {
+    let n = a.len();
     let mut ans = 0;
-    for i in 0..m {
-        if i == 0 || i * 2 == m {
-            ans += remainder[i].len() / 2;
-        } else if m - i < i {
-            break;
-        } else {
-            let j = m - i;
-
-            let len_i = remainder[i].len();
-            let len_j = remainder[j].len();
-            ans += cmp::min(len_i, len_j);
-
-            let t = if len_i > len_j { i } else { j };
-            remainder[t].sort();
-
-            let mut pair = 0;
-            let mut i = 1;
-            while i < remainder[t].len() {
-                if remainder[t][i - 1] == remainder[t][i] {
-                    pair += 1;
-                    i += 2;
-                } else {
-                    i += 1;
-                }
+    for i in 0..(n - 1) {
+        if i % 2 == 0 && a[i] < a[i + 1] {
+            if i + 2 < n && a[i + 1] > a[i + 2] && a[i] > a[i + 2] {
+                a.swap(i + 1, i + 2);
+            } else {
+                a.swap(i, i + 1);
             }
-
-            let remain = cmp::max(len_i, len_j) - cmp::min(len_i, len_j);
-            ans += cmp::min(remain / 2, pair);
+            ans += 1;
+        } else if i % 2 == 1 && a[i] > a[i + 1] {
+            if i + 2 < n && a[i + 1] < a[i + 2] && a[i] < a[i + 2] {
+                a.swap(i + 1, i + 2);
+            } else {
+                a.swap(i, i + 1);
+            }
+            ans += 1;
         }
     }
+    ans
+}
 
-    println!("{}", ans);
+fn main() {
+    input!(n: usize, a: [i64; n]);
+    let b: Vec<i64> = a.iter().map(|&i| -i).collect();
+
+    let a1 = solve(a);
+    let a2 = solve(b);
+    println!("{}", cmp::min(a1, a2));
 }

@@ -49,48 +49,42 @@ macro_rules! read_value {
     };
 }
 
-use std::cmp;
+fn lcm(a: usize, b: usize) -> usize {
+    let g = gcd(a, b);
+    a / g * b
+}
+
+fn gcd(a: usize, b: usize) -> usize {
+    if b == 0 {
+        a
+    } else {
+        gcd(b, a % b)
+    }
+}
 
 fn main() {
-    input!(n: usize, m: usize, x: [usize; n]);
+    input!(n: usize, m: usize, s: chars, t: chars);
 
-    let mut remainder = vec![vec![]; m];
-    for &x in x.iter() {
-        let r = x % m;
-        remainder[r].push(x);
-    }
+    let g = gcd(n, m);
+    let x = n / g;
+    let y = m / g;
+    let a = lcm(x, y) / y;
+    let b = lcm(x, y) / x;
+    // l = i*lcm = i * n/gcd *m
+    // a*l/n = i*y *a
+    // b*l/m = i*x *b
+    // a=lcm(x,y)/y
 
-    let mut ans = 0;
-    for i in 0..m {
-        if i == 0 || i * 2 == m {
-            ans += remainder[i].len() / 2;
-        } else if m - i < i {
+    for x in 0.. {
+        let i = n / g * x;
+        let j = m / g * x;
+        if i >= s.len() || j >= t.len() {
             break;
-        } else {
-            let j = m - i;
-
-            let len_i = remainder[i].len();
-            let len_j = remainder[j].len();
-            ans += cmp::min(len_i, len_j);
-
-            let t = if len_i > len_j { i } else { j };
-            remainder[t].sort();
-
-            let mut pair = 0;
-            let mut i = 1;
-            while i < remainder[t].len() {
-                if remainder[t][i - 1] == remainder[t][i] {
-                    pair += 1;
-                    i += 2;
-                } else {
-                    i += 1;
-                }
-            }
-
-            let remain = cmp::max(len_i, len_j) - cmp::min(len_i, len_j);
-            ans += cmp::min(remain / 2, pair);
+        }
+        if s[i] != t[j] {
+            println!("-1");
+            return;
         }
     }
-
-    println!("{}", ans);
+    println!("{}", lcm(n, m));
 }

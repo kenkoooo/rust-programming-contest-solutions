@@ -50,47 +50,53 @@ macro_rules! read_value {
 }
 
 use std::cmp;
+use std::collections::BinaryHeap;
 
-fn main() {
-    input!(n: usize, m: usize, x: [usize; n]);
+fn solve(ab: &Vec<(usize, usize)>) -> usize {
+    let n = ab.len();
+    let mut v = vec![];
+    for (i, &(a, b)) in ab.iter().enumerate() {
+        v.push((a, i));
+        v.push((b, i));
+    }
+    v.sort();
 
-    let mut remainder = vec![vec![]; m];
-    for &x in x.iter() {
-        let r = x % m;
-        remainder[r].push(x);
+    let mut used_count = vec![0; n];
+    let mut ans = 0;
+    for i in 0..n {
+        let (x, i) = v[i];
+        used_count[i] += 1;
+        ans += x;
     }
 
-    let mut ans = 0;
-    for i in 0..m {
-        if i == 0 || i * 2 == m {
-            ans += remainder[i].len() / 2;
-        } else if m - i < i {
-            break;
-        } else {
-            let j = m - i;
-
-            let len_i = remainder[i].len();
-            let len_j = remainder[j].len();
-            ans += cmp::min(len_i, len_j);
-
-            let t = if len_i > len_j { i } else { j };
-            remainder[t].sort();
-
-            let mut pair = 0;
-            let mut i = 1;
-            while i < remainder[t].len() {
-                if remainder[t][i - 1] == remainder[t][i] {
-                    pair += 1;
-                    i += 2;
-                } else {
-                    i += 1;
-                }
-            }
-
-            let remain = cmp::max(len_i, len_j) - cmp::min(len_i, len_j);
-            ans += cmp::min(remain / 2, pair);
+    for i in 0..n {
+        if used_count[i] == 2 {
+            return ans;
         }
     }
 
-    println!("{}", ans);
+    let mut min = 1e15 as usize;
+
+    for i in 0..n {
+        assert_eq!(used_count[i], 1);
+        let (a, b) = ab[i];
+        let ans = ans - cmp::min(a, b);
+        let (w, j) = v[n];
+        if j == i {
+            let (w, _) = v[n + 1];
+            min = cmp::min(min, ans + w);
+        } else {
+            min = cmp::min(min, ans + w);
+        }
+    }
+    min
+}
+
+fn main() {
+    input!(n: usize, ab: [(usize, usize); n]);
+
+    let ans0: usize = ab.iter().map(|&(a, _)| a).sum();
+    let ans1: usize = ab.iter().map(|&(_, b)| b).sum();
+    let ans2 = solve(&ab);
+    println!("{}", cmp::min(cmp::min(ans0, ans1), ans2));
 }

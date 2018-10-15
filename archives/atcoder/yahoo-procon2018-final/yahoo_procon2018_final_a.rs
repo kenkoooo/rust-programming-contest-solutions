@@ -73,13 +73,13 @@ fn main() {
     input!(n: usize, m: usize, a: [usize; n]);
 
     let primes = get_primes(350);
-    let mut divsors = vec![vec![]; m + 1];
+    let mut divisors = vec![vec![]; m + 1];
     let mut set = BTreeSet::new();
     for i in 1..(m + 1) {
         let mut a = i;
         for &prime in primes.iter() {
             if a % prime == 0 {
-                divsors[i].push(prime);
+                divisors[i].push(prime);
                 set.insert(prime);
                 while a % prime == 0 {
                     a /= prime;
@@ -90,7 +90,7 @@ fn main() {
             }
         }
         if a > 1 {
-            divsors[i].push(a);
+            divisors[i].push(a);
             set.insert(a);
         }
     }
@@ -101,7 +101,6 @@ fn main() {
         a_count[a] += 1;
     }
 
-    // divide_count[x] := a の中の x の倍数の数
     let mut divide_count = vec![0; m + 1];
     for i in 2..(m + 1) {
         let mut cur = i;
@@ -114,24 +113,22 @@ fn main() {
     }
 
     for i in 1..(m + 1) {
-        let divsors = &divsors[i];
-        let n = divsors.len();
+        let divisors = &divisors[i];
+        let n = divisors.len();
         let mut ans: i64 = 0;
         for mask in 1..(1 << n) {
             let mut count_ones = 0;
             let mut t = 1;
             for i in 0..n {
                 if mask & (1 << i) != 0 {
-                    t *= divsors[i];
+                    t *= divisors[i];
                     count_ones += 1;
                 }
             }
             let sum = divide_count[t] as i64;
             let sum = if count_ones % 2 == 1 { sum } else { -sum };
-            // println!("sum = {}", sum);
             ans += sum;
         }
         println!("{}", a.len() as i64 - ans);
     }
-    // println!("{:?}", divide_count);
 }
