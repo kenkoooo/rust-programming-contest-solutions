@@ -78,6 +78,7 @@
 | [agc024_b](https://beta.atcoder.jp/contests/agc024/tasks/agc024_b) | [agc024_b.rs](./archives/atcoder/agc024/agc024_b.rs) |
 | [agc024_c](https://beta.atcoder.jp/contests/agc024/tasks/agc024_c) | [agc024_c.rs](./archives/atcoder/agc024/agc024_c.rs) |
 | [agc024_d](https://beta.atcoder.jp/contests/agc024/tasks/agc024_d) | [agc024_d.rs](./archives/atcoder/agc024/agc024_d.rs) |
+| [agc025_b](https://beta.atcoder.jp/contests/agc025/tasks/agc025_b) | [agc025_b.rs](./archives/atcoder/agc025/agc025_b.rs) |
 | [agc026_b](https://beta.atcoder.jp/contests/agc026/tasks/agc026_b) | [agc026_b.rs](./archives/atcoder/agc026/agc026_b.rs) |
 | [agc026_c](https://beta.atcoder.jp/contests/agc026/tasks/agc026_c) | [agc026_c.rs](./archives/atcoder/agc026/agc026_c.rs) |
 | [agc027_a](https://beta.atcoder.jp/contests/agc027/tasks/agc027_a) | [agc027_a.rs](./archives/atcoder/agc027/agc027_a.rs) |
