@@ -1,86 +1,76 @@
-const MOD: i64 = 1_000_000_007;
+/// Thank you tanakh!!!
+/// https://qiita.com/tanakh/items/0ba42c7ca36cd29d0ac8
+macro_rules! input {
+    (source = $s:expr, $($r:tt)*) => {
+        let mut iter = $s.split_whitespace();
+        input_inner!{iter, $($r)*}
+    };
+    ($($r:tt)*) => {
+        let mut s = {
+            use std::io::Read;
+            let mut s = String::new();
+            std::io::stdin().read_to_string(&mut s).unwrap();
+            s
+        };
+        let mut iter = s.split_whitespace();
+        input_inner!{iter, $($r)*}
+    };
+}
+
+macro_rules! input_inner {
+    ($iter:expr) => {};
+    ($iter:expr, ) => {};
+
+    ($iter:expr, $var:ident : $t:tt $($r:tt)*) => {
+        let $var = read_value!($iter, $t);
+        input_inner!{$iter $($r)*}
+    };
+}
+
+macro_rules! read_value {
+    ($iter:expr, ( $($t:tt),* )) => {
+        ( $(read_value!($iter, $t)),* )
+    };
+
+    ($iter:expr, [ $t:tt ; $len:expr ]) => {
+        (0..$len).map(|_| read_value!($iter, $t)).collect::<Vec<_>>()
+    };
+
+    ($iter:expr, chars) => {
+        read_value!($iter, String).chars().collect::<Vec<char>>()
+    };
+
+    ($iter:expr, usize1) => {
+        read_value!($iter, usize) - 1
+    };
+
+    ($iter:expr, $t:ty) => {
+        $iter.next().unwrap().parse::<$t>().expect("Parse error")
+    };
+}
+
+const MOD: i64 = 1e9 as i64 + 7;
 
 fn main() {
-    let mut sc = Scanner::new();
-    let n: usize = sc.read();
-    let m: usize = sc.read();
-    let xs: Vec<i64> = (0..n).map(|_| sc.read()).collect();
-    let ys: Vec<i64> = (0..m).map(|_| sc.read()).collect();
+    input!(n: usize, m: usize, x: [i64; n], y: [i64; m]);
 
-    let mut top = 0;
-    for i in 0..(n - 1) {
-        let mut x = xs[i + 1] - xs[i];
-        x = (x * (i + 1) as i64) % MOD;
-        x = (x * (n - 1 - i) as i64) % MOD;
-        top = (top + x) % MOD;
-    }
+    let sum = |x: Vec<i64>| -> Vec<i64> {
+        let n = x.len();
+        let mut sum_x = vec![0; n - 1];
+        for i in 1..n {
+            let segment = x[i] - x[i - 1];
+            assert!(segment > 0);
+            let left = i as i64;
+            let right = (n - i) as i64;
+            let sum = (left * right) % MOD;
+            sum_x[i - 1] = (sum * segment) % MOD;
+        }
+        sum_x
+    };
 
-    let mut side = 0;
-    for i in 0..(m - 1) {
-        let mut y = ys[i + 1] - ys[i];
-        y = (y * (i + 1) as i64) % MOD;
-        y = (y * (m - 1 - i) as i64) % MOD;
-        side = (side + y) % MOD;
-    }
-
-    let ans = (top * side) % MOD;
-    println!("{}", ans);
+    let x = sum(x);
+    let y = sum(y);
+    let x: i64 = (x.iter().sum::<i64>()) % MOD;
+    let y: i64 = (y.iter().sum::<i64>()) % MOD;
+    println!("{}", (x * y) % MOD);
 }
-
-struct Scanner {
-    ptr: usize,
-    length: usize,
-    buf: Vec<u8>,
-    small_cache: Vec<u8>,
-}
-
-impl Scanner {
-    fn new() -> Scanner {
-        Scanner { ptr: 0, length: 0, buf: vec![0; 1024], small_cache: vec![0; 1024] }
-    }
-
-    fn load(&mut self) {
-        use std::io::Read;
-        let mut s = std::io::stdin();
-        self.length = s.read(&mut self.buf).unwrap();
-    }
-
-    fn byte(&mut self) -> u8 {
-        if self.ptr >= self.length {
-            self.ptr = 0;
-            self.load();
-            if self.length == 0 {
-                self.buf[0] = b'\n';
-                self.length = 1;
-            }
-        }
-
-        self.ptr += 1;
-        return self.buf[self.ptr - 1];
-    }
-
-    fn is_space(b: u8) -> bool { b == b'\n' || b == b'\r' || b == b'\t' || b == b' ' }
-
-    fn read<T>(&mut self) -> T where T: std::str::FromStr, T::Err: std::fmt::Debug, {
-        let mut b = self.byte();
-        while Scanner::is_space(b) {
-            b = self.byte();
-        }
-
-        for pos in 0..self.small_cache.len() {
-            self.small_cache[pos] = b;
-            b = self.byte();
-            if Scanner::is_space(b) {
-                return String::from_utf8_lossy(&self.small_cache[0..(pos + 1)]).parse().unwrap();
-            }
-        }
-
-        let mut v = self.small_cache.clone();
-        while !Scanner::is_space(b) {
-            v.push(b);
-            b = self.byte();
-        }
-        return String::from_utf8_lossy(&v).parse().unwrap();
-    }
-}
-

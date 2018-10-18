@@ -50,24 +50,5 @@ macro_rules! read_value {
 }
 
 fn main() {
-    input!(k: usize);
-    let n = 50;
-    let mut b = vec![k / n; n];
-    for i in 0..(k % n) {
-        b[i] += 1;
-    }
-
-    assert_eq!(b.iter().sum::<usize>(), k);
-    let mut upper_a = vec![0; n];
-    for i in 0..n {
-        upper_a[i] = (n + 1) * b[i] + (n - 1) - k;
-    }
-    println!("{}", n);
-    for i in 0..n {
-        if i > 0 {
-            print!(" ");
-        }
-        print!("{}", upper_a[i]);
-    }
-    println!();
+    input!(n: usize, l: usize, s: [chars; n]);
 }
