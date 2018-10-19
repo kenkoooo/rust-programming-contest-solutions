@@ -50,29 +50,19 @@ macro_rules! read_value {
 }
 
 fn main() {
-    input!(n: usize, a: [i64; n]);
+    input!(n: usize, ab: [(usize, usize); n]);
 
-    let mut seg = vec![];
-    let mut next_pop = 0;
-    let mut sum = 0;
-    let mut xor = 0;
-
-    for next_push in 0..n {
-        sum += a[next_push];
-        xor ^= a[next_push];
-        while next_pop < next_push && sum != xor {
-            sum -= a[next_pop];
-            xor ^= a[next_pop];
-            next_pop += 1;
-        }
-        assert_eq!(sum, xor);
-        seg.push((next_pop, next_push));
+    if !ab.iter().any(|&(a, b)| a != b) {
+        println!("0");
+        return;
     }
 
-    let mut ans = 0;
-    for &(next_pop, next_push) in seg.iter() {
-        let len = next_push - next_pop + 1;
-        ans += len;
-    }
-    println!("{}", ans);
+    let min = ab
+        .iter()
+        .filter(|&&(a, b)| a > b)
+        .map(|&(_, b)| b)
+        .min()
+        .unwrap();
+    let sum = ab.iter().map(|&(a, _)| a).sum::<usize>();
+    println!("{}", sum - min);
 }

@@ -149,6 +149,7 @@
 | [arc092_c](https://beta.atcoder.jp/contests/arc092/tasks/arc092_c) | [arc092_c.rs](./archives/atcoder/arc092/arc092_c.rs) |
 | [arc092_d](https://beta.atcoder.jp/contests/arc092/tasks/arc092_d) | [arc092_d.rs](./archives/atcoder/arc092/arc092_d.rs) |
 | [arc093_b](https://beta.atcoder.jp/contests/arc093/tasks/arc093_b) | [arc093_b.rs](./archives/atcoder/arc093/arc093_b.rs) |
+| [arc094_c](https://beta.atcoder.jp/contests/arc094/tasks/arc094_c) | [arc094_c.rs](./archives/atcoder/arc094/arc094_c.rs) |
 | [arc095_a](https://beta.atcoder.jp/contests/arc095/tasks/arc095_a) | [arc095_a.rs](./archives/atcoder/arc095/arc095_a.rs) |
 | [arc095_b](https://beta.atcoder.jp/contests/arc095/tasks/arc095_b) | [arc095_b.rs](./archives/atcoder/arc095/arc095_b.rs) |
 | [arc095_c](https://beta.atcoder.jp/contests/arc095/tasks/arc095_c) | [arc095_c.rs](./archives/atcoder/arc095/arc095_c.rs) |
