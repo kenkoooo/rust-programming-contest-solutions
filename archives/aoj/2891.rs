@@ -1,5 +1,5 @@
 /// Thank you tanakh!!!
-///  https://qiita.com/tanakh/items/0ba42c7ca36cd29d0ac8
+/// https://qiita.com/tanakh/items/0ba42c7ca36cd29d0ac8
 macro_rules! input {
     (source = $s:expr, $($r:tt)*) => {
         let mut iter = $s.split_whitespace();
@@ -49,66 +49,50 @@ macro_rules! read_value {
     };
 }
 
+use std::collections::VecDeque;
+
 fn main() {
     input!(
         n: usize,
-        edges: [(usize1, usize1); n],
+        uv: [(usize1, usize1); n],
         q: usize,
-        queries: [(usize1, usize1); q]
+        ab: [(usize1, usize1); q]
     );
 
     let mut graph = vec![vec![]; n];
-    for &(a, b) in edges.iter() {
-        graph[a].push(b);
-        graph[b].push(a);
+    for &(u, v) in uv.iter() {
+        graph[u].push(v);
+        graph[v].push(u);
     }
 
-    let mut used = vec![false; n];
-    let mut stack = Vec::new();
-    let result = dfs(&graph, 0, n, &mut used, &mut stack);
-    assert!(result != n);
-
-    let mut is_cycle = vec![false; n];
-    while let Some(v) = stack.pop() {
-        is_cycle[v] = true;
-        if v == result {
-            break;
+    let mut queue = VecDeque::new();
+    let mut visit_count = vec![0; n];
+    let mut visit = vec![false; n];
+    for i in 0..n {
+        if graph[i].len() == 1 {
+            queue.push_back(i);
+            visit[i] = true;
         }
     }
 
-    for &(a, b) in queries.iter() {
-        if is_cycle[a] && is_cycle[b] {
-            println!("2");
-        } else {
+    while let Some(v) = queue.pop_front() {
+        for &next in graph[v].iter() {
+            if visit[next] {
+                continue;
+            }
+            visit_count[next] += 1;
+            if visit_count[next] == graph[next].len() - 1 {
+                visit[next] = true;
+                queue.push_back(next);
+            }
+        }
+    }
+
+    for &(a, b) in ab.iter() {
+        if visit[a] || visit[b] {
             println!("1");
+        } else {
+            println!("2");
         }
     }
-}
-
-fn dfs(
-    graph: &Vec<Vec<usize>>,
-    v: usize,
-    p: usize,
-    used: &mut Vec<bool>,
-    stack: &mut Vec<usize>,
-) -> usize {
-    if used[v] {
-        return v;
-    }
-
-    let n = used.len();
-    used[v] = true;
-    stack.push(v);
-    for &next in graph[v].iter() {
-        if next == p {
-            continue;
-        }
-        let result = dfs(graph, next, v, used, stack);
-        if result != n {
-            return result;
-        }
-    }
-    stack.pop();
-    used[v] = false;
-    n
 }

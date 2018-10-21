@@ -1,5 +1,5 @@
 /// Thank you tanakh!!!
-///  https://qiita.com/tanakh/items/0ba42c7ca36cd29d0ac8
+/// https://qiita.com/tanakh/items/0ba42c7ca36cd29d0ac8
 macro_rules! input {
     (source = $s:expr, $($r:tt)*) => {
         let mut iter = $s.split_whitespace();
@@ -51,31 +51,29 @@ macro_rules! read_value {
 
 use std::cmp;
 
-const INF: usize = 1 << 30;
+const INF: usize = 1e15 as usize;
 
 fn main() {
-    input!(n: usize, s: [chars; n]);
-    let mut dictionary = vec![vec![]; 26];
+    input!(n: usize, words: [chars; n]);
+    let mut jump = vec![vec![]; 26];
+    let mut heads = vec![0; n];
     for i in 0..n {
-        let c = s[i][0] as usize - 'a' as usize;
-        dictionary[c].push(i);
+        let c = words[i][0] as usize - 'a' as usize;
+        jump[c].push(i);
+        heads[i] = c;
     }
 
-    let mut jump = vec![INF; n];
-    for i in 0..26 {
-        for j in 1..dictionary[i].len() {
-            jump[dictionary[i][j - 1]] = dictionary[i][j];
-        }
-    }
-
+    let mut next = vec![1; 26];
     let mut dp = vec![INF; n + 1];
     dp[0] = 0;
     for i in 0..n {
+        let c = heads[i];
         dp[i + 1] = cmp::min(dp[i + 1], dp[i] + 1);
-        if jump[i] != INF {
-            dp[jump[i]] = cmp::min(dp[jump[i]], dp[i]);
+        if next[c] < jump[c].len() {
+            let jump = jump[c][next[c]];
+            dp[jump] = cmp::min(dp[jump], dp[i]);
+            next[c] += 1;
         }
     }
-
     println!("{}", dp[n]);
 }
