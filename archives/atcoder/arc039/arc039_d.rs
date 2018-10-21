@@ -1,5 +1,5 @@
 /// Thank you tanakh!!!
-///  https://qiita.com/tanakh/items/0ba42c7ca36cd29d0ac8
+/// https://qiita.com/tanakh/items/0ba42c7ca36cd29d0ac8
 macro_rules! input {
     (source = $s:expr, $($r:tt)*) => {
         let mut iter = $s.split_whitespace();
@@ -48,149 +48,65 @@ macro_rules! read_value {
         $iter.next().unwrap().parse::<$t>().expect("Parse error")
     };
 }
-
 use std::cmp;
-use std::collections::{BTreeMap, BTreeSet, VecDeque};
+use std::collections::{BTreeSet, VecDeque};
 
 fn main() {
     input!(
         n: usize,
         m: usize,
-        edges: [(usize1, usize1); m],
+        xy: [(usize1, usize1); m],
         q: usize,
-        queries: [(usize1, usize1, usize1); q]
+        abc: [(usize1, usize1, usize1); q]
     );
-    solve(n, &edges, &queries);
-}
+    let mut graph = vec![vec![]; n];
+    for &(x, y) in xy.iter() {
+        graph[x].push(y);
+        graph[y].push(x);
+    }
 
-fn solve(n: usize, edges: &Vec<(usize, usize)>, queries: &Vec<(usize, usize, usize)>) {
-    let bridges = {
-        let mut graph = vec![vec![]; n];
-        for &(u, v) in edges.iter() {
-            graph[u].push(v);
-            graph[v].push(u);
-        }
-
-        let mut bridge_detector = BridgeDetector::new(n);
-        bridge_detector.run(&graph);
-
-        let mut bridges = BTreeSet::new();
-        for &(a, b) in bridge_detector.bridges.iter() {
-            bridges.insert((a, b));
-            bridges.insert((b, a));
-        }
-        bridges
-    };
-
+    let bridges = BridgeDetector::new(&graph)
+        .bridges
+        .iter()
+        .map(|&(x, y)| (x, y))
+        .collect::<BTreeSet<_>>();
     let mut uf = UnionFind::new(n);
-    for &(a, b) in edges.iter() {
-        if bridges.contains(&(a, b)) {
+    for &(x, y) in xy.iter() {
+        if bridges.contains(&(x, y)) || bridges.contains(&(y, x)) {
             continue;
         }
-        uf.unite(a, b);
+        uf.unite(x, y);
     }
 
-    let mut set = BTreeSet::new();
-    let mut find = vec![0; n];
+    let mut map = vec![n; n];
+    let mut n_tree = 0;
     for i in 0..n {
-        let f = uf.find(i);
-        let cur = set.len();
-        set.insert(f);
-        if cur == set.len() {
-            find[i] = find[f];
-        } else {
-            find[f] = cur;
-            find[i] = find[f];
+        let p = uf.find(i);
+        if map[p] == n {
+            map[p] = n_tree;
+            n_tree += 1;
         }
+        map[i] = map[p];
     }
 
-    let super_tree = {
-        let mut super_tree = vec![vec![]; set.len()];
-        for &(a, b) in edges.iter() {
-            let a = find[a];
-            let b = find[b];
-            if a == b {
-                continue;
-            }
-            super_tree[a].push(b);
-            super_tree[b].push(a);
-        }
-        super_tree
-    };
+    let n_tree = map.len();
+    let mut tree = vec![vec![]; n_tree];
+    for &(x, y) in bridges.iter() {
+        let x = map[x];
+        let y = map[y];
+        tree[x].push(y);
+        tree[y].push(x);
+    }
 
-    let lca = LowestCommonAncestor::new(&super_tree);
-    for &(a, b, c) in queries.iter() {
-        let (a, b, c) = (find[a], find[b], find[c]);
-
+    let lca = LowestCommonAncestor::new(&tree);
+    for &(a, b, c) in abc.iter() {
+        let a = map[a];
+        let b = map[b];
+        let c = map[c];
         if lca.get_dist(a, b) + lca.get_dist(b, c) == lca.get_dist(a, c) {
             println!("OK");
         } else {
             println!("NG");
-        }
-    }
-}
-
-struct BridgeDetector {
-    articulations: Vec<usize>,
-    bridges: Vec<(usize, usize)>,
-    visit: Vec<bool>,
-    ord: Vec<usize>,
-    low: Vec<usize>,
-    k: usize,
-}
-
-impl BridgeDetector {
-    fn new(n: usize) -> Self {
-        BridgeDetector {
-            articulations: vec![],
-            bridges: vec![],
-            visit: vec![false; n],
-            ord: vec![0; n],
-            low: vec![0; n],
-            k: 0,
-        }
-    }
-
-    fn run(&mut self, graph: &Vec<Vec<usize>>) {
-        let n = graph.len();
-        for i in 0..n {
-            if !self.visit[i] {
-                self.dfs(i, None, graph);
-            }
-        }
-    }
-    fn dfs(&mut self, v: usize, p: Option<usize>, graph: &Vec<Vec<usize>>) {
-        self.visit[v] = true;
-        self.ord[v] = self.k;
-        self.k += 1;
-        self.low[v] = self.ord[v];
-
-        let mut is_articulation = false;
-        let mut count = 0;
-        for &next in graph[v].iter() {
-            if !self.visit[next] {
-                count += 1;
-                self.dfs(next, Some(v), graph);
-                if self.low[v] > self.low[next] {
-                    self.low[v] = self.low[next];
-                }
-                if p.is_some() && self.ord[v] <= self.low[next] {
-                    is_articulation = true;
-                }
-                if self.ord[v] < self.low[next] {
-                    let (v, next) = if v < next { (v, next) } else { (next, v) };
-                    self.bridges.push((v, next));
-                }
-            } else if p.is_none() || next != p.unwrap() && self.low[v] > self.ord[next] {
-                self.low[v] = self.ord[next];
-            }
-        }
-
-        if p.is_none() && count > 1 {
-            is_articulation = true;
-        }
-        if is_articulation {
-            self.articulations.push(v);
         }
     }
 }
@@ -331,5 +247,74 @@ impl UnionFind {
         self.sizes[small] = 0;
         self.size -= 1;
         return true;
+    }
+}
+pub struct BridgeDetector {
+    articulations: Vec<usize>,
+    bridges: Vec<(usize, usize)>,
+    visit: Vec<bool>,
+    order: Vec<usize>,
+    low_link: Vec<usize>,
+    k: usize,
+}
+
+impl BridgeDetector {
+    pub fn new(graph: &Vec<Vec<usize>>) -> Self {
+        let n = graph.len();
+        let mut d = BridgeDetector {
+            articulations: vec![],
+            bridges: vec![],
+            visit: vec![false; n],
+            order: vec![0; n],
+            low_link: vec![0; n],
+            k: 0,
+        };
+        d.run(graph);
+        d
+    }
+
+    fn run(&mut self, graph: &Vec<Vec<usize>>) {
+        let n = graph.len();
+        for i in 0..n {
+            if !self.visit[i] {
+                self.dfs(i, 0, graph, i);
+            }
+        }
+    }
+
+    fn dfs(&mut self, v: usize, previous: usize, graph: &Vec<Vec<usize>>, root: usize) {
+        self.visit[v] = true;
+        self.order[v] = self.k;
+        self.k += 1;
+        self.low_link[v] = self.order[v];
+
+        let mut is_articulation = false;
+        let mut dimension = 0;
+        for &next in graph[v].iter() {
+            if !self.visit[next] {
+                // The edge (v->next) is not a backedge.
+                dimension += 1;
+                self.dfs(next, v, graph, root);
+                self.low_link[v] = cmp::min(self.low_link[v], self.low_link[next]);
+                if v != root && self.order[v] <= self.low_link[next] {
+                    is_articulation = true;
+                }
+                if self.order[v] < self.low_link[next] {
+                    let min = cmp::min(v, next);
+                    let max = cmp::max(v, next);
+                    self.bridges.push((min, max));
+                }
+            } else if v == root || next != previous {
+                // The edge (v->next) is a backedge.
+                self.low_link[v] = cmp::min(self.low_link[v], self.order[next]);
+            }
+        }
+
+        if v == root && dimension > 1 {
+            is_articulation = true;
+        }
+        if is_articulation {
+            self.articulations.push(v);
+        }
     }
 }

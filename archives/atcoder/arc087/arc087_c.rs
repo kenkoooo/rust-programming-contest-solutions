@@ -49,6 +49,61 @@ macro_rules! read_value {
     };
 }
 
+struct Node {
+    left: Option<Box<Node>>,
+    right: Option<Box<Node>>,
+}
+
+impl Node {
+    fn new() -> Self {
+        Node {
+            left: None,
+            right: None,
+        }
+    }
+    fn add(&mut self, s: &[char]) {
+        if s.is_empty() {
+        } else if s[0] == '0' {
+            let x: &mut Box<Node> = self.left.get_or_insert(Box::new(Node::new()));
+            x.add(&s[1..]);
+        } else {
+            let x: &mut Box<Node> = self.right.get_or_insert(Box::new(Node::new()));
+            x.add(&s[1..]);
+        }
+    }
+
+    fn dfs(&self, depth: usize, result: &mut Vec<usize>) {
+        if self.left.is_none() != self.right.is_none() {
+            result.push(depth);
+        }
+        if let Some(ref node) = self.left {
+            node.dfs(depth + 1, result);
+        }
+        if let Some(ref node) = self.right {
+            node.dfs(depth + 1, result);
+        }
+    }
+}
+
 fn main() {
     input!(n: usize, l: usize, s: [chars; n]);
+    let mut trie = Node::new();
+    for s in s.iter() {
+        trie.add(s);
+    }
+
+    let mut result = vec![];
+    trie.dfs(0, &mut result);
+
+    let grundy = result
+        .iter()
+        .map(|&result| {
+            let level = l - result;
+            let mut cur = 1;
+            while level % (cur * 2) == 0 {
+                cur *= 2;
+            }
+            cur
+        }).fold(0, |grundy, c| grundy ^ c);
+    println!("{}", if grundy == 0 { "Bob" } else { "Alice" });
 }
