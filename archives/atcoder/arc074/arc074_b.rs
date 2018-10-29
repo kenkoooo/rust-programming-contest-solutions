@@ -1,107 +1,113 @@
+/// Thank you tanakh!!!
+/// https://qiita.com/tanakh/items/0ba42c7ca36cd29d0ac8
+macro_rules! input {
+    (source = $s:expr, $($r:tt)*) => {
+        let mut iter = $s.split_whitespace();
+        input_inner!{iter, $($r)*}
+    };
+    ($($r:tt)*) => {
+        let mut s = {
+            use std::io::Read;
+            let mut s = String::new();
+            std::io::stdin().read_to_string(&mut s).unwrap();
+            s
+        };
+        let mut iter = s.split_whitespace();
+        input_inner!{iter, $($r)*}
+    };
+}
+
+macro_rules! input_inner {
+    ($iter:expr) => {};
+    ($iter:expr, ) => {};
+
+    ($iter:expr, $var:ident : $t:tt $($r:tt)*) => {
+        let $var = read_value!($iter, $t);
+        input_inner!{$iter $($r)*}
+    };
+}
+
+macro_rules! read_value {
+    ($iter:expr, ( $($t:tt),* )) => {
+        ( $(read_value!($iter, $t)),* )
+    };
+
+    ($iter:expr, [ $t:tt ; $len:expr ]) => {
+        (0..$len).map(|_| read_value!($iter, $t)).collect::<Vec<_>>()
+    };
+
+    ($iter:expr, chars) => {
+        read_value!($iter, String).chars().collect::<Vec<char>>()
+    };
+
+    ($iter:expr, usize1) => {
+        read_value!($iter, usize) - 1
+    };
+
+    ($iter:expr, $t:ty) => {
+        $iter.next().unwrap().parse::<$t>().expect("Parse error")
+    };
+}
+
 use std::collections::BinaryHeap;
+
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+struct MinUsize(i64);
+
+impl Ord for MinUsize {
+    fn cmp(&self, other: &MinUsize) -> std::cmp::Ordering {
+        other.0.cmp(&self.0)
+    }
+}
+
+impl PartialOrd for MinUsize {
+    fn partial_cmp(&self, other: &MinUsize) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
 use std::cmp;
 
 fn main() {
-    let mut sc = Scanner::new();
-    let n: usize = sc.read();
-    let a: Vec<i64> = (0..(3 * n)).map(|_| sc.read()).collect();
-    let mut prefix_sum = vec![0; 3 * n];
+    input!(n: usize, a: [i64; 3 * n]);
+
+    let mut bigger = vec![0; n + 1];
     let mut heap = BinaryHeap::new();
+    let mut sum = 0;
     for i in 0..n {
-        heap.push(-a[i]);
-        prefix_sum[i] = a[i];
-        if i > 0 {
-            prefix_sum[i] += prefix_sum[i - 1];
-        }
+        sum += a[i];
+        heap.push(MinUsize(a[i]));
+    }
+    for i in 0..(n + 1) {
+        bigger[i] = sum;
+        sum += a[i + n];
+        heap.push(MinUsize(a[i + n]));
+        let removed = heap.pop().unwrap().0;
+        sum -= removed;
+        assert_eq!(heap.len(), n);
     }
 
-    for i in n..(3 * n) {
-        let p = -heap.pop().unwrap();
-        let s = cmp::max(p, a[i]);
-        heap.push(-s);
-        prefix_sum[i] = prefix_sum[i - 1] - p + s;
+    let mut heap = BinaryHeap::new();
+    let mut sum = 0;
+    let mut smaller = vec![0; n + 1];
+    for i in 0..n {
+        sum += a[3 * n - 1 - i];
+        heap.push(a[3 * n - 1 - i]);
     }
 
-    heap.clear();
-    let mut suffix_sum = vec![0; 3 * n];
-    for i in ((2 * n)..(3 * n)).rev() {
-        heap.push(a[i]);
-        suffix_sum[i] = a[i];
-        if i < 3 * n - 1 {
-            suffix_sum[i] += suffix_sum[i + 1];
-        }
+    for i in 0..(n + 1) {
+        smaller[i] = sum;
+        let a = a[2 * n - 1 - i];
+        sum += a;
+        heap.push(a);
+        let removed = heap.pop().unwrap();
+        sum -= removed;
+        assert_eq!(heap.len(), n);
     }
 
-    for i in (0..(2 * n)).rev() {
-        let p = heap.pop().unwrap();
-        let s = cmp::min(p, a[i]);
-        heap.push(s);
-        suffix_sum[i] = suffix_sum[i + 1] - p + s;
+    let mut ans: i64 = std::i64::MIN;
+    for i in 0..(n + 1) {
+        ans = cmp::max(ans, bigger[n - i] - smaller[i]);
     }
-
-    let mut max = std::i64::MIN;
-    for i in n..(2 * n + 1) {
-        let prefix = prefix_sum[i - 1];
-        let suffix = suffix_sum[i];
-        max = cmp::max(max, prefix - suffix);
-    }
-    println!("{}", max);
+    println!("{}", ans);
 }
-
-struct Scanner {
-    ptr: usize,
-    length: usize,
-    buf: Vec<u8>,
-    small_cache: Vec<u8>,
-}
-
-impl Scanner {
-    fn new() -> Scanner {
-        Scanner { ptr: 0, length: 0, buf: vec![0; 1024], small_cache: vec![0; 1024] }
-    }
-
-    fn load(&mut self) {
-        use std::io::Read;
-        let mut s = std::io::stdin();
-        self.length = s.read(&mut self.buf).unwrap();
-    }
-
-    fn byte(&mut self) -> u8 {
-        if self.ptr >= self.length {
-            self.ptr = 0;
-            self.load();
-            if self.length == 0 {
-                self.buf[0] = b'\n';
-                self.length = 1;
-            }
-        }
-
-        self.ptr += 1;
-        return self.buf[self.ptr - 1];
-    }
-
-    fn is_space(b: u8) -> bool { b == b'\n' || b == b'\r' || b == b'\t' || b == b' ' }
-
-    fn read<T>(&mut self) -> T where T: std::str::FromStr, T::Err: std::fmt::Debug, {
-        let mut b = self.byte();
-        while Scanner::is_space(b) {
-            b = self.byte();
-        }
-
-        for pos in 0..self.small_cache.len() {
-            self.small_cache[pos] = b;
-            b = self.byte();
-            if Scanner::is_space(b) {
-                return String::from_utf8_lossy(&self.small_cache[0..(pos + 1)]).parse().unwrap();
-            }
-        }
-
-        let mut v = self.small_cache.clone();
-        while !Scanner::is_space(b) {
-            v.push(b);
-            b = self.byte();
-        }
-        return String::from_utf8_lossy(&v).parse().unwrap();
-    }
-}
-
