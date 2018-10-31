@@ -1,148 +1,113 @@
-fn main() {
-    let mut sc = Scanner::new();
-    let n: usize = sc.read();
-    let s: Vec<char> = sc.read::<String>().chars().collect();
+/// Thank you tanakh!!!
+/// https://qiita.com/tanakh/items/0ba42c7ca36cd29d0ac8
+macro_rules! input {
+    (source = $s:expr, $($r:tt)*) => {
+        let mut iter = $s.split_whitespace();
+        input_inner!{iter, $($r)*}
+    };
+    ($($r:tt)*) => {
+        let mut s = {
+            use std::io::Read;
+            let mut s = String::new();
+            std::io::stdin().read_to_string(&mut s).unwrap();
+            s
+        };
+        let mut iter = s.split_whitespace();
+        input_inner!{iter, $($r)*}
+    };
+}
 
-    let check = |sheep: &mut Vec<bool>| {
-        for pos in 2..n {
-            if sheep[pos - 1] {
-                if s[pos - 1] == 'o' {
-                    sheep[pos] = sheep[pos - 2];
-                } else {
-                    sheep[pos] = !sheep[pos - 2];
-                }
-            } else {
-                if s[pos - 1] != 'o' {
-                    sheep[pos] = sheep[pos - 2];
-                } else {
-                    sheep[pos] = !sheep[pos - 2];
-                }
-            }
-        }
-        for i in 0..n {
-            if sheep[i] {
-                if s[i] == 'o' && sheep[(i - 1 + n) % n] != sheep[(i + 1) % n] {
-                    return false;
-                }
-                if s[i] == 'x' && sheep[(i - 1 + n) % n] == sheep[(i + 1) % n] {
-                    return false;
-                }
-            } else {
-                if s[i] == 'x' && sheep[(i - 1 + n) % n] != sheep[(i + 1) % n] {
-                    return false;
-                }
-                if s[i] == 'o' && sheep[(i - 1 + n) % n] == sheep[(i + 1) % n] {
-                    return false;
-                }
-            }
-        }
-        return true;
+macro_rules! input_inner {
+    ($iter:expr) => {};
+    ($iter:expr, ) => {};
+
+    ($iter:expr, $var:ident : $t:tt $($r:tt)*) => {
+        let $var = read_value!($iter, $t);
+        input_inner!{$iter $($r)*}
+    };
+}
+
+macro_rules! read_value {
+    ($iter:expr, ( $($t:tt),* )) => {
+        ( $(read_value!($iter, $t)),* )
     };
 
-    let out = |sheep: &Vec<bool>| {
-        for i in 0..n {
-            if sheep[i] {
-                print!("S");
-            } else {
-                print!("W");
+    ($iter:expr, [ $t:tt ; $len:expr ]) => {
+        (0..$len).map(|_| read_value!($iter, $t)).collect::<Vec<_>>()
+    };
+
+    ($iter:expr, chars) => {
+        read_value!($iter, String).chars().collect::<Vec<char>>()
+    };
+
+    ($iter:expr, usize1) => {
+        read_value!($iter, usize) - 1
+    };
+
+    ($iter:expr, $t:ty) => {
+        $iter.next().unwrap().parse::<$t>().expect("Parse error")
+    };
+}
+
+fn solve(s: &Vec<char>, first: bool, second: bool) -> Option<Vec<bool>> {
+    let n = s.len();
+    let mut is_wolf = vec![false; n];
+    is_wolf[0] = first;
+    is_wolf[1] = second;
+    for i in 1..(n - 1) {
+        let prev = i - 1;
+        let next = i + 1;
+        match (s[i], is_wolf[i]) {
+            ('o', true) => {
+                is_wolf[next] = !is_wolf[prev];
             }
+            ('x', true) => {
+                is_wolf[next] = is_wolf[prev];
+            }
+            ('o', false) => {
+                is_wolf[next] = is_wolf[prev];
+            }
+            ('x', false) => {
+                is_wolf[next] = !is_wolf[prev];
+            }
+            _ => unreachable!(),
+        }
+    }
+    let honest = (s[n - 1] == 'o') == (is_wolf[n - 2] == is_wolf[0]);
+    if (!honest) != is_wolf[n - 1] {
+        return None;
+    }
+
+    let honest = (s[0] == 'o') == (is_wolf[n - 1] == is_wolf[1]);
+    if (!honest) != is_wolf[0] {
+        return None;
+    }
+    Some(is_wolf)
+}
+
+fn main() {
+    input!(n: usize, s: chars);
+    if let Some(is_wolf) = solve(&s, true, true) {
+        for &is_wolf in is_wolf.iter() {
+            print!("{}", if is_wolf { "W" } else { "S" });
         }
         println!();
-    };
-
-    let mut sheep = vec![true; n];
-    if check(&mut sheep) {
-        out(&sheep);
-        return;
-    }
-
-    sheep[0] = true;
-    sheep[1] = false;
-    if check(&mut sheep) {
-        out(&sheep);
-        return;
-    }
-    sheep[0] = false;
-    sheep[1] = true;
-    if check(&mut sheep) {
-        out(&sheep);
-        return;
-    }
-    sheep[0] = false;
-    sheep[1] = false;
-    if check(&mut sheep) {
-        out(&sheep);
-        return;
-    }
-    println!("-1");
-}
-
-struct Scanner {
-    ptr: usize,
-    length: usize,
-    buf: Vec<u8>,
-    small_cache: Vec<u8>,
-}
-
-impl Scanner {
-    fn new() -> Scanner {
-        Scanner {
-            ptr: 0,
-            length: 0,
-            buf: vec![0; 1024],
-            small_cache: vec![0; 1024],
+    } else if let Some(is_wolf) = solve(&s, true, false) {
+        for &is_wolf in is_wolf.iter() {
+            print!("{}", if is_wolf { "W" } else { "S" });
         }
-    }
-
-    fn load(&mut self) {
-        use std::io::Read;
-        let mut s = std::io::stdin();
-        self.length = s.read(&mut self.buf).unwrap();
-    }
-
-    fn byte(&mut self) -> u8 {
-        if self.ptr >= self.length {
-            self.ptr = 0;
-            self.load();
-            if self.length == 0 {
-                self.buf[0] = b'\n';
-                self.length = 1;
-            }
+        println!();
+    } else if let Some(is_wolf) = solve(&s, false, true) {
+        for &is_wolf in is_wolf.iter() {
+            print!("{}", if is_wolf { "W" } else { "S" });
         }
-
-        self.ptr += 1;
-        return self.buf[self.ptr - 1];
-    }
-
-    fn is_space(b: u8) -> bool {
-        b == b'\n' || b == b'\r' || b == b'\t' || b == b' '
-    }
-
-    fn read<T>(&mut self) -> T
-    where
-        T: std::str::FromStr,
-        T::Err: std::fmt::Debug,
-    {
-        let mut b = self.byte();
-        while Scanner::is_space(b) {
-            b = self.byte();
+        println!();
+    } else if let Some(is_wolf) = solve(&s, false, false) {
+        for &is_wolf in is_wolf.iter() {
+            print!("{}", if is_wolf { "W" } else { "S" });
         }
-
-        for pos in 0..self.small_cache.len() {
-            self.small_cache[pos] = b;
-            b = self.byte();
-            if Scanner::is_space(b) {
-                return String::from_utf8_lossy(&self.small_cache[0..(pos + 1)])
-                    .parse()
-                    .unwrap();
-            }
-        }
-
-        let mut v = self.small_cache.clone();
-        while !Scanner::is_space(b) {
-            v.push(b);
-            b = self.byte();
-        }
-        return String::from_utf8_lossy(&v).parse().unwrap();
+        println!();
+    } else {
+        println!("-1");
     }
 }

@@ -51,6 +51,7 @@
 | [agc003_c](https://beta.atcoder.jp/contests/agc003/tasks/agc003_c) | [agc003_c.rs](./archives/atcoder/agc003/agc003_c.rs) |
 | [agc003_d](https://beta.atcoder.jp/contests/agc003/tasks/agc003_d) | [agc003_d.rs](./archives/atcoder/agc003/agc003_d.rs) |
 | [agc004_c](https://beta.atcoder.jp/contests/agc004/tasks/agc004_c) | [agc004_c.rs](./archives/atcoder/agc004/agc004_c.rs) |
+| [agc004_d](https://beta.atcoder.jp/contests/agc004/tasks/agc004_d) | [agc004_d.rs](./archives/atcoder/agc004/agc004_d.rs) |
 | [agc005_c](https://beta.atcoder.jp/contests/agc005/tasks/agc005_c) | [agc005_c.rs](./archives/atcoder/agc005/agc005_c.rs) |
 | [agc008_b](https://beta.atcoder.jp/contests/agc008/tasks/agc008_b) | [agc008_b.rs](./archives/atcoder/agc008/agc008_b.rs) |
 | [agc008_c](https://beta.atcoder.jp/contests/agc008/tasks/agc008_c) | [agc008_c.rs](./archives/atcoder/agc008/agc008_c.rs) |
@@ -169,6 +170,8 @@
 | [arc100_b](https://beta.atcoder.jp/contests/arc100/tasks/arc100_b) | [arc100_b.rs](./archives/atcoder/arc100/arc100_b.rs) |
 | [arc100_c](https://beta.atcoder.jp/contests/arc100/tasks/arc100_c) | [arc100_c.rs](./archives/atcoder/arc100/arc100_c.rs) |
 | [arc101_b](https://beta.atcoder.jp/contests/arc101/tasks/arc101_b) | [arc101_b.rs](./archives/atcoder/arc101/arc101_b.rs) |
+| [arc102_b](https://beta.atcoder.jp/contests/arc102/tasks/arc102_b) | [arc102_b.rs](./archives/atcoder/arc102/arc102_b.rs) |
+| [arc102_c](https://beta.atcoder.jp/contests/arc102/tasks/arc102_c) | [arc102_c.rs](./archives/atcoder/arc102/arc102_c.rs) |
 | [arc103_a](https://beta.atcoder.jp/contests/arc103/tasks/arc103_a) | [arc103_a.rs](./archives/atcoder/arc103/arc103_a.rs) |
 | [arc103_b](https://beta.atcoder.jp/contests/arc103/tasks/arc103_b) | [arc103_b.rs](./archives/atcoder/arc103/arc103_b.rs) |
 | [arc103_c](https://beta.atcoder.jp/contests/arc103/tasks/arc103_c) | [arc103_c.rs](./archives/atcoder/arc103/arc103_c.rs) |
@@ -202,10 +205,12 @@
 | [code_thanks_festival_2017_f](https://beta.atcoder.jp/contests/code-thanks-festival-2017/tasks/code_thanks_festival_2017_f) | [code_thanks_festival_2017_f.rs](./archives/atcoder/code-thanks-festival-2017/code_thanks_festival_2017_f.rs) |
 | [colopl2018_final_b](https://beta.atcoder.jp/contests/colopl2018-final/tasks/colopl2018_final_b) | [colopl2018_final_b.rs](./archives/atcoder/colopl2018-final/colopl2018_final_b.rs) |
 | [colopl2018_qual_c](https://beta.atcoder.jp/contests/colopl2018-qual/tasks/colopl2018_qual_c) | [colopl2018_qual_c.rs](./archives/atcoder/colopl2018-qual/colopl2018_qual_c.rs) |
+| [ddcc_2016_final_b](https://beta.atcoder.jp/contests/ddcc2016-final/tasks/ddcc_2016_final_b) | [ddcc_2016_final_b.rs](./archives/atcoder/ddcc2016-final/ddcc_2016_final_b.rs) |
 | [ddcc2017_final_b](https://beta.atcoder.jp/contests/ddcc2017-final/tasks/ddcc2017_final_b) | [ddcc2017_final_b.rs](./archives/atcoder/ddcc2017-final/ddcc2017_final_b.rs) |
 | [icpc2014summer_day4_f](https://beta.atcoder.jp/contests/icpc2014summer-day4/tasks/icpc2014summer_day4_f) | [icpc2014summer_day4_f.rs](./archives/atcoder/icpc2014summer-day4/icpc2014summer_day4_f.rs) |
 | [mujin_pc_2018_c](https://beta.atcoder.jp/contests/mujin-pc-2018/tasks/mujin_pc_2018_c) | [mujin_pc_2018_c.rs](./archives/atcoder/mujin-pc-2018/mujin_pc_2018_c.rs) |
 | [mujin_pc_2018_d](https://beta.atcoder.jp/contests/mujin-pc-2018/tasks/mujin_pc_2018_d) | [mujin_pc_2018_d.rs](./archives/atcoder/mujin-pc-2018/mujin_pc_2018_d.rs) |
+| [mujin_pc_2018_e](https://beta.atcoder.jp/contests/mujin-pc-2018/tasks/mujin_pc_2018_e) | [mujin_pc_2018_e.rs](./archives/atcoder/mujin-pc-2018/mujin_pc_2018_e.rs) |
 | [soundhound2018_c](https://beta.atcoder.jp/contests/soundhound2018/tasks/soundhound2018_c) | [soundhound2018_c.rs](./archives/atcoder/soundhound2018/soundhound2018_c.rs) |
 | [soundhound2018_d](https://beta.atcoder.jp/contests/soundhound2018/tasks/soundhound2018_d) | [soundhound2018_d.rs](./archives/atcoder/soundhound2018/soundhound2018_d.rs) |
 | [soundhound2018_summer_final_c](https://beta.atcoder.jp/contests/soundhound2018-summer-final/tasks/soundhound2018_summer_final_c) | [soundhound2018_summer_final_c.rs](./archives/atcoder/soundhound2018-summer-final/soundhound2018_summer_final_c.rs) |
@@ -215,6 +220,9 @@
 | [soundhound2018_summer_qual_d](https://beta.atcoder.jp/contests/soundhound2018-summer-qual/tasks/soundhound2018_summer_qual_d) | [soundhound2018_summer_qual_d.rs](./archives/atcoder/soundhound2018-summer-qual/soundhound2018_summer_qual_d.rs) |
 | [soundhound2018_summer_qual_e](https://beta.atcoder.jp/contests/soundhound2018-summer-qual/tasks/soundhound2018_summer_qual_e) | [soundhound2018_summer_qual_e.rs](./archives/atcoder/soundhound2018-summer-qual/soundhound2018_summer_qual_e.rs) |
 | [tenka1_2017_d](https://beta.atcoder.jp/contests/tenka1-2017/tasks/tenka1_2017_d) | [tenka1_2017_d.rs](./archives/atcoder/tenka1-2017/tenka1_2017_d.rs) |
+| [tenka1_2018_c](https://beta.atcoder.jp/contests/tenka1-2018/tasks/tenka1_2018_c) | [tenka1_2018_c.rs](./archives/atcoder/tenka1-2018/tenka1_2018_c.rs) |
+| [tenka1_2018_d](https://beta.atcoder.jp/contests/tenka1-2018/tasks/tenka1_2018_d) | [tenka1_2018_d.rs](./archives/atcoder/tenka1-2018/tenka1_2018_d.rs) |
+| [tenka1_2018_e](https://beta.atcoder.jp/contests/tenka1-2018/tasks/tenka1_2018_e) | [tenka1_2018_e.rs](./archives/atcoder/tenka1-2018/tenka1_2018_e.rs) |
 | [yahoo_procon2017_qual_c](https://beta.atcoder.jp/contests/yahoo-procon2017-qual/tasks/yahoo_procon2017_qual_c) | [yahoo_procon2017_qual_c.rs](./archives/atcoder/yahoo-procon2017-qual/yahoo_procon2017_qual_c.rs) |
 | [yahoo_procon2018_final_a](https://beta.atcoder.jp/contests/yahoo-procon2018-final/tasks/yahoo_procon2018_final_a) | [yahoo_procon2018_final_a.rs](./archives/atcoder/yahoo-procon2018-final/yahoo_procon2018_final_a.rs) |
 | [yahoo_procon2018_qual_a](https://beta.atcoder.jp/contests/yahoo-procon2018-qual/tasks/yahoo_procon2018_qual_a) | [yahoo_procon2018_qual_a.rs](./archives/atcoder/yahoo-procon2018-qual/yahoo_procon2018_qual_a.rs) |
