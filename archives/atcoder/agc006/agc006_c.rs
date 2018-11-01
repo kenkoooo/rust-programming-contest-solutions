@@ -49,42 +49,46 @@ macro_rules! read_value {
     };
 }
 
-fn f(b: usize, mut n: usize) -> usize {
-    let mut result = 0;
-    while n > 0 {
-        result += n % b;
-        n /= b;
-    }
-    result
-}
-
 fn main() {
-    input!(n: usize, s: usize);
-    for b in 2..1000000 {
-        if f(b, n) == s {
-            println!("{}", b);
-            return;
+    input!(n: usize, x: [f64; n], m: usize, k: usize, a: [usize1; m]);
+    let mut swap: Vec<Vec<usize>> = vec![(0..(n - 1)).map(|i| i).collect()];
+    let mut s = swap[0].clone();
+    for &a in a.iter() {
+        s.swap(a - 1, a);
+    }
+    swap.push(s);
+    for i in 1..64 {
+        let mut next = vec![0; n - 1];
+        {
+            let ref prev = &swap[i];
+            for i in 0..(n - 1) {
+                next[i] = prev[prev[i]];
+            }
+        }
+        swap.push(next);
+    }
+
+    let mut operations: Vec<usize> = (0..(n - 1)).map(|i| i).collect();
+    for i in 0..64 {
+        if (1 << i) & k != 0 {
+            let mut next = operations.clone();
+            for j in 0..(n - 1) {
+                next[j] = operations[swap[i + 1][j]];
+            }
+            operations = next;
         }
     }
 
-    if n > s {
-        for p in (1..1000000).rev() {
-            if (n - s) % p != 0 {
-                continue;
-            }
-            let b = (n - s) / p + 1;
-            if f(b, n) == s {
-                println!("{}", b);
-                return;
-            }
-        }
+    let num = operations
+        .iter()
+        .map(|&i| x[i + 1] - x[i])
+        .collect::<Vec<_>>();
+    let mut ans = vec![0.0; n];
+    ans[0] = x[0];
+    for i in 1..n {
+        ans[i] = ans[i - 1] + num[i - 1];
     }
-
-    if s == 1 {
-        println!("{}", n);
-    } else if n == s {
-        println!("{}", n + 1);
-    } else {
-        println!("-1");
+    for &ans in ans.iter() {
+        println!("{}", ans);
     }
 }
