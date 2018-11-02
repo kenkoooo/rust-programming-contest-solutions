@@ -55,35 +55,31 @@ const INF: usize = 1e15 as usize;
 
 fn main() {
     input!(n: usize, p: [usize1; n - 1], x: [usize; n]);
-    let mut graph = vec![vec![]; n];
+    let mut tree = vec![vec![]; n];
     for child in 1..n {
         let parent = p[child - 1];
-        graph[parent].push(child);
+        tree[parent].push(child);
     }
-    if dfs(0, &graph, &x) != INF {
+    if dfs(0, &tree, &x) != INF {
         println!("POSSIBLE");
     } else {
         println!("IMPOSSIBLE");
     }
 }
 
-fn dfs(v: usize, graph: &Vec<Vec<usize>>, x: &Vec<usize>) -> usize {
+fn dfs(v: usize, tree: &Vec<Vec<usize>>, x: &Vec<usize>) -> usize {
     let mut dp = vec![INF; x[v] + 1];
     dp[0] = 0;
-
-    for &child in graph[v].iter() {
+    for &child in tree[v].iter() {
         let mut next = vec![INF; x[v] + 1];
-        let black = x[child];
-        let white = dfs(child, graph, x);
+        let white = x[child];
+        let black = dfs(child, tree, x);
         for i in 0..(x[v] + 1) {
-            if dp[i] == INF {
-                continue;
+            if i + white <= x[v] {
+                next[i + white] = cmp::min(next[i + white], dp[i] + black);
             }
             if i + black <= x[v] {
                 next[i + black] = cmp::min(next[i + black], dp[i] + white);
-            }
-            if i + white <= x[v] {
-                next[i + white] = cmp::min(next[i + white], dp[i] + black);
             }
         }
         dp = next;

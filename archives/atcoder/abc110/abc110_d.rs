@@ -53,39 +53,32 @@ const MOD: usize = 1e9 as usize + 7;
 
 fn main() {
     input!(n: usize, m: usize);
-
-    let map = {
-        let mut map = vec![];
-        let mut m = m;
-        for p in 2..100000 {
-            if m % p != 0 {
-                continue;
-            }
+    let mut m = m;
+    let mut divisors = vec![];
+    for i in 2.. {
+        if m % i == 0 {
             let mut count = 0;
-            while m % p == 0 {
-                m /= p;
+            while m % i == 0 {
+                m /= i;
                 count += 1;
             }
-            map.push(count);
+            divisors.push((i, count));
         }
-        if m > 1 {
-            map.push(1);
+        if i * i > m {
+            break;
         }
-        map
-    };
-
-    let combination = Combination::new(1000000, MOD);
-
-    let mut ans = 1;
-    for &count in map.iter() {
-        ans *= combination.fact[n - 1 + count];
-        ans %= MOD;
-        ans *= combination.inv_fact[n - 1];
-        ans %= MOD;
-        ans *= combination.inv_fact[count];
-        ans %= MOD;
+    }
+    if m != 1 {
+        divisors.push((m, 1));
     }
 
+    let comb = Combination::new(1000000, MOD);
+
+    let mut ans = 1;
+    for &(_, count) in divisors.iter() {
+        ans *= comb.get(n + count - 1, count);
+        ans %= MOD;
+    }
     println!("{}", ans);
 }
 

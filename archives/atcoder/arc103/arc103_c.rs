@@ -54,97 +54,52 @@ use std::collections::BTreeSet;
 
 fn main() {
     input!(s: chars);
-    let mut can_build = vec![true; s.len() + 1];
-    for i in 0..s.len() {
-        can_build[i + 1] = s[i] == '1';
+    let n = s.len();
+    let s = s.iter().map(|&c| c == '1').collect::<Vec<_>>();
+    if !s[0] || s[n - 1] {
+        println!("-1");
+        return;
     }
 
-    match solve(&can_build) {
-        Some(result) => for &(a, b) in result.iter() {
-            println!("{} {}", a, b);
-        },
-        None => {
+    let mut tree = vec![vec![]; n];
+    let mut cur = 0;
+    let mut cur_size = 1;
+
+    for i in 0..(n - 1) {
+        let one = i + 1;
+        let other = n - one;
+        if s[one - 1] != s[other - 1] {
             println!("-1");
+            return;
         }
-    }
-}
-
-fn solve(can_build: &Vec<bool>) -> Option<Vec<(usize, usize)>> {
-    let n = can_build.len() - 1;
-    if !can_build[1] || can_build[n] {
-        return None;
-    }
-
-    let mut v = vec![];
-    for i in 1..n {
-        if can_build[i] {
-            v.push(i);
+        if !s[i] {
+            continue;
         }
-    }
 
-    for i in 0..v.len() {
-        if v[i] + v[v.len() - 1 - i] != n {
-            return None;
-        }
-    }
-    assert_eq!(v[0], 1);
-    if v.len() == 2 {
-        let mut result = vec![];
-        for i in 1..n {
-            result.push((1, i + 1));
-        }
-        return Some(result);
-    }
-
-    let m = v.len();
-    let mut graph = vec![vec![]; n];
-    graph[0].push(1);
-    graph[1].push(0);
-    let mut tail = n - 1;
-    for i in 1..m {
-        graph[i].push(i + 1);
-        graph[i + 1].push(i);
-        let required = v[i] - v[i - 1] - 1;
-        for _ in 0..required {
-            graph[i].push(tail);
-            graph[tail].push(i);
-            tail -= 1;
-            if tail == 0 {
-                return None;
+        let have_to_add = one - cur_size + 1;
+        for _ in 0..have_to_add {
+            if cur_size == n {
+                println!("-1");
+                return;
             }
+            let v = cur_size;
+            tree[cur].push(v);
+            tree[v].push(cur);
+            cur_size += 1;
         }
-        if v[i] * 2 == n {
-            for _ in 1..v[i] {
-                if tail == i {
-                    return None;
-                }
-                graph[i + 1].push(tail);
-                graph[tail].push(i + 1);
-                tail -= 1;
-            }
-            break;
-        }
-        if v[i] + v[i + 1] == n {
-            for _ in 1..v[i + 1] {
-                if tail == i {
-                    return None;
-                }
-                graph[i + 1].push(tail);
-                graph[tail].push(i + 1);
-                tail -= 1;
-            }
-            break;
-        }
+        cur = cur_size - 1;
     }
 
     let mut set = BTreeSet::new();
-    for i in 0..n {
-        for &j in graph[i].iter() {
-            assert!(i != j);
-            let x = cmp::min(i, j);
-            let y = cmp::max(i, j);
-            set.insert((x, y));
+    for from in 0..n {
+        for &to in tree[from].iter() {
+            let (a, b) = (cmp::min(from, to), cmp::max(from, to));
+            set.insert((a, b));
         }
     }
-    Some(set.iter().map(|&(x, y)| (x + 1, y + 1)).collect())
+
+    assert_eq!(set.len(), n - 1);
+    for &(a, b) in set.iter() {
+        println!("{} {}", a + 1, b + 1);
+    }
 }
