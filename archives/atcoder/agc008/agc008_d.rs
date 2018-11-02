@@ -49,44 +49,54 @@ macro_rules! read_value {
     };
 }
 
-fn f(b: usize, mut n: usize) -> usize {
-    let mut res = 0;
-    while n > 0 {
-        res += n % b;
-        n /= b;
-    }
-    res
-}
+use std::collections::VecDeque;
 
 fn main() {
-    input!(n: usize, s: usize);
-
-    for b in 2..1000000 {
-        if f(b, n) == s {
-            println!("{}", b);
-            return;
-        }
+    input!(n: usize, x: [usize1; n]);
+    let mut ans = vec![0; n * n];
+    for i in 0..n {
+        ans[x[i]] = i + 1;
     }
 
-    // s =p+q, n=pb + q
-    if n > s {
-        for p in (1..1000000).rev() {
-            if (n - s) % p != 0 {
-                continue;
-            }
-            let b = (n - s) / p + 1;
-            if f(b, n) == s {
-                println!("{}", b);
+    let mut q = VecDeque::new();
+    for i in 0..(n * n) {
+        if ans[i] == 0 {
+            q.push_back(i);
+        } else {
+            if q.len() < ans[i] - 1 {
+                println!("No");
                 return;
             }
+            for _ in 0..(ans[i] - 1) {
+                let j = q.pop_front().unwrap();
+                ans[j] = ans[i];
+            }
         }
     }
 
-    if s == 1 {
-        println!("{}", n);
-    } else if n == s {
-        println!("{}", n + 1);
-    } else {
-        println!("{}", -1);
+    q.clear();
+    for i in (0..(n * n)).rev() {
+        if ans[i] == 0 {
+            q.push_back(i);
+        } else if x[ans[i] - 1] == i {
+            let rest = n - ans[i];
+            if q.len() < rest {
+                println!("No");
+                return;
+            }
+            for _ in 0..rest {
+                let j = q.pop_front().unwrap();
+                ans[j] = ans[i];
+            }
+        }
     }
+
+    println!("Yes");
+    for i in 0..(n * n) {
+        if i > 0 {
+            print!(" ");
+        }
+        print!("{}", ans[i]);
+    }
+    println!();
 }
