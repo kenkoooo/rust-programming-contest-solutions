@@ -49,53 +49,49 @@ macro_rules! read_value {
     };
 }
 
-use std::cmp;
-
 const MOD: usize = 1e9 as usize + 7;
 
-fn solve(n: usize, k: usize, b: &Vec<usize>) -> usize {
-    let mut dp = vec![vec![vec![0; 2]; k + 1]; n + 1];
+fn main() {
+    input!(n: usize, k: usize, a: [usize; n]);
+    let mut count = vec![0; n];
+    for i in 0..n {
+        let mut a = a[i];
+        while a > 0 {
+            a /= 2;
+            count[i] += 1;
+        }
+    }
+    let sum = count.iter().sum::<usize>();
+    let mut dp = vec![vec![vec![0; 2]; sum + 1]; n + 1];
     dp[0][0][0] = 1;
 
     for i in 0..n {
-        for j in (0..(k + 1)).rev() {
-            for t in 0..(b[i] + 1) {
-                if j + t > k {
-                    break;
-                }
-                dp[i + 1][j + t][1] += dp[i][j][1];
-                dp[i + 1][j + t][1] %= MOD;
-                if t == b[i] {
-                    dp[i + 1][j + t][1] += dp[i][j][0];
-                    dp[i + 1][j + t][1] %= MOD;
-                } else {
-                    dp[i + 1][j + t][0] += dp[i][j][0];
-                    dp[i + 1][j + t][0] %= MOD;
+        for j in 0..dp[i].len() {
+            for c in 0..(count[i] + 1) {
+                for mark in 0..2 {
+                    if j + c > sum {
+                        break;
+                    }
+                    let next_mark = if mark == 1 || c == count[i] { 1 } else { 0 };
+                    dp[i + 1][j + c][next_mark] += dp[i][j][mark];
+                    dp[i + 1][j + c][next_mark] %= MOD;
                 }
             }
         }
     }
 
     let mut ans = 0;
-    for i in 0..(k + 1) {
-        ans += dp[n][i][1];
-    }
-    (ans + dp[n][k][0]) % MOD
-}
-fn main() {
-    input!(n: usize, k: usize, a: [usize; n]);
-    let mut b = vec![0; n];
-    for i in 0..n {
-        let mut a = a[i];
-        let mut count = 0;
-        while a > 0 {
-            count += 1;
-            a /= 2;
+    for i in 0..dp[n].len() {
+        if i > k {
+            break;
         }
-        b[i] = count;
+        for m in 0..2 {
+            if i < k && m != 1 {
+                continue;
+            }
+            ans += dp[n][i][m];
+            ans %= MOD;
+        }
     }
-
-    let k = cmp::min(k, b.iter().sum());
-    let ans = solve(n, k, &b);
     println!("{}", ans);
 }
