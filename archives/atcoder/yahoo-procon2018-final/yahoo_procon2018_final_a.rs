@@ -49,86 +49,103 @@ macro_rules! read_value {
     };
 }
 
-fn get_primes(n: usize) -> Vec<usize> {
-    let mut is_prime = vec![true; n + 1];
-    is_prime[0] = false;
-    is_prime[1] = false;
-    let mut primes = vec![];
-    for i in 2..(n + 1) {
-        if is_prime[i] {
-            primes.push(i);
-            let mut pos = i * 2;
-            while pos < is_prime.len() {
-                is_prime[pos] = false;
-                pos += i;
-            }
-        }
-    }
-    primes
-}
-
-use std::collections::BTreeSet;
+use std::cmp;
 
 fn main() {
     input!(n: usize, m: usize, a: [usize; n]);
 
-    let primes = get_primes(350);
-    let mut divisors = vec![vec![]; m + 1];
-    let mut set = BTreeSet::new();
-    for i in 1..(m + 1) {
-        let mut a = i;
-        for &prime in primes.iter() {
-            if a % prime == 0 {
-                divisors[i].push(prime);
-                set.insert(prime);
-                while a % prime == 0 {
-                    a /= prime;
+    let mut is_prime = vec![true; 320];
+    is_prime[0] = false;
+    is_prime[1] = false;
+    for i in 0..is_prime.len() {
+        if is_prime[i] {
+            let mut cur = i * 2;
+            while cur < is_prime.len() {
+                is_prime[cur] = false;
+                cur += i;
+            }
+        }
+    }
+
+    let mut primes = vec![];
+    for i in 0..is_prime.len() {
+        if is_prime[i] {
+            primes.push(i);
+        }
+    }
+
+    let mut count = vec![0; 100001];
+    for &a in a.iter() {
+        let mut a = a;
+        let mut ps = vec![];
+        for &p in primes.iter() {
+            if a % p == 0 {
+                ps.push(p);
+                while a % p == 0 {
+                    a /= p;
                 }
             }
-            if prime * prime > a {
+            if a == 1 {
                 break;
             }
         }
         if a > 1 {
-            divisors[i].push(a);
-            set.insert(a);
+            ps.push(a);
         }
-    }
 
-    let max: usize = *a.iter().max().unwrap();
-    let mut a_count = vec![0; max + 1];
-    for &a in a.iter() {
-        a_count[a] += 1;
-    }
-
-    let mut divide_count = vec![0; m + 1];
-    for i in 2..(m + 1) {
-        let mut cur = i;
-        let mut count = 0;
-        while cur <= max {
-            count += a_count[cur];
-            cur += i;
+        let n = ps.len();
+        for mask in 1..(1 << n) {
+            let mut cur = 1;
+            for i in 0..n {
+                if mask & (1 << i) != 0 {
+                    cur *= ps[i];
+                }
+            }
+            count[cur] += 1;
         }
-        divide_count[i] = count;
     }
 
     for i in 1..(m + 1) {
-        let divisors = &divisors[i];
-        let n = divisors.len();
-        let mut ans: i64 = 0;
-        for mask in 1..(1 << n) {
-            let mut count_ones = 0;
-            let mut t = 1;
-            for i in 0..n {
-                if mask & (1 << i) != 0 {
-                    t *= divisors[i];
-                    count_ones += 1;
+        if i == 1 {
+            println!("{}", n);
+            continue;
+        }
+
+        let mut div = vec![];
+        let mut cur = i;
+        for &p in primes.iter() {
+            if cur % p == 0 {
+                div.push(p);
+                while cur % p == 0 {
+                    cur /= p;
                 }
             }
-            let sum = divide_count[t] as i64;
-            let sum = if count_ones % 2 == 1 { sum } else { -sum };
-            ans += sum;
+            if cur == 1 {
+                break;
+            }
         }
-        println!("{}", a.len() as i64 - ans);
+        if cur > 1 {
+            div.push(cur);
+        }
+
+        let mut ans = n as i64;
+
+        let m = div.len();
+        for mask in 1..(1 << m) {
+            let mask: usize = mask;
+            let mut cur = 1;
+            for i in 0..m {
+                if mask & (1 << i) != 0 {
+                    cur *= div[i];
+                }
+            }
+            if mask.count_ones() & 1 == 1 {
+                ans -= count[cur] as i64;
+            } else {
+                ans += count[cur] as i64;
+            }
+        }
+
+        println!("{}", ans);
     }
 }

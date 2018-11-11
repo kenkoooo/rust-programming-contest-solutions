@@ -49,18 +49,21 @@ macro_rules! read_value {
     };
 }
 
+use self::bitset::*;
+
 fn main() {
     input!(n: usize, a: [usize; n]);
     let sum: usize = a.iter().sum();
-    let mut dp = bitset::BitSet::new(sum + 1);
-    dp.set(0, true);
-    for i in 0..n {
-        let pd = dp.shift_left(a[i]);
-        dp |= pd;
+
+    let mut set = BitSet::new(sum);
+    set.set(0, true);
+    for &a in a.iter() {
+        let next = set.shift_left(a);
+        set.or_assign(next);
     }
 
-    for i in ((sum + 1) / 2)..(sum + 1) {
-        if dp.get(i) {
+    for i in ((sum + 1) / 2).. {
+        if set.get(i) {
             println!("{}", i);
             return;
         }
@@ -85,19 +88,7 @@ pub mod bitset {
 
     impl BitOrAssign for BitSet {
         fn bitor_assign(&mut self, rhs: Self) {
-            if self.data.len() < rhs.data.len() {
-                self.data.resize(rhs.data.len(), 0);
-            }
-            let n = if self.data.len() > rhs.data.len() {
-                rhs.data.len()
-            } else {
-                self.data.len()
-            };
-            for i in 0..n {
-                assert!(self.data[i] <= MAXIMUM);
-                assert!(rhs.data[i] <= MAXIMUM);
-                self.data[i] |= rhs.data[i];
-            }
+            self.or_assign(rhs);
         }
     }
 
@@ -133,8 +124,29 @@ pub mod bitset {
 
         pub fn get(&mut self, index: usize) -> bool {
             let (data_index, bit_index) = get_bit_position(index);
-            assert!(self.data.len() > data_index);
+            assert!(
+                self.data.len() > data_index,
+                "{} {}",
+                self.data.len(),
+                data_index
+            );
             self.data[data_index] & (1 << bit_index) != 0
+        }
+
+        pub fn or_assign(&mut self, rhs: Self) {
+            if self.data.len() < rhs.data.len() {
+                self.data.resize(rhs.data.len(), 0);
+            }
+            let n = if self.data.len() > rhs.data.len() {
+                rhs.data.len()
+            } else {
+                self.data.len()
+            };
+            for i in 0..n {
+                assert!(self.data[i] <= MAXIMUM);
+                assert!(rhs.data[i] <= MAXIMUM);
+                self.data[i] |= rhs.data[i];
+            }
         }
 
         pub fn shift_left(&self, shift: usize) -> Self {

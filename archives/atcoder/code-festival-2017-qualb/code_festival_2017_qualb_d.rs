@@ -49,63 +49,47 @@ macro_rules! read_value {
     };
 }
 
-use std::collections::BTreeSet;
+use std::cmp;
 
 fn main() {
-    input!(s: chars, x: i64, y: i64);
-    let mut v = vec![];
-    let mut count = 0;
-    for &c in s.iter() {
-        if c == 'T' {
-            v.push(count);
-            count = 0;
-        } else {
-            count += 1;
-        }
-    }
-    if count > 0 {
-        v.push(count);
-    }
-    let x = x - v[0];
+    input!(n: usize, s: chars);
+    let mut ok = vec![false; n];
+    let mut left = vec![0; n];
+    let mut right = vec![0; n];
+    for i in 1..(n - 1) {
+        if s[i - 1] == '1' && s[i] == '0' && s[i + 1] == '1' {
+            ok[i] = true;
 
-    let mut fx = vec![];
-    let mut fy = vec![];
-    for i in 1..v.len() {
-        if i % 2 == 0 {
-            fx.push(v[i]);
-        } else {
-            fy.push(v[i]);
+            let mut cur = i - 1;
+            while cur > 0 && s[cur - 1] == '1' {
+                left[i] += 1;
+                cur -= 1;
+            }
+
+            let mut cur = i + 1;
+            while cur + 1 < n && s[cur + 1] == '1' {
+                right[i] += 1;
+                cur += 1;
+            }
         }
     }
 
-    let x_sum = fx.iter().sum::<i64>();
-    let y_sum = fy.iter().sum::<i64>();
-
-    let mut xdp = BTreeSet::new();
-    xdp.insert(0);
-    for &fx in fx.iter() {
-        let mut next = BTreeSet::new();
-        for &cur in xdp.iter() {
-            next.insert(cur + fx);
-            next.insert(cur - fx);
+    let mut dp = vec![0; n + 1];
+    for i in 0..n {
+        dp[i + 1] = cmp::max(dp[i + 1], dp[i]);
+        if !ok[i] {
+            continue;
         }
-        xdp = next;
-    }
-
-    let mut ydp = BTreeSet::new();
-    ydp.insert(0);
-    for &fy in fy.iter() {
-        let mut next = BTreeSet::new();
-        for &cur in ydp.iter() {
-            next.insert(cur + fy);
-            next.insert(cur - fy);
+        dp[i + 2] = cmp::max(dp[i + 2], dp[i - 1] + 1);
+        dp[i + 2] = cmp::max(dp[i + 2], dp[i - 1 - left[i]] + 1 + left[i]);
+        dp[i + 2 + right[i]] = cmp::max(dp[i + 2 + right[i]], dp[i - 1] + 1 + right[i]);
+        if left[i] > 0 {
+            dp[i + 2] = cmp::max(dp[i + 2], dp[i - 1 - (left[i] - 1)] + 1 + (left[i] - 1));
         }
-        ydp = next;
+        if right[i] > 0 {
+            dp[i + 2 + (right[i] - 1)] =
+                cmp::max(dp[i + 2 + (right[i] - 1)], dp[i - 1] + 1 + (right[i] - 1));
+        }
     }
-
-    if xdp.contains(&x) && ydp.contains(&y) {
-        println!("Yes");
-    } else {
-        println!("No");
-    }
+    println!("{}", dp[n]);
 }

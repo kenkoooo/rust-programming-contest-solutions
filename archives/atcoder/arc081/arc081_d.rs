@@ -49,26 +49,30 @@ macro_rules! read_value {
     };
 }
 
+use std::cmp;
+
 fn main() {
     input!(h: usize, w: usize, s: [chars; h]);
-
     let mut rectangle = vec![vec![false; w - 1]; h - 1];
-    for i in 0..(h - 1) {
-        for j in 0..(w - 1) {
+    for h in 0..(h - 1) {
+        for w in 0..(w - 1) {
             let mut count = 0;
-            for t in 0..2 {
-                for u in 0..2 {
-                    if s[i + t][j + u] == '#' {
+            for h in h..(h + 2) {
+                for w in w..(w + 2) {
+                    if s[h][w] == '#' {
                         count += 1;
                     }
                 }
             }
-            rectangle[i][j] = count % 2 == 0;
+            rectangle[h][w] = count % 2 == 0;
         }
     }
 
-    let max = max_rectangle::maximize(&rectangle);
-    println!("{}", max);
+    let mut ans = max_rectangle::maximize(&rectangle);
+    ans = cmp::max(ans, h);
+    ans = cmp::max(ans, w);
+
+    println!("{}", ans);
 }
 
 pub mod max_rectangle {
@@ -92,7 +96,10 @@ pub mod max_rectangle {
                     break;
                 }
                 reachable_min = pos;
-                ans = cmp::max(ans, calc_area((i - reachable_min), height));
+                ans = cmp::max(
+                    ans,
+                    /* (i - reachable_min) * height */ calc_area(i - reachable_min, height),
+                );
             }
 
             if q.is_empty() || q.iter().next().unwrap().1 < hist[i] {
@@ -100,7 +107,10 @@ pub mod max_rectangle {
             }
         }
         while let Some((pos, height)) = q.pop_front() {
-            ans = cmp::max(ans, calc_area((n - pos), height));
+            ans = cmp::max(
+                ans,
+                /* (n - pos) * height */ calc_area(n - pos, height),
+            );
         }
         ans
     }
@@ -122,7 +132,7 @@ pub mod max_rectangle {
             }
         }
 
-        let mut ans = cmp::max(h + 1, w + 1);
+        let mut ans = 0;
         for i in 0..h {
             ans = cmp::max(ans, calc(&hist[i]));
         }
