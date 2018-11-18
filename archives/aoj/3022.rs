@@ -1,104 +1,57 @@
-/// Thank you tanakh!!!
-/// https://qiita.com/tanakh/items/0ba42c7ca36cd29d0ac8
-macro_rules! input {
-    (source = $s:expr, $($r:tt)*) => {
-        let mut iter = $s.split_whitespace();
-        input_inner!{iter, $($r)*}
-    };
-    ($($r:tt)*) => {
-        let mut s = {
-            use std::io::Read;
-            let mut s = String::new();
-            std::io::stdin().read_to_string(&mut s).unwrap();
-            s
-        };
-        let mut iter = s.split_whitespace();
-        input_inner!{iter, $($r)*}
-    };
-}
-
-macro_rules! input_inner {
-    ($iter:expr) => {};
-    ($iter:expr, ) => {};
-
-    ($iter:expr, $var:ident : $t:tt $($r:tt)*) => {
-        let $var = read_value!($iter, $t);
-        input_inner!{$iter $($r)*}
-    };
-}
-
-macro_rules! read_value {
-    ($iter:expr, ( $($t:tt),* )) => {
-        ( $(read_value!($iter, $t)),* )
-    };
-
-    ($iter:expr, [ $t:tt ; $len:expr ]) => {
-        (0..$len).map(|_| read_value!($iter, $t)).collect::<Vec<_>>()
-    };
-
-    ($iter:expr, chars) => {
-        read_value!($iter, String).chars().collect::<Vec<char>>()
-    };
-
-    ($iter:expr, usize1) => {
-        read_value!($iter, usize) - 1
-    };
-
-    ($iter:expr, $t:ty) => {
-        $iter.next().unwrap().parse::<$t>().expect("Parse error")
-    };
-}
-
 use std::cmp;
-use std::collections::{BTreeSet, VecDeque};
 
 const INF: usize = 1e15 as usize;
 
 fn main() {
-    input!(
-        n: usize,
-        m: usize,
-        power: [usize; n],
-        edges: [(usize1, usize1); m]
-    );
+    let s = std::io::stdin();
+    let mut sc = Scanner { reader: s.lock() };
 
-    let mut graph = vec![vec![]; n];
-    for &(u, v) in edges.iter() {
-        graph[v].push(u);
-        graph[u].push(v);
+    let n: usize = sc.read();
+    let m: usize = sc.read();
+    let mut power = vec![0; n];
+    for i in 0..n {
+        power[i] = sc.read::<usize>();
     }
 
-    let bridge_detector = BridgeDetector::new(&graph);
-    let total: usize = power.iter().sum();
+    let mut graph = vec![vec![]; n];
 
+    for _ in 0..m {
+        let u = sc.read::<usize>() - 1;
+        let v = sc.read::<usize>() - 1;
+        graph[u].push(v);
+        graph[v].push(u);
+    }
+
+    let detector = BridgeDetector::new(&graph);
     let mut is_articulation = vec![false; n];
-    for &v in bridge_detector.articulations.iter() {
-        is_articulation[v] = true;
+    for &a in detector.articulations.iter() {
+        is_articulation[a] = true;
     }
 
     let mut dp = vec![INF; n];
-    let tree = bridge_detector.dfs_tree;
-    let low_link = bridge_detector.low_link;
-    let order = bridge_detector.order;
+    let dfs_tree = detector.dfs_tree;
+    let low_link = detector.low_link;
+    let order = detector.order;
+    let total_power = power.iter().sum::<usize>();
     for i in 0..n {
-        if is_articulation[i] {
-            let mut max_child = 0;
-            let mut connected_to_parent = 0;
-            for &child in tree[i].iter() {
-                let dp_child = dfs(child, &tree, &mut dp, &power);
-                max_child = cmp::max(max_child, dp_child);
-
-                if low_link[child] < order[i] {
-                    connected_to_parent += dp_child;
-                }
-            }
-
-            let dp_parent = total - (dfs(i, &tree, &mut dp, &power) - connected_to_parent);
-
-            println!("{}", cmp::max(dp_parent, max_child));
-        } else {
-            println!("{}", total - power[i]);
+        if !is_articulation[i] {
+            println!("{}", total_power - power[i]);
+            continue;
         }
+
+        let mut max_child = 0;
+        let mut connected_to_parent = 0;
+        for &child in dfs_tree[i].iter() {
+            let dp_child = dfs(child, &dfs_tree, &mut dp, &power);
+            max_child = cmp::max(max_child, dp_child);
+
+            if low_link[child] < order[i] {
+                connected_to_parent += dp_child;
+            }
+        }
+
+        let dp_parent = total_power - (dfs(i, &dfs_tree, &mut dp, &power) - connected_to_parent);
+        println!("{}", cmp::max(max_child, dp_parent));
     }
 }
 
@@ -184,5 +137,33 @@ impl BridgeDetector {
         if is_articulation {
             self.articulations.push(v);
         }
+    }
+}
+
+pub struct Scanner<R> {
+    reader: R,
+}
+
+impl<R: std::io::Read> Scanner<R> {
+    pub fn read<T: std::str::FromStr>(&mut self) -> T {
+        use std::io::Read;
+        let buf = self
+            .reader
+            .by_ref()
+            .bytes()
+            .map(|b| b.unwrap())
+            .skip_while(|&b| b == b' ' || b == b'\n')
+            .take_while(|&b| b != b' ' && b != b'\n')
+            .collect::<Vec<_>>();
+        unsafe { std::str::from_utf8_unchecked(&buf) }
+            .parse()
+            .ok()
+            .expect("Parse error.")
+    }
+    pub fn read_vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
+        (0..n).map(|_| self.read()).collect()
+    }
+    pub fn chars(&mut self) -> Vec<char> {
+        self.read::<String>().chars().collect()
     }
 }
