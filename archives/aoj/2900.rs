@@ -1,84 +1,68 @@
-/// Thank you tanakh!!!
-///  https://qiita.com/tanakh/items/0ba42c7ca36cd29d0ac8
-macro_rules! input {
-    (source = $s:expr, $($r:tt)*) => {
-        let mut iter = $s.split_whitespace();
-        input_inner!{iter, $($r)*}
-    };
-    ($($r:tt)*) => {
-        let mut s = {
-            use std::io::Read;
-            let mut s = String::new();
-            std::io::stdin().read_to_string(&mut s).unwrap();
-            s
-        };
-        let mut iter = s.split_whitespace();
-        input_inner!{iter, $($r)*}
-    };
-}
-
-macro_rules! input_inner {
-    ($iter:expr) => {};
-    ($iter:expr, ) => {};
-
-    ($iter:expr, $var:ident : $t:tt $($r:tt)*) => {
-        let $var = read_value!($iter, $t);
-        input_inner!{$iter $($r)*}
-    };
-}
-
-macro_rules! read_value {
-    ($iter:expr, ( $($t:tt),* )) => {
-        ( $(read_value!($iter, $t)),* )
-    };
-
-    ($iter:expr, [ $t:tt ; $len:expr ]) => {
-        (0..$len).map(|_| read_value!($iter, $t)).collect::<Vec<_>>()
-    };
-
-    ($iter:expr, chars) => {
-        read_value!($iter, String).chars().collect::<Vec<char>>()
-    };
-
-    ($iter:expr, usize1) => {
-        read_value!($iter, usize) - 1
-    };
-
-    ($iter:expr, $t:ty) => {
-        $iter.next().unwrap().parse::<$t>().expect("Parse error")
-    };
-}
-
 use std::cmp;
 
 fn solve(mut a: Vec<i64>) -> usize {
     let n = a.len();
+    if n < 3 {
+        return 0;
+    }
     let mut ans = 0;
-    for i in 0..(n - 1) {
-        if i % 2 == 0 && a[i] < a[i + 1] {
-            if i + 2 < n && a[i + 1] > a[i + 2] && a[i] > a[i + 2] {
-                a.swap(i + 1, i + 2);
-            } else {
-                a.swap(i, i + 1);
-            }
+    for i in 0..(n - 2) {
+        let mut t = vec![a[i], a[i + 1], a[i + 2]];
+        if i % 2 == 1 {
+            t = t.iter().map(|&a| -a).collect();
+        }
+
+        if t[0] > t[1] {
+            continue;
+        }
+        if (t[0] < t[2] && t[2] < t[1]) || (t[0] < t[1] && t[1] < t[2]) {
+            a.swap(i, i + 1);
             ans += 1;
-        } else if i % 2 == 1 && a[i] > a[i + 1] {
-            if i + 2 < n && a[i + 1] < a[i + 2] && a[i] < a[i + 2] {
-                a.swap(i + 1, i + 2);
-            } else {
-                a.swap(i, i + 1);
-            }
+        } else {
+            a.swap(i + 1, i + 2);
             ans += 1;
         }
+    }
+    if (a[n - 3] > a[n - 2]) != (a[n - 2] < a[n - 1]) {
+        a.swap(n - 2, n - 1);
+        ans += 1;
     }
     ans
 }
 
 fn main() {
-    input!(n: usize, a: [i64; n]);
-    let b: Vec<i64> = a.iter().map(|&i| -i).collect();
+    let s = std::io::stdin();
+    let mut sc = Scanner { reader: s.lock() };
+    let n: usize = sc.read();
+    let a: Vec<i64> = sc.read_vec(n);
+    let b: Vec<i64> = a.iter().map(|&a| -a).collect();
+    println!("{}", cmp::min(solve(a), solve(b)));
+}
 
-    let a1 = solve(a);
-    let a2 = solve(b);
-    println!("{}", cmp::min(a1, a2));
+pub struct Scanner<R> {
+    reader: R,
+}
+
+impl<R: std::io::Read> Scanner<R> {
+    pub fn read<T: std::str::FromStr>(&mut self) -> T {
+        use std::io::Read;
+        let buf = self
+            .reader
+            .by_ref()
+            .bytes()
+            .map(|b| b.unwrap())
+            .skip_while(|&b| b == b' ' || b == b'\n')
+            .take_while(|&b| b != b' ' && b != b'\n')
+            .collect::<Vec<_>>();
+        unsafe { std::str::from_utf8_unchecked(&buf) }
+            .parse()
+            .ok()
+            .expect("Parse error.")
+    }
+    pub fn read_vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
+        (0..n).map(|_| self.read()).collect()
+    }
+    pub fn chars(&mut self) -> Vec<char> {
+        self.read::<String>().chars().collect()
+    }
 }
