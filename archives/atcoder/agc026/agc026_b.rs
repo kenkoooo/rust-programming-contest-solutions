@@ -1,100 +1,74 @@
-/// Thank you tanakh!!!
-///  https://qiita.com/tanakh/items/0ba42c7ca36cd29d0ac8
-macro_rules! input {
-    (source = $s:expr, $($r:tt)*) => {
-        let mut iter = $s.split_whitespace();
-        input_inner!{iter, $($r)*}
-    };
-    ($($r:tt)*) => {
-        let mut s = {
-            use std::io::Read;
-            let mut s = String::new();
-            std::io::stdin().read_to_string(&mut s).unwrap();
-            s
+fn main() {
+    let s = std::io::stdin();
+    let mut sc = Scanner { reader: s.lock() };
+
+    let t: usize = sc.read();
+    for _ in 0..t {
+        let a: i64 = sc.read();
+        let b: i64 = sc.read();
+        let c: i64 = sc.read();
+        let d: i64 = sc.read();
+        let ans = if d < b || a < b {
+            "No"
+        } else if c >= b {
+            "Yes"
+        } else {
+            // b - a - 1 >= bx + dy >= c - a + 1
+            let g = gcd(b, d);
+            let left = b - a - 1;
+            let right = c - a + 1;
+            if left >= 0 {
+                if left / g * g >= right {
+                    "No"
+                } else {
+                    "Yes"
+                }
+            } else if right <= 0 {
+                if right.abs() / g * g * (-1) <= left {
+                    "No"
+                } else {
+                    "Yes"
+                }
+            } else {
+                "No"
+            }
         };
-        let mut iter = s.split_whitespace();
-        input_inner!{iter, $($r)*}
-    };
-}
-
-macro_rules! input_inner {
-    ($iter:expr) => {};
-    ($iter:expr, ) => {};
-
-    ($iter:expr, $var:ident : $t:tt $($r:tt)*) => {
-        let $var = read_value!($iter, $t);
-        input_inner!{$iter $($r)*}
-    };
-}
-
-macro_rules! read_value {
-    ($iter:expr, ( $($t:tt),* )) => {
-        ( $(read_value!($iter, $t)),* )
-    };
-
-    ($iter:expr, [ $t:tt ; $len:expr ]) => {
-        (0..$len).map(|_| read_value!($iter, $t)).collect::<Vec<_>>()
-    };
-
-    ($iter:expr, chars) => {
-        read_value!($iter, String).chars().collect::<Vec<char>>()
-    };
-
-    ($iter:expr, usize1) => {
-        read_value!($iter, usize) - 1
-    };
-
-    ($iter:expr, $t:ty) => {
-        $iter.next().unwrap().parse::<$t>().expect("Parse error")
-    };
+        println!("{}", ans);
+    }
 }
 
 fn gcd(a: i64, b: i64) -> i64 {
-    let (a, b) = if a > b { (b, a) } else { (a, b) };
-    if b % a == 0 {
+    if b == 0 {
         a
     } else {
-        gcd(b % a, a)
+        gcd(b, a % b)
     }
 }
 
-fn solve(init: i64, buy: i64, monitor: i64, add: i64) -> bool {
-    // monitor < init + add * x - buy * y < buy
-    if init < buy || add < buy {
-        false
-    } else if buy <= monitor {
-        true
-    } else {
-        let g = gcd(add, buy);
-        let low = monitor - init;
-        let high = buy - init;
-        if high <= 0 {
-            let (high, low) = (-low, -high);
-            let x = (high - 1) / g * g;
-            if x > low {
-                false
-            } else {
-                true
-            }
-        } else {
-            let x = (high - 1) / g * g;
-            if x > low {
-                false
-            } else {
-                true
-            }
-        }
-    }
+pub struct Scanner<R> {
+    reader: R,
 }
 
-fn main() {
-    input!(t: usize, abcd: [(i64, i64, i64, i64); t]);
-
-    for &(init, buy, monitor, add) in abcd.iter() {
-        if solve(init, buy, monitor, add) {
-            println!("Yes");
-        } else {
-            println!("No");
-        }
+impl<R: std::io::Read> Scanner<R> {
+    pub fn read<T: std::str::FromStr>(&mut self) -> T {
+        use std::io::Read;
+        let buf = self
+            .reader
+            .by_ref()
+            .bytes()
+            .map(|b| b.unwrap())
+            .skip_while(|&b| b == b' ' || b == b'\n')
+            .take_while(|&b| b != b' ' && b != b'\n')
+            .collect::<Vec<_>>();
+        unsafe { std::str::from_utf8_unchecked(&buf) }
+            .parse()
+            .ok()
+            .expect("Parse error.")
+    }
+    pub fn read_vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
+        (0..n).map(|_| self.read()).collect()
+    }
+    pub fn chars(&mut self) -> Vec<char> {
+        self.read::<String>().chars().collect()
     }
 }
