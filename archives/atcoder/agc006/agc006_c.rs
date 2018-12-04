@@ -1,94 +1,68 @@
-/// Thank you tanakh!!!
-/// https://qiita.com/tanakh/items/0ba42c7ca36cd29d0ac8
-macro_rules! input {
-    (source = $s:expr, $($r:tt)*) => {
-        let mut iter = $s.split_whitespace();
-        input_inner!{iter, $($r)*}
-    };
-    ($($r:tt)*) => {
-        let mut s = {
-            use std::io::Read;
-            let mut s = String::new();
-            std::io::stdin().read_to_string(&mut s).unwrap();
-            s
-        };
-        let mut iter = s.split_whitespace();
-        input_inner!{iter, $($r)*}
-    };
-}
-
-macro_rules! input_inner {
-    ($iter:expr) => {};
-    ($iter:expr, ) => {};
-
-    ($iter:expr, $var:ident : $t:tt $($r:tt)*) => {
-        let $var = read_value!($iter, $t);
-        input_inner!{$iter $($r)*}
-    };
-}
-
-macro_rules! read_value {
-    ($iter:expr, ( $($t:tt),* )) => {
-        ( $(read_value!($iter, $t)),* )
-    };
-
-    ($iter:expr, [ $t:tt ; $len:expr ]) => {
-        (0..$len).map(|_| read_value!($iter, $t)).collect::<Vec<_>>()
-    };
-
-    ($iter:expr, chars) => {
-        read_value!($iter, String).chars().collect::<Vec<char>>()
-    };
-
-    ($iter:expr, usize1) => {
-        read_value!($iter, usize) - 1
-    };
-
-    ($iter:expr, $t:ty) => {
-        $iter.next().unwrap().parse::<$t>().expect("Parse error")
-    };
-}
-
 fn main() {
-    input!(n: usize, x: [f64; n], m: usize, k: usize, a: [usize1; m]);
-    let mut swap: Vec<Vec<usize>> = vec![(0..(n - 1)).map(|i| i).collect()];
-    let mut s = swap[0].clone();
+    let sc = std::io::stdin();
+    let mut sc = Scanner { reader: sc.lock() };
+    let n: usize = sc.read();
+    let x: Vec<i64> = sc.read_vec(n);
+    let m: usize = sc.read();
+    let k: usize = sc.read();
+    let a: Vec<usize> = (0..m).map(|_| sc.read::<usize>() - 1).collect();
+
+    let mut t: Vec<usize> = (0..(n - 1)).collect();
     for &a in a.iter() {
-        s.swap(a - 1, a);
-    }
-    swap.push(s);
-    for i in 1..64 {
-        let mut next = vec![0; n - 1];
-        {
-            let ref prev = &swap[i];
-            for i in 0..(n - 1) {
-                next[i] = prev[prev[i]];
-            }
-        }
-        swap.push(next);
+        t.swap(a, a - 1);
     }
 
-    let mut operations: Vec<usize> = (0..(n - 1)).map(|i| i).collect();
-    for i in 0..64 {
-        if (1 << i) & k != 0 {
-            let mut next = operations.clone();
-            for j in 0..(n - 1) {
-                next[j] = operations[swap[i + 1][j]];
-            }
-            operations = next;
-        }
+    let result = pow(t, k);
+    let mut ans: Vec<i64> = vec![0; n - 1];
+    for i in 0..(n - 1) {
+        ans[i] = x[result[i] + 1] - x[result[i]];
     }
 
-    let num = operations
-        .iter()
-        .map(|&i| x[i + 1] - x[i])
-        .collect::<Vec<_>>();
-    let mut ans = vec![0.0; n];
-    ans[0] = x[0];
-    for i in 1..n {
-        ans[i] = ans[i - 1] + num[i - 1];
+    let mut cur = x[0];
+    println!("{}", cur);
+    for i in 0..(n - 1) {
+        cur += ans[i];
+        println!("{}", cur);
     }
-    for &ans in ans.iter() {
-        println!("{}", ans);
+}
+
+fn pow(mut t: Vec<usize>, mut e: usize) -> Vec<usize> {
+    let n = t.len();
+    let mut result = (0..n).collect::<Vec<usize>>();
+    while e > 0 {
+        if e & 1 == 1 {
+            result = (0..n).map(|i| result[t[i]]).collect();
+        }
+        e >>= 1;
+        t = (0..n).map(|i| t[t[i]]).collect();
+    }
+    result
+}
+
+pub struct Scanner<R> {
+    reader: R,
+}
+
+impl<R: std::io::Read> Scanner<R> {
+    pub fn read<T: std::str::FromStr>(&mut self) -> T {
+        use std::io::Read;
+        let buf = self
+            .reader
+            .by_ref()
+            .bytes()
+            .map(|b| b.unwrap())
+            .skip_while(|&b| b == b' ' || b == b'\n')
+            .take_while(|&b| b != b' ' && b != b'\n')
+            .collect::<Vec<_>>();
+        unsafe { std::str::from_utf8_unchecked(&buf) }
+            .parse()
+            .ok()
+            .expect("Parse error.")
+    }
+    pub fn read_vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
+        (0..n).map(|_| self.read()).collect()
+    }
+    pub fn chars(&mut self) -> Vec<char> {
+        self.read::<String>().chars().collect()
     }
 }
