@@ -103,11 +103,14 @@
 | [arc058_b](https://beta.atcoder.jp/contests/arc058/tasks/arc058_b) | [arc058_b.rs](./archives/atcoder/arc058/arc058_b.rs) |
 | [arc058_c](https://beta.atcoder.jp/contests/arc058/tasks/arc058_c) | [arc058_c.rs](./archives/atcoder/arc058/arc058_c.rs) |
 | [arc059_b](https://beta.atcoder.jp/contests/arc059/tasks/arc059_b) | [arc059_b.rs](./archives/atcoder/arc059/arc059_b.rs) |
+| [arc059_c](https://beta.atcoder.jp/contests/arc059/tasks/arc059_c) | [arc059_c.rs](./archives/atcoder/arc059/arc059_c.rs) |
+| [arc059_d](https://beta.atcoder.jp/contests/arc059/tasks/arc059_d) | [arc059_d.rs](./archives/atcoder/arc059/arc059_d.rs) |
 | [arc060_b](https://beta.atcoder.jp/contests/arc060/tasks/arc060_b) | [arc060_b.rs](./archives/atcoder/arc060/arc060_b.rs) |
 | [arc060_c](https://beta.atcoder.jp/contests/arc060/tasks/arc060_c) | [arc060_c.rs](./archives/atcoder/arc060/arc060_c.rs) |
 | [arc061_b](https://beta.atcoder.jp/contests/arc061/tasks/arc061_b) | [arc061_b.rs](./archives/atcoder/arc061/arc061_b.rs) |
 | [arc061_c](https://beta.atcoder.jp/contests/arc061/tasks/arc061_c) | [arc061_c.rs](./archives/atcoder/arc061/arc061_c.rs) |
 | [arc063_b](https://beta.atcoder.jp/contests/arc063/tasks/arc063_b) | [arc063_b.rs](./archives/atcoder/arc063/arc063_b.rs) |
+| [arc063_c](https://beta.atcoder.jp/contests/arc063/tasks/arc063_c) | [arc063_c.rs](./archives/atcoder/arc063/arc063_c.rs) |
 | [arc064_b](https://beta.atcoder.jp/contests/arc064/tasks/arc064_b) | [arc064_b.rs](./archives/atcoder/arc064/arc064_b.rs) |
 | [arc064_c](https://beta.atcoder.jp/contests/arc064/tasks/arc064_c) | [arc064_c.rs](./archives/atcoder/arc064/arc064_c.rs) |
 | [arc066_b](https://beta.atcoder.jp/contests/arc066/tasks/arc066_b) | [arc066_b.rs](./archives/atcoder/arc066/arc066_b.rs) |
@@ -123,6 +126,8 @@
 | [arc073_b](https://beta.atcoder.jp/contests/arc073/tasks/arc073_b) | [arc073_b.rs](./archives/atcoder/arc073/arc073_b.rs) |
 | [arc073_c](https://beta.atcoder.jp/contests/arc073/tasks/arc073_c) | [arc073_c.rs](./archives/atcoder/arc073/arc073_c.rs) |
 | [arc074_b](https://beta.atcoder.jp/contests/arc074/tasks/arc074_b) | [arc074_b.rs](./archives/atcoder/arc074/arc074_b.rs) |
+| [arc074_c](https://beta.atcoder.jp/contests/arc074/tasks/arc074_c) | [arc074_c.rs](./archives/atcoder/arc074/arc074_c.rs) |
+| [arc074_d](https://beta.atcoder.jp/contests/arc074/tasks/arc074_d) | [arc074_d.rs](./archives/atcoder/arc074/arc074_d.rs) |
 | [arc075_b](https://beta.atcoder.jp/contests/arc075/tasks/arc075_b) | [arc075_b.rs](./archives/atcoder/arc075/arc075_b.rs) |
 | [arc075_c](https://beta.atcoder.jp/contests/arc075/tasks/arc075_c) | [arc075_c.rs](./archives/atcoder/arc075/arc075_c.rs) |
 | [arc076_b](https://beta.atcoder.jp/contests/arc076/tasks/arc076_b) | [arc076_b.rs](./archives/atcoder/arc076/arc076_b.rs) |
@@ -132,6 +137,7 @@
 | [arc078_b](https://beta.atcoder.jp/contests/arc078/tasks/arc078_b) | [arc078_b.rs](./archives/atcoder/arc078/arc078_b.rs) |
 | [arc079_b](https://beta.atcoder.jp/contests/arc079/tasks/arc079_b) | [arc079_b.rs](./archives/atcoder/arc079/arc079_b.rs) |
 | [arc079_c](https://beta.atcoder.jp/contests/arc079/tasks/arc079_c) | [arc079_c.rs](./archives/atcoder/arc079/arc079_c.rs) |
+| [arc079_d](https://beta.atcoder.jp/contests/arc079/tasks/arc079_d) | [arc079_d.rs](./archives/atcoder/arc079/arc079_d.rs) |
 | [arc081_c](https://beta.atcoder.jp/contests/arc081/tasks/arc081_c) | [arc081_c.rs](./archives/atcoder/arc081/arc081_c.rs) |
 | [arc081_d](https://beta.atcoder.jp/contests/arc081/tasks/arc081_d) | [arc081_d.rs](./archives/atcoder/arc081/arc081_d.rs) |
 | [arc082_c](https://beta.atcoder.jp/contests/arc082/tasks/arc082_c) | [arc082_c.rs](./archives/atcoder/arc082/arc082_c.rs) |
@@ -202,6 +208,7 @@
 | [codefestival_2016_qualB_d](https://beta.atcoder.jp/contests/codefestival-2016-qualB/tasks/codefestival_2016_qualB_d) | [codefestival_2016_qualB_d.rs](./archives/atcoder/codefestival-2016-qualB/codefestival_2016_qualB_d.rs) |
 | [code_festival_2017_quala_c](https://beta.atcoder.jp/contests/code-festival-2017-quala/tasks/code_festival_2017_quala_c) | [code_festival_2017_quala_c.rs](./archives/atcoder/code-festival-2017-quala/code_festival_2017_quala_c.rs) |
 | [code_festival_2017_quala_d](https://beta.atcoder.jp/contests/code-festival-2017-quala/tasks/code_festival_2017_quala_d) | [code_festival_2017_quala_d.rs](./archives/atcoder/code-festival-2017-quala/code_festival_2017_quala_d.rs) |
+| [code_festival_2017_quala_e](https://beta.atcoder.jp/contests/code-festival-2017-quala/tasks/code_festival_2017_quala_e) | [code_festival_2017_quala_e.rs](./archives/atcoder/code-festival-2017-quala/code_festival_2017_quala_e.rs) |
 | [code_festival_2017_qualb_c](https://beta.atcoder.jp/contests/code-festival-2017-qualb/tasks/code_festival_2017_qualb_c) | [code_festival_2017_qualb_c.rs](./archives/atcoder/code-festival-2017-qualb/code_festival_2017_qualb_c.rs) |
 | [code_festival_2017_qualb_d](https://beta.atcoder.jp/contests/code-festival-2017-qualb/tasks/code_festival_2017_qualb_d) | [code_festival_2017_qualb_d.rs](./archives/atcoder/code-festival-2017-qualb/code_festival_2017_qualb_d.rs) |
 | [code_festival_2017_qualc_c](https://beta.atcoder.jp/contests/code-festival-2017-qualc/tasks/code_festival_2017_qualc_c) | [code_festival_2017_qualc_c.rs](./archives/atcoder/code-festival-2017-qualc/code_festival_2017_qualc_c.rs) |
@@ -229,6 +236,7 @@
 | [soundhound2018_summer_qual_d](https://beta.atcoder.jp/contests/soundhound2018-summer-qual/tasks/soundhound2018_summer_qual_d) | [soundhound2018_summer_qual_d.rs](./archives/atcoder/soundhound2018-summer-qual/soundhound2018_summer_qual_d.rs) |
 | [soundhound2018_summer_qual_e](https://beta.atcoder.jp/contests/soundhound2018-summer-qual/tasks/soundhound2018_summer_qual_e) | [soundhound2018_summer_qual_e.rs](./archives/atcoder/soundhound2018-summer-qual/soundhound2018_summer_qual_e.rs) |
 | [tenka1_2017_d](https://beta.atcoder.jp/contests/tenka1-2017/tasks/tenka1_2017_d) | [tenka1_2017_d.rs](./archives/atcoder/tenka1-2017/tenka1_2017_d.rs) |
+| [tenka1_2017_e](https://beta.atcoder.jp/contests/tenka1-2017/tasks/tenka1_2017_e) | [tenka1_2017_e.rs](./archives/atcoder/tenka1-2017/tenka1_2017_e.rs) |
 | [tenka1_2018_c](https://beta.atcoder.jp/contests/tenka1-2018/tasks/tenka1_2018_c) | [tenka1_2018_c.rs](./archives/atcoder/tenka1-2018/tenka1_2018_c.rs) |
 | [tenka1_2018_d](https://beta.atcoder.jp/contests/tenka1-2018/tasks/tenka1_2018_d) | [tenka1_2018_d.rs](./archives/atcoder/tenka1-2018/tenka1_2018_d.rs) |
 | [tenka1_2018_e](https://beta.atcoder.jp/contests/tenka1-2018/tasks/tenka1_2018_e) | [tenka1_2018_e.rs](./archives/atcoder/tenka1-2018/tenka1_2018_e.rs) |
