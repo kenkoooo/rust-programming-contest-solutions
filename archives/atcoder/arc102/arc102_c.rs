@@ -1,260 +1,45 @@
-/// Thank you tanakh!!!
-/// https://qiita.com/tanakh/items/0ba42c7ca36cd29d0ac8
-macro_rules! input {
-    (source = $s:expr, $($r:tt)*) => {
-        let mut iter = $s.split_whitespace();
-        input_inner!{iter, $($r)*}
-    };
-    ($($r:tt)*) => {
-        let mut s = {
-            use std::io::Read;
-            let mut s = String::new();
-            std::io::stdin().read_to_string(&mut s).unwrap();
-            s
-        };
-        let mut iter = s.split_whitespace();
-        input_inner!{iter, $($r)*}
-    };
-}
-
-macro_rules! input_inner {
-    ($iter:expr) => {};
-    ($iter:expr, ) => {};
-
-    ($iter:expr, $var:ident : $t:tt $($r:tt)*) => {
-        let $var = read_value!($iter, $t);
-        input_inner!{$iter $($r)*}
-    };
-}
-
-macro_rules! read_value {
-    ($iter:expr, ( $($t:tt),* )) => {
-        ( $(read_value!($iter, $t)),* )
-    };
-
-    ($iter:expr, [ $t:tt ; $len:expr ]) => {
-        (0..$len).map(|_| read_value!($iter, $t)).collect::<Vec<_>>()
-    };
-
-    ($iter:expr, chars) => {
-        read_value!($iter, String).chars().collect::<Vec<char>>()
-    };
-
-    ($iter:expr, usize1) => {
-        read_value!($iter, usize) - 1
-    };
-
-    ($iter:expr, $t:ty) => {
-        $iter.next().unwrap().parse::<$t>().expect("Parse error")
-    };
-}
-
+use self::mod_int::ModInt;
 use std::cmp;
-use std::ops::*;
 
 const MOD: usize = 998244353;
 
-fn main() {
-    input!(k: usize, n: usize);
+fn solve(sum: usize, k: usize, n: usize, comb: &Combination) -> ModInt<usize> {
+    let mut pair_count = 0;
+    for one in 1..cmp::min(k + 1, sum / 2 + 1) {
+        let other = sum - one;
+        if other > k {
+            continue;
+        }
+        pair_count += 1;
+    }
 
-    let comb = Combination::new(1000000, MOD);
+    let mut ans = comb.h(k, n);
+    for unused_pair in 1..(pair_count + 1) {
+        if n < 2 * unused_pair {
+            break;
+        }
+
+        let count = comb.get(pair_count, unused_pair) * comb.h(k, n - 2 * unused_pair);
+        if unused_pair % 2 == 1 {
+            ans -= count;
+        } else {
+            ans += count;
+        }
+    }
+    ans
+}
+
+fn main() {
+    let sc = std::io::stdin();
+    let mut sc = Scanner { reader: sc.lock() };
+
+    let k: usize = sc.read();
+    let n: usize = sc.read();
+    let combination = Combination::new(1000000, MOD);
 
     for i in 2..(2 * k + 1) {
-        let mut num = 0;
-        for a in 1..(k + 1) {
-            if a >= i {
-                break;
-            }
-            let b = i - a;
-            if b > k {
-                continue;
-            }
-            if a > b {
-                break;
-            }
-            num += 1;
-        }
-
-        let mut ans = comb.h(k, n);
-        for m in 1..(num + 1) {
-            if n < 2 * m {
-                break;
-            }
-            let a = comb.get(num, m) * comb.h(k, n - 2 * m);
-            if m % 2 == 1 {
-                ans = ans - a;
-            } else {
-                ans += a;
-            }
-        }
-
-        println!("{}", ans.value);
-    }
-}
-
-fn pow(x: usize, mut e: usize) -> ModInt<usize> {
-    let mut cur = ModInt::new(x);
-    let mut result = ModInt::new(1);
-    while e > 0 {
-        if e & 1 != 0 {
-            result *= cur;
-        }
-        cur *= cur;
-        e >>= 1;
-    }
-    result
-}
-
-#[derive(Copy)]
-pub struct ModInt<T> {
-    value: T,
-    modulo: T,
-}
-
-impl<T> Clone for ModInt<T>
-where
-    T: Copy,
-{
-    fn clone(&self) -> Self {
-        ModInt {
-            value: self.value,
-            modulo: self.modulo,
-        }
-    }
-
-    fn clone_from(&mut self, source: &ModInt<T>) {
-        self.value = source.value;
-        self.modulo = source.modulo;
-    }
-}
-
-impl<T> Add<ModInt<T>> for ModInt<T>
-where
-    T: Add<Output = T> + Sub<Output = T> + Copy + PartialOrd,
-{
-    type Output = ModInt<T>;
-    fn add(self, rhs: ModInt<T>) -> ModInt<T> {
-        self + rhs.value
-    }
-}
-
-impl<T> Add<T> for ModInt<T>
-where
-    T: Add<Output = T> + Sub<Output = T> + Copy + PartialOrd,
-{
-    type Output = ModInt<T>;
-    fn add(self, rhs: T) -> ModInt<T> {
-        let m = self.modulo;
-        let mut t = rhs + self.value;
-        if t > m {
-            t = t - m;
-        }
-        ModInt {
-            value: t,
-            modulo: self.modulo,
-        }
-    }
-}
-
-impl<T> Sub<T> for ModInt<T>
-where
-    T: PartialOrd + Copy + Add<Output = T> + Sub<Output = T> + Rem<Output = T>,
-{
-    type Output = ModInt<T>;
-    fn sub(self, rhs: T) -> ModInt<T> {
-        let rhs = if rhs >= self.modulo {
-            rhs % self.modulo
-        } else {
-            rhs
-        };
-        let value = if self.value < rhs {
-            self.value + self.modulo
-        } else {
-            self.value
-        };
-        ModInt {
-            value: value - rhs,
-            modulo: self.modulo,
-        }
-    }
-}
-
-impl<T> Sub<ModInt<T>> for ModInt<T>
-where
-    T: PartialOrd + Copy + Add<Output = T> + Sub<Output = T> + Rem<Output = T>,
-{
-    type Output = ModInt<T>;
-    fn sub(self, rhs: ModInt<T>) -> ModInt<T> {
-        self - rhs.value
-    }
-}
-
-impl<T> AddAssign<T> for ModInt<T>
-where
-    T: Add<Output = T> + Sub<Output = T> + Copy + PartialOrd,
-{
-    fn add_assign(&mut self, other: T) {
-        *self = *self + other;
-    }
-}
-impl<T> AddAssign<ModInt<T>> for ModInt<T>
-where
-    T: Add<Output = T> + Sub<Output = T> + Copy + PartialOrd,
-{
-    fn add_assign(&mut self, other: ModInt<T>) {
-        *self = *self + other;
-    }
-}
-
-impl<T> Mul<ModInt<T>> for ModInt<T>
-where
-    T: Mul<Output = T> + Rem<Output = T> + Copy,
-{
-    type Output = ModInt<T>;
-
-    fn mul(self, rhs: ModInt<T>) -> ModInt<T> {
-        self * rhs.value
-    }
-}
-impl<T> Mul<T> for ModInt<T>
-where
-    T: Mul<Output = T> + Rem<Output = T> + Copy,
-{
-    type Output = ModInt<T>;
-
-    fn mul(self, rhs: T) -> ModInt<T> {
-        let t = (self.value * rhs) % self.modulo;
-        ModInt {
-            value: t,
-            modulo: self.modulo,
-        }
-    }
-}
-
-impl<T> MulAssign<T> for ModInt<T>
-where
-    T: Mul<Output = T> + Rem<Output = T> + Copy,
-{
-    fn mul_assign(&mut self, rhs: T) {
-        *self = *self * rhs;
-    }
-}
-
-impl<T> MulAssign<ModInt<T>> for ModInt<T>
-where
-    T: Mul<Output = T> + Rem<Output = T> + Copy,
-{
-    fn mul_assign(&mut self, rhs: ModInt<T>) {
-        *self = *self * rhs;
-    }
-}
-
-impl ModInt<usize> {
-    pub fn new(value: usize) -> ModInt<usize> {
-        ModInt {
-            value: value,
-            modulo: MOD,
-        }
+        let ans = solve(i, k, n, &combination);
+        println!("{}", ans.0);
     }
 }
 
@@ -290,11 +75,155 @@ impl Combination {
 
     pub fn get(&self, x: usize, y: usize) -> ModInt<usize> {
         assert!(x >= y);
-        let v = self.fact[x] * self.inv_fact[y] % self.modulo * self.inv_fact[x - y] % self.modulo;
-        ModInt::new(v)
+        let result =
+            self.fact[x] * self.inv_fact[y] % self.modulo * self.inv_fact[x - y] % self.modulo;
+        ModInt::new(result)
     }
 
     pub fn h(&self, n: usize, r: usize) -> ModInt<usize> {
         self.get(n + r - 1, r)
+    }
+}
+
+pub mod mod_int {
+    use std::ops::{Add, AddAssign, Mul, MulAssign, Sub, SubAssign};
+
+    type Num = usize;
+    use super::MOD;
+
+    #[derive(Clone, Copy)]
+    pub struct ModInt<T: Copy + Clone>(pub T);
+
+    impl Add<ModInt<Num>> for ModInt<Num> {
+        type Output = ModInt<Num>;
+        fn add(self, rhs: ModInt<Num>) -> ModInt<Num> {
+            self + rhs.0
+        }
+    }
+
+    impl Add<Num> for ModInt<Num> {
+        type Output = ModInt<Num>;
+        fn add(self, rhs: Num) -> ModInt<Num> {
+            let mut t = rhs + self.0;
+            if t >= MOD {
+                t = t - MOD;
+            }
+            ModInt(t)
+        }
+    }
+
+    impl Sub<Num> for ModInt<Num> {
+        type Output = ModInt<Num>;
+        fn sub(self, rhs: Num) -> ModInt<Num> {
+            let rhs = if rhs >= MOD { rhs % MOD } else { rhs };
+            let value = if self.0 < rhs { self.0 + MOD } else { self.0 };
+            ModInt(value - rhs)
+        }
+    }
+
+    impl Sub<ModInt<Num>> for ModInt<Num> {
+        type Output = ModInt<Num>;
+        fn sub(self, rhs: ModInt<Num>) -> ModInt<Num> {
+            self - rhs.0
+        }
+    }
+
+    impl AddAssign<Num> for ModInt<Num> {
+        fn add_assign(&mut self, other: Num) {
+            *self = *self + other;
+        }
+    }
+    impl AddAssign<ModInt<Num>> for ModInt<Num> {
+        fn add_assign(&mut self, other: ModInt<Num>) {
+            *self = *self + other;
+        }
+    }
+
+    impl SubAssign<Num> for ModInt<Num> {
+        fn sub_assign(&mut self, other: Num) {
+            *self = *self - other;
+        }
+    }
+
+    impl SubAssign<ModInt<Num>> for ModInt<Num> {
+        fn sub_assign(&mut self, other: ModInt<Num>) {
+            *self = *self - other;
+        }
+    }
+
+    impl Mul<ModInt<Num>> for ModInt<Num> {
+        type Output = ModInt<Num>;
+
+        fn mul(self, rhs: ModInt<Num>) -> ModInt<Num> {
+            self * rhs.0
+        }
+    }
+    impl Mul<Num> for ModInt<Num> {
+        type Output = ModInt<Num>;
+
+        fn mul(self, rhs: Num) -> ModInt<Num> {
+            let t = (self.0 * rhs) % MOD;
+            ModInt(t)
+        }
+    }
+
+    impl MulAssign<Num> for ModInt<Num> {
+        fn mul_assign(&mut self, rhs: Num) {
+            *self = *self * rhs;
+        }
+    }
+
+    impl MulAssign<ModInt<Num>> for ModInt<Num> {
+        fn mul_assign(&mut self, rhs: ModInt<Num>) {
+            *self = *self * rhs;
+        }
+    }
+
+    impl ModInt<Num> {
+        pub fn new(value: Num) -> Self {
+            ModInt(value)
+        }
+
+        pub fn pow(self, e: usize) -> ModInt<Num> {
+            let mut result = ModInt::new(1);
+            let mut cur = self;
+            let mut e = e;
+            while e > 0 {
+                if e & 1 == 1 {
+                    result *= cur;
+                }
+                e >>= 1;
+                cur *= cur;
+            }
+            result
+        }
+    }
+}
+
+pub struct Scanner<R> {
+    reader: R,
+}
+
+impl<R: std::io::Read> Scanner<R> {
+    pub fn read<T: std::str::FromStr>(&mut self) -> T {
+        use std::io::Read;
+        let buf = self
+            .reader
+            .by_ref()
+            .bytes()
+            .map(|b| b.unwrap())
+            .skip_while(|&b| b == b' ' || b == b'\n')
+            .take_while(|&b| b != b' ' && b != b'\n')
+            .collect::<Vec<_>>();
+        unsafe { std::str::from_utf8_unchecked(&buf) }
+            .parse()
+            .ok()
+            .expect("Parse error.")
+    }
+    pub fn read_vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
+        (0..n).map(|_| self.read()).collect()
+    }
+    pub fn chars(&mut self) -> Vec<char> {
+        self.read::<String>().chars().collect()
     }
 }
