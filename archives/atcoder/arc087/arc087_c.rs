@@ -1,109 +1,112 @@
-/// Thank you tanakh!!!
-/// https://qiita.com/tanakh/items/0ba42c7ca36cd29d0ac8
-macro_rules! input {
-    (source = $s:expr, $($r:tt)*) => {
-        let mut iter = $s.split_whitespace();
-        input_inner!{iter, $($r)*}
-    };
-    ($($r:tt)*) => {
-        let mut s = {
-            use std::io::Read;
-            let mut s = String::new();
-            std::io::stdin().read_to_string(&mut s).unwrap();
-            s
-        };
-        let mut iter = s.split_whitespace();
-        input_inner!{iter, $($r)*}
-    };
-}
+use std::collections::BTreeSet;
 
-macro_rules! input_inner {
-    ($iter:expr) => {};
-    ($iter:expr, ) => {};
-
-    ($iter:expr, $var:ident : $t:tt $($r:tt)*) => {
-        let $var = read_value!($iter, $t);
-        input_inner!{$iter $($r)*}
-    };
-}
-
-macro_rules! read_value {
-    ($iter:expr, ( $($t:tt),* )) => {
-        ( $(read_value!($iter, $t)),* )
-    };
-
-    ($iter:expr, [ $t:tt ; $len:expr ]) => {
-        (0..$len).map(|_| read_value!($iter, $t)).collect::<Vec<_>>()
-    };
-
-    ($iter:expr, chars) => {
-        read_value!($iter, String).chars().collect::<Vec<char>>()
-    };
-
-    ($iter:expr, usize1) => {
-        read_value!($iter, usize) - 1
-    };
-
-    ($iter:expr, $t:ty) => {
-        $iter.next().unwrap().parse::<$t>().expect("Parse error")
-    };
-}
-
-struct Node {
-    left: Option<Box<Node>>,
-    right: Option<Box<Node>>,
-}
-
-impl Node {
-    fn new() -> Self {
-        Node {
-            left: None,
-            right: None,
-        }
-    }
-    fn add(&mut self, s: &[char]) {
-        if s.is_empty() {
-        } else if s[0] == '0' {
-            let x: &mut Box<Node> = self.left.get_or_insert(Box::new(Node::new()));
-            x.add(&s[1..]);
-        } else {
-            let x: &mut Box<Node> = self.right.get_or_insert(Box::new(Node::new()));
-            x.add(&s[1..]);
-        }
-    }
-
-    fn dfs(&self, depth: usize, result: &mut Vec<usize>) {
-        if self.left.is_none() != self.right.is_none() {
-            result.push(depth);
-        }
-        if let Some(ref node) = self.left {
-            node.dfs(depth + 1, result);
-        }
-        if let Some(ref node) = self.right {
-            node.dfs(depth + 1, result);
-        }
-    }
-}
+const INF: usize = 1e15 as usize;
 
 fn main() {
-    input!(n: usize, l: usize, s: [chars; n]);
-    let mut trie = Node::new();
-    for s in s.iter() {
-        trie.add(s);
+    let s = std::io::stdin();
+    let mut sc = Scanner { reader: s.lock() };
+    let n: usize = sc.read();
+    let l: usize = sc.read();
+
+    let mut trie = Trie::new();
+    for _ in 0..n {
+        let s = sc.chars();
+        trie.add(&s, 0);
+    }
+    let mut count = vec![];
+    trie.count_tree(0, &mut count);
+
+    let mut ans = 0;
+    for grundy in count.iter().map(|&depth| (l - depth).trailing_zeros() + 1) {
+        ans ^= grundy;
+    }
+    println!("{}", if ans == 0 { "Bob" } else { "Alice" });
+
+    // let mut grundy = vec![INF; 31];
+    // grundy[0] = 0;
+    // get(30, &mut grundy);
+    // println!("{:?}", grundy);
+}
+
+struct Trie {
+    child: Vec<Option<Trie>>,
+}
+
+impl Trie {
+    fn new() -> Self {
+        Trie {
+            child: vec![None, None],
+        }
     }
 
-    let mut result = vec![];
-    trie.dfs(0, &mut result);
-
-    let grundy = result
-        .iter()
-        .map(|&result| {
-            let level = l - result;
-            let mut cur = 1;
-            while level % (cur * 2) == 0 {
-                cur *= 2;
+    fn count_tree(&self, depth: usize, result: &mut Vec<usize>) {
+        let len = self.child.iter().filter(|c| c.is_some()).count();
+        if len == 1 {
+            result.push(depth);
+        }
+        for child in self.child.iter() {
+            match child {
+                Some(child) => child.count_tree(depth + 1, result),
+                None => {}
             }
-            cur
-        }).fold(0, |grundy, c| grundy ^ c);
-    println!("{}", if grundy == 0 { "Bob" } else { "Alice" });
+        }
+    }
+
+    fn add(&mut self, s: &Vec<char>, pos: usize) {
+        if s.len() == pos {
+            return;
+        }
+        let index = s[pos] as usize - ('0' as usize);
+        self.child[index].get_or_insert(Trie::new()).add(s, pos + 1);
+    }
+}
+
+fn get(i: usize, grundy: &mut Vec<usize>) -> usize {
+    if grundy[i] != INF {
+        return grundy[i];
+    }
+
+    let mut set = BTreeSet::new();
+    for k in 1..(i + 1) {
+        let mut g = 0;
+        for j in k..i {
+            g ^= get(j, grundy);
+        }
+        set.insert(g);
+    }
+    for j in 0.. {
+        if !set.contains(&j) {
+            grundy[i] = j;
+            break;
+        }
+    }
+    grundy[i]
+}
+
+pub struct Scanner<R> {
+    reader: R,
+}
+
+impl<R: std::io::Read> Scanner<R> {
+    pub fn read<T: std::str::FromStr>(&mut self) -> T {
+        use std::io::Read;
+        let buf = self
+            .reader
+            .by_ref()
+            .bytes()
+            .map(|b| b.unwrap())
+            .skip_while(|&b| b == b' ' || b == b'\n')
+            .take_while(|&b| b != b' ' && b != b'\n')
+            .collect::<Vec<_>>();
+        unsafe { std::str::from_utf8_unchecked(&buf) }
+            .parse()
+            .ok()
+            .expect("Parse error.")
+    }
+    pub fn read_vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
+        (0..n).map(|_| self.read()).collect()
+    }
+    pub fn chars(&mut self) -> Vec<char> {
+        self.read::<String>().chars().collect()
+    }
 }

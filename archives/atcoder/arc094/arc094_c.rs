@@ -1,68 +1,53 @@
-/// Thank you tanakh!!!
-/// https://qiita.com/tanakh/items/0ba42c7ca36cd29d0ac8
-macro_rules! input {
-    (source = $s:expr, $($r:tt)*) => {
-        let mut iter = $s.split_whitespace();
-        input_inner!{iter, $($r)*}
-    };
-    ($($r:tt)*) => {
-        let mut s = {
-            use std::io::Read;
-            let mut s = String::new();
-            std::io::stdin().read_to_string(&mut s).unwrap();
-            s
-        };
-        let mut iter = s.split_whitespace();
-        input_inner!{iter, $($r)*}
-    };
-}
-
-macro_rules! input_inner {
-    ($iter:expr) => {};
-    ($iter:expr, ) => {};
-
-    ($iter:expr, $var:ident : $t:tt $($r:tt)*) => {
-        let $var = read_value!($iter, $t);
-        input_inner!{$iter $($r)*}
-    };
-}
-
-macro_rules! read_value {
-    ($iter:expr, ( $($t:tt),* )) => {
-        ( $(read_value!($iter, $t)),* )
-    };
-
-    ($iter:expr, [ $t:tt ; $len:expr ]) => {
-        (0..$len).map(|_| read_value!($iter, $t)).collect::<Vec<_>>()
-    };
-
-    ($iter:expr, chars) => {
-        read_value!($iter, String).chars().collect::<Vec<char>>()
-    };
-
-    ($iter:expr, usize1) => {
-        read_value!($iter, usize) - 1
-    };
-
-    ($iter:expr, $t:ty) => {
-        $iter.next().unwrap().parse::<$t>().expect("Parse error")
-    };
-}
+use std::cmp;
 
 fn main() {
-    input!(n: usize, ab: [(usize, usize); n]);
-
-    if !ab.iter().any(|&(a, b)| a != b) {
-        println!("0");
-        return;
+    let s = std::io::stdin();
+    let mut sc = Scanner { reader: s.lock() };
+    let n: usize = sc.read();
+    let mut a = vec![];
+    let mut b = vec![];
+    for _ in 0..n {
+        a.push(sc.read::<usize>());
+        b.push(sc.read::<usize>());
     }
+    let sum = a.iter().sum::<usize>();
+    let mut min = sum;
+    for i in 0..n {
+        if a[i] > b[i] {
+            min = cmp::min(min, b[i]);
+        }
+    }
+    if min == sum {
+        println!("0");
+    } else {
+        println!("{}", sum - min);
+    }
+}
 
-    let min = ab
-        .iter()
-        .filter(|&&(a, b)| a > b)
-        .map(|&(_, b)| b)
-        .min()
-        .unwrap();
-    let sum = ab.iter().map(|&(a, _)| a).sum::<usize>();
-    println!("{}", sum - min);
+pub struct Scanner<R> {
+    reader: R,
+}
+
+impl<R: std::io::Read> Scanner<R> {
+    pub fn read<T: std::str::FromStr>(&mut self) -> T {
+        use std::io::Read;
+        let buf = self
+            .reader
+            .by_ref()
+            .bytes()
+            .map(|b| b.unwrap())
+            .skip_while(|&b| b == b' ' || b == b'\n')
+            .take_while(|&b| b != b' ' && b != b'\n')
+            .collect::<Vec<_>>();
+        unsafe { std::str::from_utf8_unchecked(&buf) }
+            .parse()
+            .ok()
+            .expect("Parse error.")
+    }
+    pub fn read_vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
+        (0..n).map(|_| self.read()).collect()
+    }
+    pub fn chars(&mut self) -> Vec<char> {
+        self.read::<String>().chars().collect()
+    }
 }

@@ -1,133 +1,107 @@
-/// Thank you tanakh!!!
-/// https://qiita.com/tanakh/items/0ba42c7ca36cd29d0ac8
-macro_rules! input {
-    (source = $s:expr, $($r:tt)*) => {
-        let mut iter = $s.split_whitespace();
-        input_inner!{iter, $($r)*}
-    };
-    ($($r:tt)*) => {
-        let mut s = {
-            use std::io::Read;
-            let mut s = String::new();
-            std::io::stdin().read_to_string(&mut s).unwrap();
-            s
-        };
-        let mut iter = s.split_whitespace();
-        input_inner!{iter, $($r)*}
-    };
-}
-
-macro_rules! input_inner {
-    ($iter:expr) => {};
-    ($iter:expr, ) => {};
-
-    ($iter:expr, $var:ident : $t:tt $($r:tt)*) => {
-        let $var = read_value!($iter, $t);
-        input_inner!{$iter $($r)*}
-    };
-}
-
-macro_rules! read_value {
-    ($iter:expr, ( $($t:tt),* )) => {
-        ( $(read_value!($iter, $t)),* )
-    };
-
-    ($iter:expr, [ $t:tt ; $len:expr ]) => {
-        (0..$len).map(|_| read_value!($iter, $t)).collect::<Vec<_>>()
-    };
-
-    ($iter:expr, chars) => {
-        read_value!($iter, String).chars().collect::<Vec<char>>()
-    };
-
-    ($iter:expr, usize1) => {
-        read_value!($iter, usize) - 1
-    };
-
-    ($iter:expr, $t:ty) => {
-        $iter.next().unwrap().parse::<$t>().expect("Parse error")
-    };
-}
-
-use std::collections::BTreeSet;
-
-struct Data {
-    positive: BTreeSet<(i64, i64, usize)>,
-    negative: BTreeSet<(i64, i64, usize)>,
-}
-
-impl Data {
-    fn new(lr: &Vec<(i64, i64)>) -> Self {
-        let mut positive_set = BTreeSet::new();
-        let mut negative_set = BTreeSet::new();
-        let n = lr.len();
-        for i in 0..n {
-            let (l, r) = lr[i];
-            positive_set.insert((l, r, i));
-            negative_set.insert((r, l, i));
-        }
-        Data {
-            positive: positive_set,
-            negative: negative_set,
-        }
-    }
-
-    fn pop_min(&mut self) -> (i64, i64) {
-        assert_eq!(self.positive.len(), self.negative.len());
-        assert!(!self.negative.is_empty());
-        let &(r, l, i) = self.negative.iter().next().unwrap();
-        self.negative.remove(&(r, l, i));
-        self.positive.remove(&(l, r, i));
-        (l, r)
-    }
-    fn pop_max(&mut self) -> (i64, i64) {
-        assert_eq!(self.positive.len(), self.negative.len());
-        assert!(!self.positive.is_empty());
-        let &(l, r, i) = self.positive.iter().next_back().unwrap();
-        self.negative.remove(&(r, l, i));
-        self.positive.remove(&(l, r, i));
-        (l, r)
-    }
-
-    fn len(&self) -> usize {
-        assert_eq!(self.positive.len(), self.negative.len());
-        self.negative.len()
-    }
-}
-
-fn solve(mut data: Data) -> i64 {
-    let mut cur = 0;
-    let mut ans = 0;
-    let n = data.len();
-    for i in 0..n {
-        let (l, r) = if i % 2 == 0 {
-            data.pop_max()
-        } else {
-            data.pop_min()
-        };
-        assert!(l < r);
-        let (move_dist, next) = if cur < l {
-            (l - cur, l)
-        } else if r < cur {
-            (cur - r, r)
-        } else {
-            (0, cur)
-        };
-        ans += move_dist;
-        cur = next;
-    }
-    ans + (cur - 0).abs()
-}
-
 use std::cmp;
+use std::collections::BinaryHeap;
 
 fn main() {
-    input!(n: usize, lr: [(i64, i64); n]);
-    let data = Data::new(&lr);
-    let ans1 = solve(data);
+    let s = std::io::stdin();
+    let mut sc = Scanner { reader: s.lock() };
+    let n: usize = sc.read();
+    let mut right = vec![];
+    let mut left = vec![];
+    for _ in 0..n {
+        left.push(sc.read::<i64>());
+        right.push(sc.read::<i64>());
+    }
 
-    let neg_lr = lr.iter().map(|&(l, r)| (-r, -l)).collect::<Vec<_>>();
-    let data = Data::new(&neg_lr);
-    let ans2 = solve(data);
+    let left_inv = left.iter().map(|&left| -left).collect();
+    let right_inv = right.iter().map(|&right| -right).collect();
+    let ans1 = solve(left, right);
+    let ans2 = solve(right_inv, left_inv);
     println!("{}", cmp::max(ans1, ans2));
+}
+fn solve(left: Vec<i64>, right: Vec<i64>) -> i64 {
+    let n = left.len();
+
+    let mut left_heap = BinaryHeap::new();
+    let mut right_heap = BinaryHeap::new();
+    for i in 0..n {
+        left_heap.push((left[i], i));
+        right_heap.push((-right[i], i));
+    }
+
+    let mut ans = 0;
+    let mut cur = 0;
+    let mut used = vec![false; n];
+    for i in 0..n {
+        let k = if i % 2 == 0 {
+            {
+                let mut result;
+                loop {
+                    let (_, k) = left_heap.pop().unwrap();
+                    if used[k] {
+                        continue;
+                    }
+                    used[k] = true;
+                    result = k;
+                    break;
+                }
+                result
+            }
+        } else {
+            {
+                let mut result;
+                loop {
+                    let (_, k) = right_heap.pop().unwrap();
+                    if used[k] {
+                        continue;
+                    }
+                    used[k] = true;
+                    result = k;
+                    break;
+                }
+                result
+            }
+        };
+
+        if left[k] <= cur && cur <= right[k] {
+            continue;
+        }
+
+        if (left[k] - cur).abs() < (right[k] - cur).abs() {
+            ans += (left[k] - cur).abs();
+            cur = left[k];
+        } else {
+            ans += (right[k] - cur).abs();
+            cur = right[k];
+        }
+    }
+    ans += cur.abs();
+    ans
+}
+
+pub struct Scanner<R> {
+    reader: R,
+}
+
+impl<R: std::io::Read> Scanner<R> {
+    pub fn read<T: std::str::FromStr>(&mut self) -> T {
+        use std::io::Read;
+        let buf = self
+            .reader
+            .by_ref()
+            .bytes()
+            .map(|b| b.unwrap())
+            .skip_while(|&b| b == b' ' || b == b'\n')
+            .take_while(|&b| b != b' ' && b != b'\n')
+            .collect::<Vec<_>>();
+        unsafe { std::str::from_utf8_unchecked(&buf) }
+            .parse()
+            .ok()
+            .expect("Parse error.")
+    }
+    pub fn read_vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
+        (0..n).map(|_| self.read()).collect()
+    }
+    pub fn chars(&mut self) -> Vec<char> {
+        self.read::<String>().chars().collect()
+    }
 }
