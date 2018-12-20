@@ -1,76 +1,56 @@
-/// Thank you tanakh!!!
-/// https://qiita.com/tanakh/items/0ba42c7ca36cd29d0ac8
-macro_rules! input {
-    (source = $s:expr, $($r:tt)*) => {
-        let mut iter = $s.split_whitespace();
-        input_inner!{iter, $($r)*}
-    };
-    ($($r:tt)*) => {
-        let mut s = {
-            use std::io::Read;
-            let mut s = String::new();
-            std::io::stdin().read_to_string(&mut s).unwrap();
-            s
-        };
-        let mut iter = s.split_whitespace();
-        input_inner!{iter, $($r)*}
-    };
-}
-
-macro_rules! input_inner {
-    ($iter:expr) => {};
-    ($iter:expr, ) => {};
-
-    ($iter:expr, $var:ident : $t:tt $($r:tt)*) => {
-        let $var = read_value!($iter, $t);
-        input_inner!{$iter $($r)*}
-    };
-}
-
-macro_rules! read_value {
-    ($iter:expr, ( $($t:tt),* )) => {
-        ( $(read_value!($iter, $t)),* )
-    };
-
-    ($iter:expr, [ $t:tt ; $len:expr ]) => {
-        (0..$len).map(|_| read_value!($iter, $t)).collect::<Vec<_>>()
-    };
-
-    ($iter:expr, chars) => {
-        read_value!($iter, String).chars().collect::<Vec<char>>()
-    };
-
-    ($iter:expr, usize1) => {
-        read_value!($iter, usize) - 1
-    };
-
-    ($iter:expr, $t:ty) => {
-        $iter.next().unwrap().parse::<$t>().expect("Parse error")
-    };
-}
-
 use std::cmp;
+use std::collections::BTreeSet;
 
 fn main() {
-    input!(n: usize, a: [usize; (1 << n)]);
+    let sc = std::io::stdin();
+    let mut sc = Scanner { reader: sc.lock() };
 
-    let mut top2 = a.iter().map(|&a| (a, 0)).collect::<Vec<_>>();
-    for i in 0..n {
-        for j in 0..(1 << n) {
-            if j & (1 << i) != 0 {
-                let (cur1, cur2) = top2[j];
-                let (t1, t2) = top2[j ^ (1 << i)];
-                let mut t = [cur1, cur2, t1, t2];
-                t.sort();
-                top2[j] = (t[3], t[2]);
-            }
+    let n: usize = sc.read();
+    let a: Vec<usize> = sc.read_vec(1 << n);
+
+    let mut top: Vec<(usize, usize)> = (0..(1 << n)).map(|i| (a[i], i)).collect();
+    let mut ans = vec![0; 1 << n];
+    for mask in 1..(1 << n) {
+        let mut set = BTreeSet::new();
+        set.insert(top[mask]);
+        for pos in 0..n {
+            let pos_mask = 1 << pos;
+            let sub_mask = mask & (!pos_mask);
+            set.insert(top[sub_mask]);
         }
-    }
+        let mut iter = set.iter().rev();
+        top[mask] = *iter.next().unwrap();
 
-    let mut max = 0;
-    for i in 1..(1 << n) {
-        let (s, t) = top2[i];
-        max = cmp::max(max, s + t);
-        println!("{}", max);
+        let &(top2, _) = iter.next().unwrap();
+        ans[mask] = cmp::max(ans[mask - 1], top[mask].0 + top2);
+        println!("{}", ans[mask]);
+    }
+}
+
+pub struct Scanner<R> {
+    reader: R,
+}
+
+impl<R: std::io::Read> Scanner<R> {
+    pub fn read<T: std::str::FromStr>(&mut self) -> T {
+        use std::io::Read;
+        let buf = self
+            .reader
+            .by_ref()
+            .bytes()
+            .map(|b| b.unwrap())
+            .skip_while(|&b| b == b' ' || b == b'\n')
+            .take_while(|&b| b != b' ' && b != b'\n')
+            .collect::<Vec<_>>();
+        unsafe { std::str::from_utf8_unchecked(&buf) }
+            .parse()
+            .ok()
+            .expect("Parse error.")
+    }
+    pub fn read_vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
+        (0..n).map(|_| self.read()).collect()
+    }
+    pub fn chars(&mut self) -> Vec<char> {
+        self.read::<String>().chars().collect()
     }
 }
