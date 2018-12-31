@@ -1,211 +1,139 @@
-/// Thank you tanakh!!!
-/// https://qiita.com/tanakh/items/0ba42c7ca36cd29d0ac8
-macro_rules! input {
-    (source = $s:expr, $($r:tt)*) => {
-        let mut iter = $s.split_whitespace();
-        input_inner!{iter, $($r)*}
-    };
-    ($($r:tt)*) => {
-        let mut s = {
-            use std::io::Read;
-            let mut s = String::new();
-            std::io::stdin().read_to_string(&mut s).unwrap();
-            s
-        };
-        let mut iter = s.split_whitespace();
-        input_inner!{iter, $($r)*}
-    };
-}
-
-macro_rules! input_inner {
-    ($iter:expr) => {};
-    ($iter:expr, ) => {};
-
-    ($iter:expr, $var:ident : $t:tt $($r:tt)*) => {
-        let $var = read_value!($iter, $t);
-        input_inner!{$iter $($r)*}
-    };
-}
-
-macro_rules! read_value {
-    ($iter:expr, ( $($t:tt),* )) => {
-        ( $(read_value!($iter, $t)),* )
-    };
-
-    ($iter:expr, [ $t:tt ; $len:expr ]) => {
-        (0..$len).map(|_| read_value!($iter, $t)).collect::<Vec<_>>()
-    };
-
-    ($iter:expr, chars) => {
-        read_value!($iter, String).chars().collect::<Vec<char>>()
-    };
-
-    ($iter:expr, usize1) => {
-        read_value!($iter, usize) - 1
-    };
-
-    ($iter:expr, $t:ty) => {
-        $iter.next().unwrap().parse::<$t>().expect("Parse error")
-    };
-}
-
 use std::cmp;
+use std::collections::BTreeMap;
 
 fn main() {
-    input!(h: usize, w: usize, s: [chars; h]);
-
-    let s: Vec<Vec<usize>> = s
-        .iter()
-        .map(|t| t.iter().map(|&c| if c == '#' { 1 } else { 0 }).collect())
-        .collect();
-
-    let ans1 = solve(h, w, &s);
-    let s: Vec<Vec<usize>> = s
-        .iter()
-        .map(|t| {
-            let mut t = t.clone();
-            t.reverse();
-            t
-        }).collect();
-    let ans2 = solve(h, w, &s);
-
-    let mut ans3 = count_duplicated(h, w, &s);
-    println!("{}", ans1 + ans2 - ans3);
-}
-
-fn solve(h: usize, w: usize, s: &Vec<Vec<usize>>) -> usize {
-    let x = cmp::max(h, w);
-    let mut map = vec![vec![0; x * 3]; x * 3];
+    let s = std::io::stdin();
+    let mut sc = Scanner { reader: s.lock() };
+    let h: usize = sc.read();
+    let w: usize = sc.read();
+    let s: Vec<Vec<char>> = (0..h).map(|_| sc.chars()).collect();
+    let mut points = vec![];
     for i in 0..h {
         for j in 0..w {
-            map[i + x][j + x] = s[i][j];
-        }
-    }
-    let z = x * 3;
-    let mut sum = vec![vec![0; z + 1]; z + 1];
-    for si in 0..z {
-        for i in si..z {
-            let j = i - si;
-            sum[i + 1][j + 1] = sum[i][j] + map[i][j];
+            if s[i][j] == '#' {
+                let x = i as i64;
+                let y = j as i64;
+                points.push((x, y));
+            }
         }
     }
 
-    for sj in 1..z {
-        for j in sj..z {
-            let i = j - sj;
-            sum[i + 1][j + 1] = sum[i][j] + map[i][j];
+    let pairs = points.iter().map(|&(x, y)| (y - x, x)).collect::<Vec<_>>();
+    let a1 = solve(h, pairs, false);
+
+    let pairs = points.iter().map(|&(x, y)| (y + x, x)).collect::<Vec<_>>();
+    let a2 = solve(h, pairs, true);
+
+    let mut ans = a1 + a2;
+    let mut map = BTreeMap::new();
+    for &(x, y) in points.iter() {
+        let k = y + x;
+        map.entry(k).or_insert(Vec::new()).push((x, y));
+    }
+    for t in map.values() {
+        let n = t.len();
+        for i in 0..n {
+            for j in 0..i {
+                let (x1, y1) = t[j];
+                let (x2, y2) = t[i];
+                let d = (x1 - x2).abs();
+                let v = vec![
+                    (x1 - d, y1 - d),
+                    (x2 - d, y2 - d),
+                    (x1 + d, y1 + d),
+                    (x2 + d, y2 + d),
+                ];
+                for &(x, y) in v.iter() {
+                    if x < 0 || y < 0 {
+                        continue;
+                    }
+                    let (x, y) = (x as usize, y as usize);
+                    if x >= h || y >= w {
+                        continue;
+                    }
+                    if s[x][y] == '#' {
+                        ans -= 1;
+                    }
+                }
+            }
         }
     }
+    println!("{}", ans);
+}
+
+fn solve(h: usize, pairs: Vec<(i64, i64)>, s: bool) -> usize {
+    let sign = if s { 1 } else { -1 };
+    let mut map = BTreeMap::new();
+    let mut list_map = BTreeMap::new();
+    for &(k, x) in pairs.iter() {
+        map.entry(k).or_insert(vec![0; h])[x as usize] = 1;
+        list_map.entry(k).or_insert(Vec::new()).push(x);
+    }
+    for list in list_map.values_mut() {
+        list.sort();
+    }
+
+    let sum_map: BTreeMap<_, _> = map
+        .iter()
+        .map(|(&k, v)| {
+            let mut sum = vec![0; h + 1];
+            for i in 0..h {
+                sum[i + 1] = sum[i] + v[i];
+            }
+            (k, sum)
+        })
+        .collect();
 
     let mut ans = 0;
-    for si in 0..h {
-        for i1 in si..h {
-            let j1 = i1 - si;
-            if j1 >= w {
-                continue;
-            }
-            for i2 in (i1 + 1)..h {
-                let j2 = i2 - si;
-                if j2 >= w {
-                    continue;
-                }
-                if s[i1][j1] != 1 || s[i2][j2] != 1 {
-                    continue;
-                }
-                let d = i2 - i1;
-                ans += sum[x + i2 + d + 1][x + j1 + 1] - sum[x + i2][x + j1 - d];
-                ans += sum[x + i1 + 1][x + j2 + d + 1] - sum[x + i1 - d][x + j2];
-            }
-        }
-    }
+    for (k, list) in list_map.iter() {
+        let n = list.len();
+        for i in 0..n {
+            for j in 0..i {
+                let x1 = list[j];
+                let x2 = list[i];
+                let d = x2 - x1;
+                assert!(d > 0);
 
-    for sj in 1..w {
-        for j1 in sj..w {
-            let i1 = j1 - sj;
-            if i1 >= h {
-                continue;
-            }
-            for j2 in (j1 + 1)..w {
-                let i2 = j2 - sj;
-                if i2 >= h {
-                    continue;
+                if let Some(sum) = sum_map.get(&(k - 2 * d * sign)) {
+                    let from = cmp::max(x1 - d, 0) as usize;
+                    let to = x1 as usize;
+                    ans += sum[to + 1] - sum[from];
                 }
-                if s[i1][j1] != 1 || s[i2][j2] != 1 {
-                    continue;
+                if let Some(sum) = sum_map.get(&(k + 2 * d * sign)) {
+                    let from = x2 as usize;
+                    let to = cmp::min(h - 1, (x2 + d) as usize);
+                    ans += sum[to + 1] - sum[from];
                 }
-                let d = i2 - i1;
-                ans += sum[x + i2 + d + 1][x + j1 + 1] - sum[x + i2][x + j1 - d];
-                ans += sum[x + i1 + 1][x + j2 + d + 1] - sum[x + i1 - d][x + j2];
             }
         }
     }
     ans
 }
 
-fn count_duplicated(h: usize, w: usize, s: &Vec<Vec<usize>>) -> usize {
-    let x = cmp::max(h, w);
+pub struct Scanner<R> {
+    reader: R,
+}
 
-    let mut ans = 0;
-    for si in 0..h {
-        for i1 in si..h {
-            let j1 = i1 - si;
-            if j1 >= w {
-                continue;
-            }
-            for i2 in (i1 + 1)..h {
-                let j2 = i2 - si;
-                if j2 >= w {
-                    continue;
-                }
-                if s[i1][j1] != 1 || s[i2][j2] != 1 {
-                    continue;
-                }
-                let d = i2 - i1;
-                if i1 >= d {
-                    ans += s[i1 - d][j2];
-                }
-                if j2 + d < w {
-                    ans += s[i1][j2 + d];
-                }
-                if j1 >= d {
-                    ans += s[i2][j1 - d];
-                }
-                if i2 + d < h {
-                    ans += s[i2 + d][j1];
-                }
-            }
-        }
+impl<R: std::io::Read> Scanner<R> {
+    pub fn read<T: std::str::FromStr>(&mut self) -> T {
+        use std::io::Read;
+        let buf = self
+            .reader
+            .by_ref()
+            .bytes()
+            .map(|b| b.unwrap())
+            .skip_while(|&b| b == b' ' || b == b'\n')
+            .take_while(|&b| b != b' ' && b != b'\n')
+            .collect::<Vec<_>>();
+        unsafe { std::str::from_utf8_unchecked(&buf) }
+            .parse()
+            .ok()
+            .expect("Parse error.")
     }
-
-    for sj in 1..w {
-        for j1 in sj..w {
-            let i1 = j1 - sj;
-            if i1 >= h {
-                continue;
-            }
-            for j2 in (j1 + 1)..w {
-                let i2 = j2 - sj;
-                if i2 >= h {
-                    continue;
-                }
-                if s[i1][j1] != 1 || s[i2][j2] != 1 {
-                    continue;
-                }
-                let d = i2 - i1;
-                if i1 >= d {
-                    ans += s[i1 - d][j2];
-                }
-                if j2 + d < w {
-                    ans += s[i1][j2 + d];
-                }
-                if j1 >= d {
-                    ans += s[i2][j1 - d];
-                }
-                if i2 + d < h {
-                    ans += s[i2 + d][j1];
-                }
-            }
-        }
+    pub fn read_vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
+        (0..n).map(|_| self.read()).collect()
     }
-    ans
+    pub fn chars(&mut self) -> Vec<char> {
+        self.read::<String>().chars().collect()
+    }
 }
