@@ -1,105 +1,80 @@
-/// Thank you tanakh!!!
-/// https://qiita.com/tanakh/items/0ba42c7ca36cd29d0ac8
-macro_rules! input {
-    (source = $s:expr, $($r:tt)*) => {
-        let mut iter = $s.split_whitespace();
-        input_inner!{iter, $($r)*}
-    };
-    ($($r:tt)*) => {
-        let mut s = {
-            use std::io::Read;
-            let mut s = String::new();
-            std::io::stdin().read_to_string(&mut s).unwrap();
-            s
-        };
-        let mut iter = s.split_whitespace();
-        input_inner!{iter, $($r)*}
-    };
-}
-
-macro_rules! input_inner {
-    ($iter:expr) => {};
-    ($iter:expr, ) => {};
-
-    ($iter:expr, $var:ident : $t:tt $($r:tt)*) => {
-        let $var = read_value!($iter, $t);
-        input_inner!{$iter $($r)*}
-    };
-}
-
-macro_rules! read_value {
-    ($iter:expr, ( $($t:tt),* )) => {
-        ( $(read_value!($iter, $t)),* )
-    };
-
-    ($iter:expr, [ $t:tt ; $len:expr ]) => {
-        (0..$len).map(|_| read_value!($iter, $t)).collect::<Vec<_>>()
-    };
-
-    ($iter:expr, chars) => {
-        read_value!($iter, String).chars().collect::<Vec<char>>()
-    };
-
-    ($iter:expr, usize1) => {
-        read_value!($iter, usize) - 1
-    };
-
-    ($iter:expr, $t:ty) => {
-        $iter.next().unwrap().parse::<$t>().expect("Parse error")
-    };
-}
-
 use std::cmp;
-use std::cmp::Ordering;
 
 fn main() {
-    input!(r: f64, n: usize, m: usize);
-    let mut d = vec![0.0; n + 1];
-    for i in 0..n {
-        let w = r * 2.0 / (n as f64);
-        let dist = (r - w * (i as f64)).abs();
-        d[i] = (r.powi(2) - dist.powi(2)).sqrt() * 2.0;
-    }
-    let mut used = vec![false; n + 1];
-    let mut e = d
-        .iter()
-        .enumerate()
-        .map(|(i, &d)| (d, i))
-        .collect::<Vec<_>>();
-    e.sort_by(|&(d1, _), &(d2, _)| {
-        if d1 < d2 {
-            Ordering::Greater
-        } else if d1 > d2 {
-            Ordering::Less
-        } else {
-            Ordering::Equal
-        }
-    });
+    let s = std::io::stdin();
+    let mut sc = Scanner { reader: s.lock() };
+    let r: f64 = sc.read();
+    let n: usize = sc.read();
+    let m: usize = sc.read();
 
+    let mut lines = vec![0.0; n - 1];
+    let dr = 2.0 * r / (n as f64);
+    for i in 1..n {
+        let dr = r - dr * (i as f64);
+        let dh = (r * r - dr * dr).sqrt();
+        lines[i - 1] = dh * 2.0;
+    }
+    let mut used = vec![false; n - 1];
     let mut ans = 0.0;
-    for &(_, i) in e.iter() {
-        if used[i] {
-            continue;
-        }
-        let mut p = n;
-        for j in 0..n {
-            if i == j {
-                continue;
-            }
-            if used[i] {
-                continue;
-            }
-            if cmp::min(i, j) + m > cmp::max(i, j) {
-                continue;
-            }
-            if (d[i] - d[j]).abs() < (d[i] - d[p]).abs() {
-                p = j;
+    for _ in 0..n {
+        let mut head = n;
+        for (i, &line) in lines.iter().enumerate() {
+            if (head == n || lines[head] < line) && !used[i] {
+                head = i;
             }
         }
-        used[p] = true;
-        used[i] = true;
-        ans += if d[i] > d[p] { d[i] } else { d[p] };
+
+        if head == n {
+            break;
+        }
+        let mut tail = n;
+        for (i, &line) in lines.iter().enumerate() {
+            if (tail == n || lines[tail] < line)
+                && cmp::min(i, head) + m <= cmp::max(i, head)
+                && !used[i]
+            {
+                tail = i;
+            }
+        }
+
+        if tail == n {
+            used[head] = true;
+            ans += lines[head];
+        } else {
+            used[head] = true;
+            used[tail] = true;
+            assert!(lines[head] >= lines[tail]);
+            ans += lines[head];
+        }
     }
 
     println!("{}", ans);
+}
+
+pub struct Scanner<R> {
+    reader: R,
+}
+
+impl<R: std::io::Read> Scanner<R> {
+    pub fn read<T: std::str::FromStr>(&mut self) -> T {
+        use std::io::Read;
+        let buf = self
+            .reader
+            .by_ref()
+            .bytes()
+            .map(|b| b.unwrap())
+            .skip_while(|&b| b == b' ' || b == b'\n')
+            .take_while(|&b| b != b' ' && b != b'\n')
+            .collect::<Vec<_>>();
+        unsafe { std::str::from_utf8_unchecked(&buf) }
+            .parse()
+            .ok()
+            .expect("Parse error.")
+    }
+    pub fn read_vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
+        (0..n).map(|_| self.read()).collect()
+    }
+    pub fn chars(&mut self) -> Vec<char> {
+        self.read::<String>().chars().collect()
+    }
 }
