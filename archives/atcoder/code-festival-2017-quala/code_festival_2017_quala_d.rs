@@ -1,80 +1,57 @@
-/// Thank you tanakh!!!
-/// https://qiita.com/tanakh/items/0ba42c7ca36cd29d0ac8
-macro_rules! input {
-    (source = $s:expr, $($r:tt)*) => {
-        let mut iter = $s.split_whitespace();
-        input_inner!{iter, $($r)*}
-    };
-    ($($r:tt)*) => {
-        let mut s = {
-            use std::io::Read;
-            let mut s = String::new();
-            std::io::stdin().read_to_string(&mut s).unwrap();
-            s
-        };
-        let mut iter = s.split_whitespace();
-        input_inner!{iter, $($r)*}
-    };
-}
-
-macro_rules! input_inner {
-    ($iter:expr) => {};
-    ($iter:expr, ) => {};
-
-    ($iter:expr, $var:ident : $t:tt $($r:tt)*) => {
-        let $var = read_value!($iter, $t);
-        input_inner!{$iter $($r)*}
-    };
-}
-
-macro_rules! read_value {
-    ($iter:expr, ( $($t:tt),* )) => {
-        ( $(read_value!($iter, $t)),* )
-    };
-
-    ($iter:expr, [ $t:tt ; $len:expr ]) => {
-        (0..$len).map(|_| read_value!($iter, $t)).collect::<Vec<_>>()
-    };
-
-    ($iter:expr, chars) => {
-        read_value!($iter, String).chars().collect::<Vec<char>>()
-    };
-
-    ($iter:expr, usize1) => {
-        read_value!($iter, usize) - 1
-    };
-
-    ($iter:expr, $t:ty) => {
-        $iter.next().unwrap().parse::<$t>().expect("Parse error")
-    };
-}
+const LENGTH: usize = 2000;
+const S: usize = 500;
 
 fn main() {
-    input!(h: usize, w: usize, d: i64);
-    let max_d = d * ((h * w) as i64);
+    let s = std::io::stdin();
+    let mut sc = Scanner { reader: s.lock() };
+    let h: usize = sc.read();
+    let w: usize = sc.read();
+    let d: usize = sc.read();
 
-    let mut ans = vec![vec![0; w]; h];
-    for i in 0..h {
-        for j in 0..w {
-            let i = i as i64;
-            let j = j as i64;
-            let x = i + j;
-            let y = i - j;
-
-            let bi = x / d;
-            let bj = if y < 0 { (y - d + 1) / d } else { y / d };
-            let color = (bi % 2) * 2 + if bj < 0 { (-bj) % 2 } else { bj % 2 };
-
-            ans[i as usize][j as usize] = color as usize;
+    let mut big_table = vec![vec!['?'; LENGTH]; LENGTH];
+    let colors = vec![vec!['R', 'G'], vec!['B', 'Y']];
+    for i in 0..LENGTH {
+        for j in 0..LENGTH {
+            let ii = (i / d) % 2;
+            let jj = (j / d) % 2;
+            big_table[i][j] = colors[ii][jj];
         }
     }
 
-    let c: Vec<char> = "RYGB".chars().collect();
-
     for i in 0..h {
         for j in 0..w {
-            print!("{}", c[ans[i][j]]);
+            let p = S + i + j;
+            let q = S + i - j;
+            print!("{}", big_table[p][q]);
         }
         println!();
+    }
+}
+
+pub struct Scanner<R> {
+    reader: R,
+}
+
+impl<R: std::io::Read> Scanner<R> {
+    pub fn read<T: std::str::FromStr>(&mut self) -> T {
+        use std::io::Read;
+        let buf = self
+            .reader
+            .by_ref()
+            .bytes()
+            .map(|b| b.unwrap())
+            .skip_while(|&b| b == b' ' || b == b'\n')
+            .take_while(|&b| b != b' ' && b != b'\n')
+            .collect::<Vec<_>>();
+        unsafe { std::str::from_utf8_unchecked(&buf) }
+            .parse()
+            .ok()
+            .expect("Parse error.")
+    }
+    pub fn read_vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
+        (0..n).map(|_| self.read()).collect()
+    }
+    pub fn chars(&mut self) -> Vec<char> {
+        self.read::<String>().chars().collect()
     }
 }
