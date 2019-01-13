@@ -1,62 +1,71 @@
 fn main() {
-    let sc = std::io::stdin();
-    let mut sc = Scanner { reader: sc.lock() };
+    let s = std::io::stdin();
+    let mut sc = Scanner { reader: s.lock() };
     let n: usize = sc.read();
-    let mut x: Vec<i64> = vec![];
-    let mut y: Vec<i64> = vec![];
+    let mut xy = vec![];
     for _ in 0..n {
-        x.push(sc.read());
-        y.push(sc.read());
+        let x: i64 = sc.read();
+        let y: i64 = sc.read();
+        xy.push((x, y));
     }
 
-    for i in 1..n {
-        if (x[0] + y[0]).abs() % 2 != (x[i] + y[i]).abs() % 2 {
-            println!("-1");
-            return;
-        }
+    if xy.iter().any(|&(x, y)| (x + y).abs() % 2 == 0)
+        && xy.iter().any(|&(x, y)| (x + y).abs() % 2 == 1)
+    {
+        println!("-1");
+        return;
     }
 
-    let mut arms = vec![];
-    if (x[0] + y[0]).abs() % 2 == 0 {
+    let mut arms: Vec<i64> = (0..31).rev().map(|i| 1 << i).collect::<Vec<_>>();
+    if (xy[0].0 + xy[0].1).abs() % 2 == 0 {
         arms.push(1);
     }
-    for i in 0..31 {
-        arms.push(1 << i);
-    }
-    let m = arms.len();
-    println!("{}", m);
-    for i in 0..m {
+
+    let arms_sum = arms.iter().sum::<i64>();
+
+    println!("{}", arms.len());
+    for (i, &arm) in arms.iter().enumerate() {
         if i > 0 {
             print!(" ");
         }
-        print!("{}", arms[i]);
+        print!("{}", arm);
     }
     println!();
 
-    let sum: i64 = arms.iter().map(|&a| a).sum();
-    for (u, v) in (0..n).map(|i| (x[i] + y[i], x[i] - y[i])) {
-        let calc_up = |u: i64| {
-            assert!((u + sum) % 2 == 0);
-            let mut u = (u + sum) / 2;
-            let mut p = vec![false; m];
-            for i in (0..m).rev() {
-                if u >= arms[i] {
-                    u -= arms[i];
-                    p[i] = true;
-                }
+    for &(x, y) in xy.iter() {
+        let p = x + y;
+        let mut cur_sum = arms_sum;
+        let mut x_dir = vec![];
+        for &arm in arms.iter() {
+            if cur_sum - 2 * arm >= p {
+                cur_sum -= 2 * arm;
+                x_dir.push(-1);
+            } else {
+                x_dir.push(1);
             }
-            p
-        };
-        let u_up = calc_up(u);
-        let v_up = calc_up(v);
-        for i in 0..m {
-            let dir = match (u_up[i], v_up[i]) {
-                (true, true) => 'R',
-                (false, false) => 'L',
-                (false, true) => 'D',
-                (true, false) => 'U',
-            };
-            print!("{}", dir);
+        }
+
+        let q = x - y;
+        let mut cur_sum = arms_sum;
+        let mut y_dir = vec![];
+        for &arm in arms.iter() {
+            if cur_sum - 2 * arm >= q {
+                cur_sum -= 2 * arm;
+                y_dir.push(-1);
+            } else {
+                y_dir.push(1);
+            }
+        }
+
+        let n = x_dir.len();
+        for i in 0..n {
+            match (x_dir[i], y_dir[i]) {
+                (1, 1) => print!("R"),
+                (1, -1) => print!("U"),
+                (-1, 1) => print!("D"),
+                (-1, -1) => print!("L"),
+                _ => unreachable!(),
+            }
         }
         println!();
     }

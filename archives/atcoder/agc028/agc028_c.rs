@@ -1,56 +1,46 @@
 use std::cmp;
 
-fn solve(a: &Vec<usize>, b: &Vec<usize>) -> usize {
-    let n = a.len();
+fn main() {
+    let s = std::io::stdin();
+    let mut sc = Scanner { reader: s.lock() };
+    let n = sc.read();
+    let ab = (0..n)
+        .map(|_| (sc.read(), sc.read()))
+        .collect::<Vec<(i64, i64)>>();
+
+    let a_sum = ab.iter().map(|&(a, _)| a).sum::<i64>();
+    let b_sum = ab.iter().map(|&(_, b)| b).sum::<i64>();
+
     let mut v = vec![];
-    for i in 0..n {
-        v.push((a[i], i));
-        v.push((b[i], i));
+    for (i, &(a, b)) in ab.iter().enumerate() {
+        v.push((a, i));
+        v.push((b, i));
     }
     v.sort();
 
-    let mut ans = 0;
     let mut used_count = vec![0; n];
+    let mut ans = 0;
     for i in 0..n {
         let (t, i) = v[i];
         used_count[i] += 1;
         ans += t;
     }
 
-    let used_two = used_count.iter().any(|&c| c == 2);
-    if used_two {
-        return ans;
-    }
-
-    let mut min = 1e15 as usize;
-    for i in 0..n {
-        let (t, i) = v[i];
-        let ans = ans - t;
-        let (t, j) = v[n];
-        if i == j {
-            let (t, _) = v[n + 1];
-            min = cmp::min(ans + t, min);
-        } else {
-            min = cmp::min(ans + t, min);
+    if used_count.iter().any(|&c| c == 2) {
+        println!("{}", cmp::min(cmp::min(a_sum, b_sum), ans));
+    } else {
+        let mut min = 1e15 as i64;
+        for i in 0..n {
+            let (t, i) = v[i];
+            let ans = ans - t;
+            if i == v[n].1 {
+                min = cmp::min(min, ans + v[n + 1].0);
+            } else {
+                min = cmp::min(min, ans + v[n].0);
+            }
         }
+        println!("{}", cmp::min(cmp::min(a_sum, b_sum), min));
     }
-    min
-}
-
-fn main() {
-    let sc = std::io::stdin();
-    let mut sc = Scanner { reader: sc.lock() };
-    let n: usize = sc.read();
-    let mut a: Vec<usize> = vec![0; n];
-    let mut b: Vec<usize> = vec![0; n];
-    for i in 0..n {
-        a[i] = sc.read();
-        b[i] = sc.read();
-    }
-
-    let all_a: usize = a.iter().sum();
-    let all_b: usize = b.iter().sum();
-    println!("{}", cmp::min(solve(&a, &b), cmp::min(all_a, all_b)));
 }
 
 pub struct Scanner<R> {
