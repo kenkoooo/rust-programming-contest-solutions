@@ -1,9 +1,13 @@
 use std::cmp;
+use std::collections::{BinaryHeap, VecDeque};
+
+const INF: i64 = 1e16 as i64;
 
 fn main() {
     let sc = std::io::stdin();
     let mut sc = Scanner { reader: sc.lock() };
-    let n: usize = sc.read();
+
+    let n = sc.read();
     let mut graph = vec![vec![]; n];
     for _ in 1..n {
         let a = sc.read::<usize>() - 1;
@@ -12,87 +16,95 @@ fn main() {
         graph[b].push(a);
     }
 
-    let k: usize = sc.read();
-    let mut has_num = vec![false; n];
-    let mut num = vec![0; n];
-    let mut root = n;
+    let mut min = vec![-INF; n];
+    let mut max = vec![INF; n];
+    let mut number = vec![0; n];
+    let mut is_numbered = vec![false; n];
+    let k = sc.read();
     for _ in 0..k {
         let v = sc.read::<usize>() - 1;
-        num[v] = sc.read::<i64>();
-        has_num[v] = true;
-        root = v;
+        let p: i64 = sc.read();
+        is_numbered[v] = true;
+        number[v] = p;
     }
 
-    let mut min_max = vec![(0, 0); n];
-    dfs(root, root, &graph, &num, &has_num, &mut min_max);
-    if !answer_dfs(root, root, &graph, &mut num, &mut min_max) {
-        println!("No");
-        return;
-    } else {
-        println!("Yes");
-        for i in 0..n {
-            println!("{}", num[i]);
-        }
-    }
-}
-
-fn answer_dfs(
-    v: usize,
-    p: usize,
-    graph: &Vec<Vec<usize>>,
-    num: &mut Vec<i64>,
-    min_max: &mut Vec<(i64, i64)>,
-) -> bool {
-    let (min, max) = min_max[v];
-    let is_root = v == p;
-    if !is_root {
-        if min <= num[p] + 1 && num[p] + 1 <= max {
-            num[v] = num[p] + 1
-        } else if min <= num[p] - 1 && num[p] - 1 <= max {
-            num[v] = num[p] - 1
-        } else {
-            return false;
+    let mut q = BinaryHeap::new();
+    for i in 0..n {
+        if is_numbered[i] {
+            max[i] = number[i];
+            q.push((-max[i], i));
         }
     }
 
-    for &next in graph[v].iter() {
-        if next == p {
-            continue;
-        }
-        let (mut next_min, mut next_max) = min_max[next];
-        next_min = cmp::max(next_min, num[v] - 1);
-        next_max = cmp::min(next_max, num[v] + 1);
-        min_max[next] = (next_min, next_max);
-        if !answer_dfs(next, v, graph, num, min_max) {
-            return false;
+    while let Some((_, v)) = q.pop() {
+        for &next in graph[v].iter() {
+            if max[next] > max[v] + 1 {
+                max[next] = max[v] + 1;
+                q.push((-max[next], next));
+            }
         }
     }
-    true
-}
 
-fn dfs(
-    v: usize,
-    p: usize,
-    graph: &Vec<Vec<usize>>,
-    num: &Vec<i64>,
-    has_num: &Vec<bool>,
-    min_max: &mut Vec<(i64, i64)>,
-) {
-    let (mut min, mut max) = if has_num[v] {
-        (num[v], num[v])
-    } else {
-        (-1e15 as i64, 1e15 as i64)
-    };
-    for &next in graph[v].iter() {
-        if p == next {
-            continue;
+    let mut q = BinaryHeap::new();
+    for i in 0..n {
+        if is_numbered[i] {
+            min[i] = number[i];
+            q.push((min[i], i));
         }
-        dfs(next, v, graph, num, has_num, min_max);
-        let (next_min, next_max) = min_max[next];
-        min = cmp::max(next_min - 1, min);
-        max = cmp::min(next_max + 1, max);
     }
-    min_max[v] = (min, max);
+
+    while let Some((_, v)) = q.pop() {
+        for &next in graph[v].iter() {
+            if min[next] < min[v] - 1 {
+                min[next] = min[v] - 1;
+                q.push((min[next], next));
+            }
+        }
+    }
+
+    let mut root = 0;
+    for i in 0..n {
+        if is_numbered[i] {
+            root = i;
+        }
+    }
+
+    let mut vis = vec![false; n];
+    let mut q = VecDeque::new();
+    q.push_back(root);
+    vis[root] = true;
+    while let Some(v) = q.pop_front() {
+        for &next in graph[v].iter() {
+            if vis[next] {
+                continue;
+            }
+            vis[next] = true;
+            q.push_back(next);
+
+            if !is_numbered[next] {
+                if min[next] <= number[v] + 1 && number[v] + 1 <= max[next] {
+                    number[next] = number[v] + 1;
+                } else if min[next] <= number[v] - 1 && number[v] - 1 <= max[next] {
+                    number[next] = number[v] - 1;
+                } else {
+                    println!("No");
+                    return;
+                }
+                is_numbered[next] = true;
+            } else {
+                if number[next] < min[next] || max[next] < number[next] {
+                    println!("No");
+                    return;
+                }
+            }
+        }
+    }
+
+    println!("Yes");
+    for i in 0..n {
+        assert!(is_numbered[i]);
+        println!("{}", number[i]);
+    }
 }
 
 pub struct Scanner<R> {
