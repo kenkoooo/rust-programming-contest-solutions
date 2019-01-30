@@ -3,224 +3,149 @@ use self::mod_int::ModInt;
 const MOD: usize = 1e9 as usize + 7;
 
 fn main() {
-    let stdin = std::io::stdin();
-    let mut sc = Scanner {
-        reader: stdin.lock(),
-    };
-
+    let sc = std::io::stdin();
+    let mut sc = Scanner { reader: sc.lock() };
     let n: usize = sc.read();
-    let s = sc.chars();
+    let s: Vec<char> = sc.chars();
     let m = s.len();
 
-    let mut dp = vec![ModInt::new(0, MOD); n + 1];
-    dp[0] = ModInt::new(1, MOD);
+    let mut dp = vec![ModInt::new(0); n + 1];
+    dp[0] = ModInt::new(1);
 
-    let inv2 = pow(ModInt::new(2, MOD), MOD - 2);
-    let inv2_m = pow(inv2, m);
+    let inv2 = ModInt::new(2).pow(MOD - 2);
+    let inv2m = inv2.pow(m);
 
     for _ in 0..n {
-        let mut next = vec![ModInt::new(0, MOD); n + 1];
+        let mut next = vec![ModInt::new(0); n + 1];
         for i in 0..(n + 1) {
             if i > 0 {
                 next[i - 1] += dp[i];
             } else {
                 next[0] += dp[0];
             }
+
             if i < n {
                 next[i + 1] += dp[i] * 2;
             }
         }
         dp = next;
     }
-    let ans = dp[m] * inv2_m;
-    println!("{}", ans.value);
-}
 
-fn pow(x: ModInt<usize>, e: usize) -> ModInt<usize> {
-    let mut e = e;
-    let mut result = ModInt::new(1, MOD);
-    let mut cur = x;
-    while e > 0 {
-        if e & 1 != 0 {
-            result *= cur;
-        }
-        e /= 2;
-        cur = cur * cur;
-    }
-    result
+    let ans = dp[m] * inv2m;
+    println!("{}", ans.0);
 }
 
 pub mod mod_int {
-    use std::ops::{Add, AddAssign, Mul, MulAssign, Rem, Sub, SubAssign};
+    use super::MOD;
+    use std::ops::{Add, AddAssign, Mul, MulAssign, Sub, SubAssign};
 
-    #[derive(Copy)]
-    pub struct ModInt<T> {
-        pub value: T,
-        modulo: T,
+    type Num = usize;
+
+    #[derive(Clone, Copy)]
+    pub struct ModInt<T: Copy + Clone>(pub T);
+
+    impl Add<ModInt<Num>> for ModInt<Num> {
+        type Output = ModInt<Num>;
+        fn add(self, rhs: ModInt<Num>) -> ModInt<Num> {
+            self + rhs.0
+        }
     }
 
-    impl<T> Clone for ModInt<T>
-    where
-        T: Copy,
-    {
-        fn clone(&self) -> Self {
-            ModInt {
-                value: self.value,
-                modulo: self.modulo,
+    impl Add<Num> for ModInt<Num> {
+        type Output = ModInt<Num>;
+        fn add(self, rhs: Num) -> ModInt<Num> {
+            let mut t = rhs + self.0;
+            if t >= MOD {
+                t = t - MOD;
             }
-        }
-
-        fn clone_from(&mut self, source: &ModInt<T>) {
-            self.value = source.value;
-            self.modulo = source.modulo;
+            ModInt(t)
         }
     }
 
-    impl<T> Add<ModInt<T>> for ModInt<T>
-    where
-        T: Add<Output = T> + Sub<Output = T> + Copy + PartialOrd,
-    {
-        type Output = ModInt<T>;
-        fn add(self, rhs: ModInt<T>) -> ModInt<T> {
-            self + rhs.value
+    impl Sub<Num> for ModInt<Num> {
+        type Output = ModInt<Num>;
+        fn sub(self, rhs: Num) -> ModInt<Num> {
+            let rhs = if rhs >= MOD { rhs % MOD } else { rhs };
+            let value = if self.0 < rhs { self.0 + MOD } else { self.0 };
+            ModInt(value - rhs)
         }
     }
 
-    impl<T> Add<T> for ModInt<T>
-    where
-        T: Add<Output = T> + Sub<Output = T> + Copy + PartialOrd,
-    {
-        type Output = ModInt<T>;
-        fn add(self, rhs: T) -> ModInt<T> {
-            let m = self.modulo;
-            let mut t = rhs + self.value;
-            if t >= m {
-                t = t - m;
-            }
-            ModInt {
-                value: t,
-                modulo: self.modulo,
-            }
+    impl Sub<ModInt<Num>> for ModInt<Num> {
+        type Output = ModInt<Num>;
+        fn sub(self, rhs: ModInt<Num>) -> ModInt<Num> {
+            self - rhs.0
         }
     }
 
-    impl<T> Sub<T> for ModInt<T>
-    where
-        T: PartialOrd + Copy + Add<Output = T> + Sub<Output = T> + Rem<Output = T>,
-    {
-        type Output = ModInt<T>;
-        fn sub(self, rhs: T) -> ModInt<T> {
-            let rhs = if rhs >= self.modulo {
-                rhs % self.modulo
-            } else {
-                rhs
-            };
-            let value = if self.value < rhs {
-                self.value + self.modulo
-            } else {
-                self.value
-            };
-            ModInt {
-                value: value - rhs,
-                modulo: self.modulo,
-            }
-        }
-    }
-
-    impl<T> Sub<ModInt<T>> for ModInt<T>
-    where
-        T: PartialOrd + Copy + Add<Output = T> + Sub<Output = T> + Rem<Output = T>,
-    {
-        type Output = ModInt<T>;
-        fn sub(self, rhs: ModInt<T>) -> ModInt<T> {
-            self - rhs.value
-        }
-    }
-
-    impl<T> AddAssign<T> for ModInt<T>
-    where
-        T: Add<Output = T> + Sub<Output = T> + Copy + PartialOrd,
-    {
-        fn add_assign(&mut self, other: T) {
+    impl AddAssign<Num> for ModInt<Num> {
+        fn add_assign(&mut self, other: Num) {
             *self = *self + other;
         }
     }
-    impl<T> AddAssign<ModInt<T>> for ModInt<T>
-    where
-        T: Add<Output = T> + Sub<Output = T> + Copy + PartialOrd,
-    {
-        fn add_assign(&mut self, other: ModInt<T>) {
+    impl AddAssign<ModInt<Num>> for ModInt<Num> {
+        fn add_assign(&mut self, other: ModInt<Num>) {
             *self = *self + other;
         }
     }
 
-    impl<T> SubAssign<T> for ModInt<T>
-    where
-        T: PartialOrd + Copy + Add<Output = T> + Sub<Output = T> + Rem<Output = T>,
-    {
-        fn sub_assign(&mut self, other: T) {
+    impl SubAssign<Num> for ModInt<Num> {
+        fn sub_assign(&mut self, other: Num) {
             *self = *self - other;
         }
     }
 
-    impl<T> SubAssign<ModInt<T>> for ModInt<T>
-    where
-        T: PartialOrd + Copy + Add<Output = T> + Sub<Output = T> + Rem<Output = T>,
-    {
-        fn sub_assign(&mut self, other: ModInt<T>) {
+    impl SubAssign<ModInt<Num>> for ModInt<Num> {
+        fn sub_assign(&mut self, other: ModInt<Num>) {
             *self = *self - other;
         }
     }
 
-    impl<T> Mul<ModInt<T>> for ModInt<T>
-    where
-        T: Mul<Output = T> + Rem<Output = T> + Copy,
-    {
-        type Output = ModInt<T>;
+    impl Mul<ModInt<Num>> for ModInt<Num> {
+        type Output = ModInt<Num>;
 
-        fn mul(self, rhs: ModInt<T>) -> ModInt<T> {
-            self * rhs.value
+        fn mul(self, rhs: ModInt<Num>) -> ModInt<Num> {
+            self * rhs.0
         }
     }
-    impl<T> Mul<T> for ModInt<T>
-    where
-        T: Mul<Output = T> + Rem<Output = T> + Copy,
-    {
-        type Output = ModInt<T>;
+    impl Mul<Num> for ModInt<Num> {
+        type Output = ModInt<Num>;
 
-        fn mul(self, rhs: T) -> ModInt<T> {
-            let t = (self.value * rhs) % self.modulo;
-            ModInt {
-                value: t,
-                modulo: self.modulo,
-            }
+        fn mul(self, rhs: Num) -> ModInt<Num> {
+            let t = (self.0 * rhs) % MOD;
+            ModInt(t)
         }
     }
 
-    impl<T> MulAssign<T> for ModInt<T>
-    where
-        T: Mul<Output = T> + Rem<Output = T> + Copy,
-    {
-        fn mul_assign(&mut self, rhs: T) {
+    impl MulAssign<Num> for ModInt<Num> {
+        fn mul_assign(&mut self, rhs: Num) {
             *self = *self * rhs;
         }
     }
 
-    impl<T> MulAssign<ModInt<T>> for ModInt<T>
-    where
-        T: Mul<Output = T> + Rem<Output = T> + Copy,
-    {
-        fn mul_assign(&mut self, rhs: ModInt<T>) {
+    impl MulAssign<ModInt<Num>> for ModInt<Num> {
+        fn mul_assign(&mut self, rhs: ModInt<Num>) {
             *self = *self * rhs;
         }
     }
 
-    impl<T> ModInt<T> {
-        pub fn new(value: T, modulo: T) -> ModInt<T> {
-            ModInt {
-                value: value,
-                modulo: modulo,
+    impl ModInt<Num> {
+        pub fn new(value: Num) -> Self {
+            ModInt(value)
+        }
+
+        pub fn pow(self, e: usize) -> ModInt<Num> {
+            let mut result = ModInt::new(1);
+            let mut cur = self;
+            let mut e = e;
+            while e > 0 {
+                if e & 1 == 1 {
+                    result *= cur;
+                }
+                e >>= 1;
+                cur *= cur;
             }
+            result
         }
     }
 }
