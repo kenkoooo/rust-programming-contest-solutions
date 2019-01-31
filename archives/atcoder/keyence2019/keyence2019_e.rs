@@ -1,39 +1,46 @@
-const INF: usize = 1e17 as usize;
+use std::cmp;
+
+const INF: i64 = std::i64::MAX / 2;
 
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { reader: s.lock() };
-    let n: usize = sc.read();
-    let d: usize = sc.read();
-    let a: Vec<usize> = sc.read_vec(n);
 
-    let mut cities = vec![];
-    for (i, &a) in a.iter().enumerate() {
-        cities.push((a, i));
-    }
-    cities.sort();
-
+    let n = sc.read();
+    let d: i64 = sc.read();
+    let p: Vec<i64> = sc.read_vec(n);
+    let mut a = p
+        .iter()
+        .enumerate()
+        .map(|(i, &a)| (a, i))
+        .collect::<Vec<_>>();
+    a.sort();
+    let mut seg_l = SegmentTree::new(n, (INF, 0), |a, b| cmp::min(a, b));
+    let mut seg_r = SegmentTree::new(n, (INF, 0), |a, b| cmp::min(a, b));
     let mut edges = vec![];
-    let mut seg1 = SegmentTree::new(n, (INF, 0), |t1, t2| if t1 > t2 { t2 } else { t1 });
-    let mut seg2 = SegmentTree::new(n, (INF, 0), |t1, t2| if t1 > t2 { t2 } else { t1 });
-    for &(_, i) in cities.iter() {
-        let right = seg1.query(i, n);
-        if right.0 != INF {
-            let j = right.1;
-            let cost = (j - i) * d + a[i] + a[j];
-            edges.push((cost, i, j));
+    for &(a, i) in a.iter() {
+        let (left_a, left_i) = seg_l.query(0, i + 1);
+        if left_a < INF {
+            edges.push((left_i, i));
         }
-        let left = seg2.query(0, i + 1);
-        if left.0 != INF {
-            let j = left.1;
-            let cost = (i - j) * d + a[i] + a[j];
-            edges.push((cost, i, j));
+        let (right_a, right_i) = seg_r.query(i, n);
+        if right_a < INF {
+            edges.push((i, right_i));
         }
-        seg1.update(i, (i * d + a[i], i));
-        seg2.update(i, ((n - i) * d + a[i], i));
+        seg_l.update(i, ((n - i) as i64 * d + a, i));
+        seg_r.update(i, (i as i64 * d + a, i));
     }
 
+    let mut edges = edges
+        .iter()
+        .map(|&(i, j)| {
+            assert!(i < j);
+            let cost = (j - i) as i64 * d + p[i] + p[j];
+            (cost, i, j)
+        })
+        .collect::<Vec<_>>();
     edges.sort();
+
     let mut uf = UnionFind::new(n);
     let mut ans = 0;
     for &(cost, i, j) in edges.iter() {
@@ -42,8 +49,52 @@ fn main() {
             ans += cost;
         }
     }
-
     println!("{}", ans);
+}
+pub struct UnionFind {
+    parent: Vec<usize>,
+    sizes: Vec<usize>,
+    size: usize,
+}
+
+impl UnionFind {
+    pub fn new(n: usize) -> UnionFind {
+        UnionFind {
+            parent: (0..n).map(|i| i).collect::<Vec<usize>>(),
+            sizes: vec![1; n],
+            size: n,
+        }
+    }
+
+    pub fn find(&mut self, x: usize) -> usize {
+        if x == self.parent[x] {
+            x
+        } else {
+            let px = self.parent[x];
+            self.parent[x] = self.find(px);
+            self.parent[x]
+        }
+    }
+
+    pub fn unite(&mut self, x: usize, y: usize) -> bool {
+        let parent_x = self.find(x);
+        let parent_y = self.find(y);
+        if parent_x == parent_y {
+            return false;
+        }
+
+        let (large, small) = if self.sizes[parent_x] < self.sizes[parent_y] {
+            (parent_y, parent_x)
+        } else {
+            (parent_x, parent_y)
+        };
+
+        self.parent[small] = large;
+        self.sizes[large] += self.sizes[small];
+        self.sizes[small] = 0;
+        self.size -= 1;
+        return true;
+    }
 }
 
 /// Segment Tree for range queries
@@ -101,52 +152,6 @@ where
             let y = self.query_range(a, b, k * 2 + 2, (l + r) >> 1, r);
             (self.f)(x, y)
         }
-    }
-}
-
-pub struct UnionFind {
-    parent: Vec<usize>,
-    sizes: Vec<usize>,
-    size: usize,
-}
-
-impl UnionFind {
-    pub fn new(n: usize) -> UnionFind {
-        UnionFind {
-            parent: (0..n).map(|i| i).collect::<Vec<usize>>(),
-            sizes: vec![1; n],
-            size: n,
-        }
-    }
-
-    pub fn find(&mut self, x: usize) -> usize {
-        if x == self.parent[x] {
-            x
-        } else {
-            let px = self.parent[x];
-            self.parent[x] = self.find(px);
-            self.parent[x]
-        }
-    }
-
-    pub fn unite(&mut self, x: usize, y: usize) -> bool {
-        let parent_x = self.find(x);
-        let parent_y = self.find(y);
-        if parent_x == parent_y {
-            return false;
-        }
-
-        let (large, small) = if self.sizes[parent_x] < self.sizes[parent_y] {
-            (parent_y, parent_x)
-        } else {
-            (parent_x, parent_y)
-        };
-
-        self.parent[small] = large;
-        self.sizes[large] += self.sizes[small];
-        self.sizes[small] = 0;
-        self.size -= 1;
-        return true;
     }
 }
 
