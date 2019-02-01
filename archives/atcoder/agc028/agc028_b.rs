@@ -3,47 +3,41 @@ use self::mod_int::ModInt;
 const MOD: usize = 1e9 as usize + 7;
 
 fn main() {
-    let sc = std::io::stdin();
-    let mut sc = Scanner { reader: sc.lock() };
-    let n: usize = sc.read();
+    let s = std::io::stdin();
+    let mut sc = Scanner { reader: s.lock() };
+    let n = sc.read();
     let a: Vec<usize> = sc.read_vec(n);
 
-    let mut inv = vec![ModInt::new(0); n + 1];
+    let mut fact = ModInt::new(1);
     for i in 1..(n + 1) {
-        inv[i] = pow(ModInt::new(i), MOD - 2);
+        fact *= i;
     }
+
+    // inv[x] := 1/x
+    let mut inv = vec![ModInt::new(1); n + 1];
+    for i in 1..(n + 1) {
+        inv[i] = ModInt::new(i).pow(MOD - 2);
+    }
+
+    // sum[x] := 1/1 + 1/2 + 1/3 + ... + 1/x
     let mut sum = vec![ModInt::new(0); n + 1];
     for i in 0..n {
         sum[i + 1] = sum[i] + inv[i + 1];
     }
 
-    let mut total = ModInt::new(1);
+    let mut fact = ModInt::new(1);
     for i in 1..(n + 1) {
-        total *= i;
+        fact *= i;
     }
 
     let mut ans = ModInt::new(0);
     for i in 0..n {
-        let left = i;
-        let right = n - 1 - i;
-        let p = sum[left + 1] + sum[right + 1] - sum[1];
-        ans += p * total * a[i];
+        let left = i + 1;
+        let right = n - i;
+        ans += (sum[left] + sum[right] - 1) * fact * a[i];
     }
-    println!("{}", ans.0);
-}
 
-fn pow(x: ModInt<usize>, e: usize) -> ModInt<usize> {
-    let mut result = ModInt::new(1);
-    let mut cur = x;
-    let mut e = e;
-    while e > 0 {
-        if e & 1 == 1 {
-            result *= cur;
-        }
-        e >>= 1;
-        cur *= cur;
-    }
-    result
+    println!("{}", ans.0);
 }
 
 pub mod mod_int {
@@ -143,6 +137,20 @@ pub mod mod_int {
     impl ModInt<Num> {
         pub fn new(value: Num) -> Self {
             ModInt(value)
+        }
+
+        pub fn pow(self, e: usize) -> ModInt<Num> {
+            let mut result = ModInt::new(1);
+            let mut cur = self;
+            let mut e = e;
+            while e > 0 {
+                if e & 1 == 1 {
+                    result *= cur;
+                }
+                e >>= 1;
+                cur *= cur;
+            }
+            result
         }
     }
 }
