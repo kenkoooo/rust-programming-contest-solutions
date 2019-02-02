@@ -5,92 +5,16 @@ fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { reader: s.lock() };
     let n: usize = sc.read();
-
     if n == 1 {
         println!("1");
         println!("+ 1");
         return;
     }
 
-    let primes = get_primes(n);
-    let primes: Vec<usize> = primes
-        .iter()
-        .map(|&p| {
-            let mut cur = p;
-            while cur * p <= n {
-                cur *= p;
-            }
-            cur
-        })
-        .collect();
-    let add_counts: Vec<usize> = primes
-        .iter()
-        .map(|&prime| {
-            let mut other_lcm = 1;
-            for &p in primes.iter() {
-                if p == prime {
-                    continue;
-                }
-                other_lcm = (other_lcm * p) % prime;
-            }
-            let mut cur = 0;
-            let mut count = 0;
-            while cur != 1 {
-                cur = (cur + other_lcm) % prime;
-                count += 1;
-            }
-            count
-        })
-        .collect();
-
-    let mut numerator = BigInt::from(0);
-    let mut denominator = BigInt::from(1);
-
-    let mut ans = vec![];
-    for i in 0..primes.len() {
-        let prime = primes[i];
-        let add_count = add_counts[i];
-
-        let old_denominator = denominator.clone();
-        denominator *= prime;
-        numerator *= prime;
-
-        if add_count * 2 > prime {
-            let add_count = prime - add_count;
-            numerator -= old_denominator * add_count;
-            for _ in 0..add_count {
-                ans.push((1, '-', prime));
-            }
-        } else {
-            numerator += old_denominator * add_count;
-            for _ in 0..add_count {
-                ans.push((0, '+', prime));
-            }
-        }
-    }
-
-    let zero = BigInt::from(0);
-    while numerator < zero {
-        numerator += denominator.clone();
-        ans.push((0, '+', 1));
-    }
-    while numerator > denominator.clone() {
-        numerator -= denominator.clone();
-        ans.push((1, '-', 1));
-    }
-
-    ans.sort();
-    println!("{}", ans.len());
-    for &(_, c, p) in ans.iter() {
-        println!("{} {}", c, p);
-    }
-}
-
-fn get_primes(n: usize) -> Vec<usize> {
     let mut is_prime = vec![true; n + 1];
     is_prime[0] = false;
     is_prime[1] = false;
-    for p in 0..(n + 1) {
+    for p in 2..(n + 1) {
         if is_prime[p] {
             let mut cur = p * 2;
             while cur <= n {
@@ -100,7 +24,76 @@ fn get_primes(n: usize) -> Vec<usize> {
         }
     }
 
-    (0..(n + 1)).filter(|&i| is_prime[i]).collect()
+    let primes = is_prime
+        .iter()
+        .enumerate()
+        .filter(|&(_, &is_prime)| is_prime)
+        .map(|(p, _)| {
+            let mut pow = 1;
+            while pow * p <= n {
+                pow *= p;
+            }
+            pow
+        })
+        .collect::<Vec<_>>();
+    let add_counts = primes
+        .iter()
+        .map(|&prime| {
+            // lcs(1, 2, ..., n) / prime (mod prime)
+            let mut lcs = 1;
+            for &p in primes.iter().filter(|&&p| p != prime) {
+                lcs *= p;
+                lcs %= prime;
+            }
+
+            let mut count = 0;
+            while (count * lcs) % prime != 1 {
+                count += 1;
+            }
+            (prime, count)
+        })
+        .collect::<Vec<(usize, usize)>>();
+
+    let mut add = vec![];
+    let mut sub = vec![];
+    for &(prime, add_count) in add_counts.iter() {
+        if add_count * 2 > prime {
+            let sub_count = prime - add_count;
+            sub.extend(vec![prime; sub_count]);
+        } else {
+            add.extend(vec![prime; add_count]);
+        }
+    }
+
+    let mut lcs = BigInt::from(1);
+    for &(prime, _) in add_counts.iter() {
+        lcs *= prime;
+    }
+
+    let mut num = BigInt::from(0);
+    for &add in add.iter() {
+        num += lcs.clone() / add;
+    }
+    for &sub in sub.iter() {
+        num -= lcs.clone() / sub;
+    }
+
+    while num < BigInt::from(0) {
+        num += lcs.clone();
+        add.push(1);
+    }
+    while num > lcs {
+        num -= lcs.clone();
+        sub.push(1);
+    }
+
+    println!("{}", add.len() + sub.len());
+    for &a in add.iter() {
+        println!("+ {}", a);
+    }
+    for &a in sub.iter() {
+        println!("- {}", a);
+    }
 }
 
 pub struct Scanner<R> {
