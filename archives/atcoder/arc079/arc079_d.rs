@@ -1,115 +1,110 @@
-const INF: usize = 1e15 as usize;
+use std::collections::BTreeSet;
 
 fn main() {
-    let sc = std::io::stdin();
-    let mut sc = Scanner { reader: sc.lock() };
-    let n: usize = sc.read();
-    let p: Vec<usize> = sc.read_vec(n);
+    let s = std::io::stdin();
+    let mut sc = Scanner { reader: s.lock() };
 
+    let n = sc.read();
     let mut graph = vec![vec![]; n];
-    let mut inverted = vec![0; n];
+    let mut parents = vec![0; n];
     for i in 0..n {
-        let from = p[i] - 1;
-        let to = i;
-        graph[from].push(to);
-        inverted[to] = from;
+        let p = sc.read::<usize>() - 1;
+        graph[p].push(i);
+        parents[i] = p;
     }
 
-    let cycled_node = {
-        let mut visited = vec![false; n];
-        let mut cur = 0;
-        while !visited[inverted[cur]] {
-            cur = inverted[cur];
-            visited[cur] = true;
+    let mut vis = vec![false; n];
+    let mut cur = 0;
+    loop {
+        if vis[cur] {
+            break;
         }
-        cur
-    };
-
-    let mut cur = cycled_node;
-    let mut cycle = vec![cur];
-    cur = inverted[cur];
-    while cur != cycle[0] {
-        cycle.push(cur);
-        cur = inverted[cur];
+        vis[cur] = true;
+        cur = parents[cur];
     }
 
     let mut is_cycle = vec![false; n];
-    for &node in cycle.iter() {
-        is_cycle[node] = true;
+    loop {
+        if is_cycle[cur] {
+            break;
+        }
+        is_cycle[cur] = true;
+        cur = parents[cur];
     }
 
-    let mut num = vec![INF; n];
-    for &node in cycle.iter() {
-        dfs(node, &graph, &mut num, &is_cycle);
-    }
-
-    let head = cycled_node;
-    let candidate1 = num[head];
-    let mut next_nums: Vec<usize> = graph[head].iter().map(|&next| num[next]).collect();
-    next_nums.push(candidate1);
-    next_nums.sort();
-    let mut candidate2 = 0;
-    for &num in next_nums.iter() {
-        if candidate2 == num {
-            candidate2 += 1;
+    let mut grundy = vec![n; n];
+    for i in 0..n {
+        if is_cycle[i] {
+            for &next in graph[i].iter() {
+                if !is_cycle[next] {
+                    dfs(next, &graph, &mut grundy);
+                }
+            }
         }
     }
 
-    let mut num1 = num.clone();
-    num1[head] = candidate1;
-    let mut cur = inverted[head];
-    while cur != head {
-        num1[cur] = get_grundy(cur, &graph, &num1);
-        cur = inverted[cur];
-    }
-    if num1[head] == get_grundy(head, &graph, &num1) {
+    let head = is_cycle
+        .iter()
+        .enumerate()
+        .filter(|&(_, &is_cycle)| is_cycle)
+        .map(|(v, _)| v)
+        .next()
+        .unwrap();
+    let mut set = graph[head]
+        .iter()
+        .map(|&next| grundy[next])
+        .collect::<BTreeSet<usize>>();
+
+    grundy[head] = (0..).filter(|i| !set.contains(i)).next().unwrap();
+    if solve(head, &mut grundy, &parents, &graph) {
         println!("POSSIBLE");
         return;
     }
 
-    let mut num2 = num.clone();
-    num2[head] = candidate2;
-    let mut cur = inverted[head];
-    while cur != head {
-        num2[cur] = get_grundy(cur, &graph, &num2);
-        cur = inverted[cur];
-    }
-    if num2[head] == get_grundy(head, &graph, &num2) {
+    set.insert(grundy[head]);
+    grundy[head] = (0..).filter(|i| !set.contains(i)).next().unwrap();
+    if solve(head, &mut grundy, &parents, &graph) {
         println!("POSSIBLE");
         return;
     }
-
     println!("IMPOSSIBLE");
 }
 
-fn get_grundy(node: usize, graph: &Vec<Vec<usize>>, num: &Vec<usize>) -> usize {
-    let mut next_nums: Vec<usize> = graph[node].iter().map(|&next| num[next]).collect();
-    next_nums.sort();
-    let mut grundy = 0;
-    for &num in next_nums.iter() {
-        if grundy == num {
-            grundy += 1;
-        }
+fn solve(
+    head: usize,
+    grundy: &mut Vec<usize>,
+    parents: &Vec<usize>,
+    graph: &Vec<Vec<usize>>,
+) -> bool {
+    let mut cur = parents[head];
+    while cur != head {
+        let set = graph[cur]
+            .iter()
+            .map(|&next| grundy[next])
+            .collect::<BTreeSet<usize>>();
+        grundy[cur] = (0..).filter(|i| !set.contains(i)).next().unwrap();
+        cur = parents[cur];
     }
-    grundy
+    let set = graph[head]
+        .iter()
+        .map(|&next| grundy[next])
+        .collect::<BTreeSet<usize>>();
+    grundy[head] == (0..).filter(|i| !set.contains(i)).next().unwrap()
 }
 
-fn dfs(v: usize, graph: &Vec<Vec<usize>>, num: &mut Vec<usize>, is_cycle: &Vec<bool>) -> usize {
-    let mut next_nums: Vec<_> = graph[v]
-        .iter()
-        .filter(|&&next| !is_cycle[next])
-        .map(|&next| dfs(next, graph, num, is_cycle))
-        .collect();
-    next_nums.sort();
-
-    let mut cur = 0;
-    for &next_num in next_nums.iter() {
-        if cur == next_num {
-            cur += 1;
-        }
+fn dfs(v: usize, graph: &Vec<Vec<usize>>, grundy: &mut Vec<usize>) {
+    let mut set = BTreeSet::new();
+    for &next in graph[v].iter() {
+        dfs(next, graph, grundy);
+        set.insert(grundy[next]);
     }
-    num[v] = cur;
-    num[v]
+    for i in 0.. {
+        if set.contains(&i) {
+            continue;
+        }
+        grundy[v] = i;
+        break;
+    }
 }
 
 pub struct Scanner<R> {

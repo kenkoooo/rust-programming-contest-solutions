@@ -1,138 +1,132 @@
-use std::ops::{AddAssign, Sub};
+use self::fenwick_tree::FenwickTree;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(PartialEq)]
 struct F64(f64);
 
-impl PartialEq for F64 {
-    fn eq(&self, other: &F64) -> bool {
-        self.0 == other.0
-    }
-}
-impl Eq for F64 {}
-
-impl Ord for F64 {
-    fn cmp(&self, other: &F64) -> std::cmp::Ordering {
-        if self.0 < other.0 {
-            std::cmp::Ordering::Less
-        } else {
-            std::cmp::Ordering::Greater
-        }
-    }
-}
 impl PartialOrd for F64 {
-    fn partial_cmp(&self, other: &F64) -> Option<std::cmp::Ordering> {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         Some(self.cmp(other))
     }
 }
 
-fn solve(lines: &Vec<(F64, F64, F64, F64)>) -> f64 {
-    let n = lines.len();
-    let count = ((n - 1) * n / 2 + 1) / 2;
-
-    let mut ok = -1e15;
-    let mut ng = 1e15;
-    let mut prev_ok = ok;
-    let mut prev_ng = ng;
-    loop {
-        let x = (ok + ng) / 2.0;
-
-        let mut v = vec![];
-        for (i, &(_, a, b, c)) in lines.iter().enumerate() {
-            let y = (c.0 - a.0 * x) / b.0;
-            v.push((F64(y), i));
+impl Ord for F64 {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        if self.0 > other.0 {
+            std::cmp::Ordering::Greater
+        } else if self.0 < other.0 {
+            std::cmp::Ordering::Less
+        } else {
+            std::cmp::Ordering::Equal
         }
-        v.sort();
+    }
+}
 
-        let mut sub_count = 0;
+impl Eq for F64 {}
+
+fn main() {
+    let s = std::io::stdin();
+    let mut sc = Scanner { reader: s.lock() };
+    let n = sc.read();
+    let lines = (0..n)
+        .map(|_| (sc.read(), sc.read(), sc.read()))
+        .collect::<Vec<(f64, f64, f64)>>();
+    let lines_y = lines.iter().map(|&(a, b, c)| (b, a, c)).collect();
+    let x = solve(lines);
+    let y = solve(lines_y);
+    println!("{} {}", x, y);
+}
+
+fn solve(mut lines: Vec<(f64, f64, f64)>) -> f64 {
+    let n = lines.len();
+    let center = (n * (n - 1) / 2 + 1) / 2;
+
+    let mut low = -1e9;
+    lines.sort_by_key(|&(a, b, c)| F64((-a * low + c) / b));
+    let mut high = 1e9;
+    let mut prev_low = low;
+    let mut prev_high = high;
+    loop {
+        let x = (low + high) / 2.0;
+        let mut indices = (0..n)
+            .map(|i| {
+                let (a, b, c) = lines[i];
+                let y = (-a * x + c) / b;
+                (F64(y), i)
+            })
+            .collect::<Vec<_>>();
+        indices.sort();
+
         let mut bit = FenwickTree::new(n, 0);
-        for &(_, i) in v.iter() {
-            sub_count += bit.sum(i, n);
+        let mut rotation = 0;
+        for &(_, i) in indices.iter() {
+            rotation += bit.sum(i, n);
             bit.add(i, 1);
         }
 
-        if sub_count < count {
-            ok = x;
+        if rotation >= center {
+            high = x;
         } else {
-            ng = x;
+            low = x;
         }
 
-        if ok == prev_ok && ng == prev_ng {
+        if low == prev_low && high == prev_high {
             break;
         }
-        prev_ok = ok;
-        prev_ng = ng;
+        prev_high = high;
+        prev_low = low;
     }
-    ok
+    (high + low) / 2.0
 }
 
-fn main() {
-    let sc = std::io::stdin();
-    let mut sc = Scanner { reader: sc.lock() };
-    let n: usize = sc.read();
-    let mut lines_x = vec![];
-    let mut lines_y = vec![];
-    for _ in 0..n {
-        let a = sc.read::<f64>();
-        let b = sc.read::<f64>();
-        let c = sc.read::<f64>();
-        lines_x.push((F64(-a / b), F64(a), F64(b), F64(c)));
-        lines_y.push((F64(-b / a), F64(b), F64(a), F64(c)));
-    }
-    lines_x.sort();
-    lines_x.reverse();
-    lines_y.sort();
-    lines_y.reverse();
-
-    let x = solve(&lines_x);
-    let y = solve(&lines_y);
-    println!("{} {}", x, y);
-}
-/// `FenwickTree` is a data structure that can efficiently update elements
-/// and calculate prefix sums in a table of numbers.
-/// [https://en.wikipedia.org/wiki/Fenwick_tree](https://en.wikipedia.org/wiki/Fenwick_tree)
-pub struct FenwickTree<T> {
-    n: usize,
-    data: Vec<T>,
-    init: T,
-}
-
-impl<T: Copy + AddAssign + Sub<Output = T>> FenwickTree<T> {
-    /// Constructs a new `FenwickTree`. The size of `FenwickTree` should be specified by `size`.
-    pub fn new(size: usize, init: T) -> FenwickTree<T> {
-        FenwickTree {
-            n: size + 1,
-            data: vec![init; size + 1],
-            init: init,
-        }
+pub mod fenwick_tree {
+    use std::ops::{AddAssign, Sub};
+    /// `FenwickTree` is a data structure that can efficiently update elements
+    /// and calculate prefix sums in a table of numbers.
+    /// [https://en.wikipedia.org/wiki/Fenwick_tree](https://en.wikipedia.org/wiki/Fenwick_tree)
+    pub struct FenwickTree<T> {
+        n: usize,
+        data: Vec<T>,
+        init: T,
     }
 
-    pub fn add(&mut self, k: usize, value: T) {
-        let mut x = k;
-        while x < self.n {
-            self.data[x] += value;
-            x |= x + 1;
-        }
-    }
-
-    /// Returns a sum of range `[l, r)`
-    pub fn sum(&self, l: usize, r: usize) -> T {
-        self.sum_one(r) - self.sum_one(l)
-    }
-
-    /// Returns a sum of range `[0, k)`
-    pub fn sum_one(&self, k: usize) -> T {
-        if k >= self.n {
-            panic!("");
+    impl<T: Copy + AddAssign + Sub<Output = T>> FenwickTree<T> {
+        /// Constructs a new `FenwickTree`. The size of `FenwickTree` should be specified by `size`.
+        pub fn new(size: usize, init: T) -> FenwickTree<T> {
+            FenwickTree {
+                n: size + 1,
+                data: vec![init; size + 1],
+                init: init,
+            }
         }
 
-        let mut result = self.init;
-        let mut x = k as i32 - 1;
-        while x >= 0 {
-            result += self.data[x as usize];
-            x = (x & (x + 1)) - 1;
+        pub fn add(&mut self, k: usize, value: T) {
+            let mut x = k;
+            while x < self.n {
+                self.data[x] += value;
+                x |= x + 1;
+            }
         }
 
-        result
+        /// Returns a sum of range `[l, r)`
+        pub fn sum(&self, l: usize, r: usize) -> T {
+            self.sum_one(r) - self.sum_one(l)
+        }
+
+        /// Returns a sum of range `[0, k)`
+        pub fn sum_one(&self, k: usize) -> T {
+            if k >= self.n {
+                panic!("");
+            }
+
+            let mut result = self.init;
+            let mut x = k as i32 - 1;
+            while x >= 0 {
+                result += self.data[x as usize];
+                x = (x & (x + 1)) - 1;
+            }
+
+            result
+        }
     }
 }
 

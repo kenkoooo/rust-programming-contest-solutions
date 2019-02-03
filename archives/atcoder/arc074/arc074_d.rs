@@ -1,40 +1,37 @@
-use self::dinitz::Dinitz;
-
-const INF: i64 = 1e9 as i64;
-
+const INF: i64 = 1e15 as i64;
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { reader: s.lock() };
-    let h: usize = sc.read();
+    let h = sc.read();
     let w: usize = sc.read();
     let a: Vec<Vec<char>> = (0..h).map(|_| sc.chars()).collect();
 
     let v = h + w + 2;
     let source = h + w;
     let sink = source + 1;
-    let mut graph = Dinitz::new(v);
+    let mut max_flow = dinitz::Dinitz::new(v);
     for i in 0..h {
         for j in 0..w {
             match a[i][j] {
                 'S' => {
-                    graph.add_edge(source, i, INF);
-                    graph.add_edge(source, h + j, INF);
+                    max_flow.add_edge(source, i, INF);
+                    max_flow.add_edge(source, h + j, INF);
                 }
                 'T' => {
-                    graph.add_edge(i, sink, INF);
-                    graph.add_edge(h + j, sink, INF);
+                    max_flow.add_edge(i, sink, INF);
+                    max_flow.add_edge(h + j, sink, INF);
                 }
                 'o' => {
-                    graph.add_edge(i, h + j, 1);
-                    graph.add_edge(h + j, i, 1);
+                    max_flow.add_edge(i, h + j, 1);
+                    max_flow.add_edge(h + j, i, 1);
                 }
                 _ => {}
             }
         }
     }
 
-    let ans = graph.max_flow(source, sink);
-    println!("{}", if ans >= INF { -1 } else { ans });
+    let flow = max_flow.max_flow(source, sink);
+    println!("{}", if flow >= INF { -1 } else { flow });
 }
 
 pub mod dinitz {

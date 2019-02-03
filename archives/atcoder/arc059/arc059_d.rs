@@ -3,36 +3,30 @@ use self::mod_int::ModInt;
 const MOD: usize = 1e9 as usize + 7;
 
 fn main() {
-    let sc = std::io::stdin();
-    let mut sc = Scanner { reader: sc.lock() };
+    let s = std::io::stdin();
+    let mut sc = Scanner { reader: s.lock() };
     let n: usize = sc.read();
-    let s: Vec<char> = sc.chars();
+    let s = sc.chars();
     let m = s.len();
 
     let mut dp = vec![ModInt::new(0); n + 1];
     dp[0] = ModInt::new(1);
-
-    let inv2 = ModInt::new(2).pow(MOD - 2);
-    let inv2m = inv2.pow(m);
-
     for _ in 0..n {
         let mut next = vec![ModInt::new(0); n + 1];
-        for i in 0..(n + 1) {
+        for i in 0..n {
+            next[i + 1] += dp[i] * 2;
             if i > 0 {
                 next[i - 1] += dp[i];
             } else {
                 next[0] += dp[0];
             }
-
-            if i < n {
-                next[i + 1] += dp[i] * 2;
-            }
         }
         dp = next;
     }
 
-    let ans = dp[m] * inv2m;
-    println!("{}", ans.0);
+    let pow2 = ModInt::new(2).pow(m);
+    let inv_pow = pow2.pow(MOD - 2);
+    println!("{}", (dp[m] * inv_pow).0);
 }
 
 pub mod mod_int {

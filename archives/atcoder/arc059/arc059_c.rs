@@ -3,49 +3,50 @@ use self::mod_int::ModInt;
 const MOD: usize = 1e9 as usize + 7;
 
 fn main() {
-    let sc = std::io::stdin();
-    let mut sc = Scanner { reader: sc.lock() };
+    let s = std::io::stdin();
+    let mut sc = Scanner { reader: s.lock() };
     let n = sc.read();
     let c: usize = sc.read();
     let a: Vec<usize> = sc.read_vec(n);
     let b: Vec<usize> = sc.read_vec(n);
-
-    // pow[i][j] := i**j
     let b_max = *b.iter().max().unwrap();
+
+    // pow[x][a] := x^a
     let mut pow = vec![vec![ModInt::new(0); c + 1]; b_max + 1];
-    for i in 1..pow.len() {
+    for i in 1..(b_max + 1) {
         pow[i][0] = ModInt::new(1);
         for j in 0..c {
             pow[i][j + 1] = pow[i][j] * i;
         }
     }
 
-    // sum[i][x] := a[i]**x + (a[i]+1)**x + ... + b[i]**x
-    let mut sum = vec![vec![ModInt::new(0); c + 1]; n];
-    for i in 0..n {
-        let from = a[i];
-        let to = b[i];
-        for c in 0..(c + 1) {
-            for t in from..(to + 1) {
-                sum[i][c] += pow[t][c];
-            }
+    // sum[x+1][a] := pow[0][a] + pow[1][a] + ... + pow[x][a]
+    let mut sum = vec![vec![ModInt::new(0); c + 1]; b_max + 2];
+    for a in 0..(c + 1) {
+        for x in 0..(b_max + 1) {
+            sum[x + 1][a] = sum[x][a] + pow[x][a];
         }
     }
 
     let mut dp = vec![ModInt::new(0); c + 1];
     dp[0] = ModInt::new(1);
     for i in 0..n {
-        let sum = &sum[i];
         let mut next = vec![ModInt::new(0); c + 1];
-        for from in 0..(c + 1) {
-            for add in 0..(c + 1) {
-                if from + add > c {
-                    continue;
+        let from = a[i];
+        let to = b[i];
+        for add in 0..(c + 1) {
+            for prev in 0..(c + 1) {
+                if prev + add > c {
+                    break;
                 }
-
-                next[from + add] += dp[from] * sum[add];
+                let x = sum[to + 1][add] - sum[from][add];
+                next[prev + add] += dp[prev] * x;
+                // for x in from..(to + 1) {
+                //     next[prev + add] += dp[prev] * pow[x][add];
+                // }
             }
         }
+
         dp = next;
     }
 
@@ -166,6 +167,7 @@ pub mod mod_int {
         }
     }
 }
+
 pub struct Scanner<R> {
     reader: R,
 }
