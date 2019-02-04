@@ -3,44 +3,40 @@ use std::cmp;
 
 const MOD: usize = 998244353;
 
-fn solve(sum: usize, k: usize, n: usize, comb: &Combination) -> ModInt<usize> {
-    let mut pair_count = 0;
-    for one in 1..cmp::min(k + 1, sum / 2 + 1) {
-        let other = sum - one;
-        if other > k {
-            continue;
-        }
-        pair_count += 1;
+fn main() {
+    let s = std::io::stdin();
+    let mut sc = Scanner { reader: s.lock() };
+    let k: usize = sc.read();
+    let n: usize = sc.read();
+    let combination = Combination::new(1000000, MOD);
+    for sum in 2..(2 * k + 1) {
+        let ans = solve(sum, k, n, &combination);
+        println!("{}", ans.0);
     }
+}
 
-    let mut ans = comb.h(k, n);
-    for unused_pair in 1..(pair_count + 1) {
-        if n < 2 * unused_pair {
+fn solve(sum: usize, k: usize, n: usize, combination: &Combination) -> ModInt<usize> {
+    let max = cmp::min(k, sum / 2);
+    let min = if sum > k { sum - k } else { 1 };
+    let pair_count = max - min + 1;
+
+
+    let mut ans = combination.h(k, n);
+    for used_pair in 1..(pair_count + 1) {
+        if n < 2 * used_pair {
             break;
         }
 
-        let count = comb.get(pair_count, unused_pair) * comb.h(k, n - 2 * unused_pair);
-        if unused_pair % 2 == 1 {
+        let pair_selection = combination.get(pair_count, used_pair);
+        let other_combination = combination.h(k, n - 2 * used_pair);
+        let count = pair_selection * other_combination;
+        if used_pair % 2 == 1 {
             ans -= count;
         } else {
             ans += count;
         }
     }
     ans
-}
-
-fn main() {
-    let sc = std::io::stdin();
-    let mut sc = Scanner { reader: sc.lock() };
-
-    let k: usize = sc.read();
-    let n: usize = sc.read();
-    let combination = Combination::new(1000000, MOD);
-
-    for i in 2..(2 * k + 1) {
-        let ans = solve(i, k, n, &combination);
-        println!("{}", ans.0);
-    }
 }
 
 pub struct Combination {
@@ -75,9 +71,8 @@ impl Combination {
 
     pub fn get(&self, x: usize, y: usize) -> ModInt<usize> {
         assert!(x >= y);
-        let result =
-            self.fact[x] * self.inv_fact[y] % self.modulo * self.inv_fact[x - y] % self.modulo;
-        ModInt::new(result)
+        let t = self.fact[x] * self.inv_fact[y] % self.modulo * self.inv_fact[x - y] % self.modulo;
+        ModInt::new(t)
     }
 
     pub fn h(&self, n: usize, r: usize) -> ModInt<usize> {
@@ -86,10 +81,10 @@ impl Combination {
 }
 
 pub mod mod_int {
+    use super::MOD;
     use std::ops::{Add, AddAssign, Mul, MulAssign, Sub, SubAssign};
 
     type Num = usize;
-    use super::MOD;
 
     #[derive(Clone, Copy)]
     pub struct ModInt<T: Copy + Clone>(pub T);
@@ -133,6 +128,7 @@ pub mod mod_int {
             *self = *self + other;
         }
     }
+
     impl AddAssign<ModInt<Num>> for ModInt<Num> {
         fn add_assign(&mut self, other: ModInt<Num>) {
             *self = *self + other;
@@ -158,6 +154,7 @@ pub mod mod_int {
             self * rhs.0
         }
     }
+
     impl Mul<Num> for ModInt<Num> {
         type Output = ModInt<Num>;
 
