@@ -4,16 +4,16 @@ const MOD: usize = 1e9 as usize + 7;
 
 fn main() {
     let s = std::io::stdin();
-    let mut sc = Scanner { reader: s.lock() };
-
-    let n = sc.read();
+    let mut sc = Scanner { stdin: s.lock() };
+    let n: usize = sc.read();
     let m = sc.read();
-    let mut constraints = vec![vec![]; n + 1];
+
+    let mut left_x = vec![vec![]; n + 1];
     for _ in 0..m {
-        let l = sc.read::<usize>();
-        let r = sc.read::<usize>();
+        let left = sc.read::<usize>();
+        let right = sc.read::<usize>();
         let x: usize = sc.read();
-        constraints[r].push((l, x));
+        left_x[right].push((left, x));
     }
 
     let mut dp = vec![vec![vec![0; n + 1]; n + 1]; n + 1];
@@ -21,30 +21,25 @@ fn main() {
     for r in 0..n {
         for g in 0..n {
             for b in 0..n {
-                let max = max3(r, g, b);
-                let next = vec![(max + 1, g, b), (r, max + 1, b), (r, g, max + 1)];
-                for &(nr, ng, nb) in next.iter() {
-                    let mut ok = true;
-                    for &(left, x) in constraints[max + 1].iter() {
-                        let mut count = 0;
-                        if nr >= left {
-                            count += 1;
-                        }
-                        if ng >= left {
-                            count += 1;
-                        }
-                        if nb >= left {
-                            count += 1;
-                        }
-                        if count != x {
-                            ok = false;
-                            break;
-                        }
-                    }
-                    if ok {
-                        dp[nr][ng][nb] += dp[r][g][b];
-                        dp[nr][ng][nb] %= MOD;
-                    }
+                let max = cmp::max(cmp::max(r, g), b);
+                let check = |a: usize, b: usize| left_x[max + 1].iter().all(|&(left, x)| {
+                    let mut count = 1;
+                    if a >= left { count += 1; }
+                    if b >= left { count += 1; }
+                    count == x
+                });
+
+                if check(g, b) {
+                    dp[max + 1][g][b] += dp[r][g][b];
+                    dp[max + 1][g][b] %= MOD;
+                }
+                if check(r, g) {
+                    dp[r][g][max + 1] += dp[r][g][b];
+                    dp[r][g][max + 1] %= MOD;
+                }
+                if check(r, b) {
+                    dp[r][max + 1][b] += dp[r][g][b];
+                    dp[r][max + 1][b] %= MOD;
                 }
             }
         }
@@ -53,29 +48,24 @@ fn main() {
     let mut ans = 0;
     for i in 0..n {
         for j in 0..n {
-            ans += dp[n][i][j];
-            ans += dp[i][n][j];
             ans += dp[i][j][n];
+            ans += dp[i][n][j];
+            ans += dp[n][j][i];
             ans %= MOD;
         }
     }
-
     println!("{}", ans);
 }
 
-fn max3(x: usize, y: usize, z: usize) -> usize {
-    cmp::max(cmp::max(x, y), z)
-}
-
 pub struct Scanner<R> {
-    reader: R,
+    stdin: R,
 }
 
 impl<R: std::io::Read> Scanner<R> {
     pub fn read<T: std::str::FromStr>(&mut self) -> T {
         use std::io::Read;
         let buf = self
-            .reader
+            .stdin
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
@@ -87,7 +77,7 @@ impl<R: std::io::Read> Scanner<R> {
             .ok()
             .expect("Parse error.")
     }
-    pub fn read_vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
+    pub fn vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
         (0..n).map(|_| self.read()).collect()
     }
     pub fn chars(&mut self) -> Vec<char> {
