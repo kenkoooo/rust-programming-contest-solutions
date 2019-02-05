@@ -2,103 +2,81 @@ use std::cmp;
 
 const INF: usize = 1e15 as usize;
 
-fn min_cost(x: &Vec<usize>, y: &Vec<usize>) -> usize {
-    assert_eq!(x.len(), y.len());
-    let h = x.len();
-    let mut cost = vec![vec![0; h + 1]; h + 1];
-    for left in 0..h {
-        let mut count = 0;
-        for i in 0..h {
-            if h - 1 < i + left {
-                continue;
-            }
-            let left_piece = x[h - 1 - i - left];
-            let right_pirce = y[h - 1 - i];
-            if left_piece == right_pirce {
-                count += 1;
-            }
-        }
-
-        cost[left][0] = count;
-        for right in 0..h {
-            if h - 1 < left + right {
-                continue;
-            }
-            if x[h - 1 - left - right] == y[h - 1 - right] {
-                count -= 1;
-            }
-            cost[left + right + 1][right + 1] = count;
-        }
-    }
-    for right in 0..h {
-        let mut count = 0;
-        for i in 0..h {
-            if h - 1 < i + right {
-                continue;
-            }
-            let left_piece = x[h - 1 - i];
-            let right_pirce = y[h - 1 - i - right];
-            if left_piece == right_pirce {
-                count += 1;
-            }
-        }
-
-        cost[0][right] = count;
-        for left in 0..h {
-            if h - 1 < left + right {
-                continue;
-            }
-            if x[h - 1 - left] == y[h - 1 - left - right] {
-                count -= 1;
-            }
-            cost[left + 1][left + right + 1] = count;
-        }
-    }
-
-    let mut dp = vec![vec![INF; h + 1]; h + 1];
-    dp[0][0] = 0;
-    for left in 0..(h + 1) {
-        for right in 0..(h + 1) {
-            let next_cost = dp[left][right] + cost[left][right];
-            if left + 1 <= h {
-                dp[left + 1][right] = cmp::min(dp[left + 1][right], next_cost);
-            }
-            if right + 1 <= h {
-                dp[left][right + 1] = cmp::min(dp[left][right + 1], next_cost);
-            }
-        }
-    }
-
-    dp[h][h]
-}
-
 fn main() {
-    let sc = std::io::stdin();
-    let mut sc = Scanner { reader: sc.lock() };
+    let s = std::io::stdin();
+    let mut sc = Scanner { stdin: s.lock() };
+
     let h: usize = sc.read();
     let w: usize = sc.read();
     let c: Vec<Vec<char>> = (0..h).map(|_| sc.chars()).collect();
-
-    let mut rotated = vec![vec![0; h]; w];
-    for i in 0..h {
-        for j in 0..w {
-            rotated[j][i] = c[i][j] as usize - ('a' as usize);
+    let mut map = vec![vec![0; h]; w];
+    for i in 0..w {
+        for j in 0..h {
+            map[i][j] = c[j][i] as usize - 'a' as usize;
         }
     }
 
-    let ans: usize = (1..w).map(|i| min_cost(&rotated[i - 1], &rotated[i])).sum();
+    let mut ans = 0;
+    for i in 1..w {
+        ans += calc(&map[i - 1], &map[i]);
+    }
     println!("{}", ans);
 }
 
+fn calc(a: &Vec<usize>, b: &Vec<usize>) -> usize {
+    let n = a.len();
+    let mut cost_dp = vec![vec![0; n + 1]; n + 1];
+    for i in 0..n {
+        let mut cost = 0;
+        for j in 0..(n - i) {
+            if a[j + i] == b[j] {
+                cost += 1;
+            }
+        }
+        cost_dp[0][i] = cost;
+    }
+    for i in 0..n {
+        let mut cost = 0;
+        for j in 0..(n - i) {
+            if b[j + i] == a[j] {
+                cost += 1;
+            }
+        }
+        cost_dp[i][0] = cost;
+    }
+    for d in 0..n {
+        for i in 0..n {
+            if i + 1 + d > n { break; }
+            cost_dp[i + 1][i + 1 + d] = cost_dp[i][i + d] - if a[n - 1 - i] == b[n - 1 - d - i] { 1 } else { 0 };
+            cost_dp[i + 1 + d][i + 1] = cost_dp[i + d][i] - if a[n - 1 - d - i] == b[n - 1 - i] { 1 } else { 0 };
+        }
+    }
+
+    let mut dp = vec![vec![INF; n + 1]; n + 1];
+    dp[0][0] = 0;
+    for i in 0..n {
+        for j in 0..n {
+            dp[i + 1][j] = cmp::min(dp[i][j] + cost_dp[i][j], dp[i + 1][j]);
+            dp[i][j + 1] = cmp::min(dp[i][j] + cost_dp[i][j], dp[i][j + 1]);
+        }
+    }
+    let mut ans = INF;
+    for i in 0..n {
+        ans = cmp::min(ans, dp[n][i]);
+        ans = cmp::min(ans, dp[i][n]);
+    }
+    ans
+}
+
 pub struct Scanner<R> {
-    reader: R,
+    stdin: R,
 }
 
 impl<R: std::io::Read> Scanner<R> {
     pub fn read<T: std::str::FromStr>(&mut self) -> T {
         use std::io::Read;
         let buf = self
-            .reader
+            .stdin
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
@@ -110,7 +88,7 @@ impl<R: std::io::Read> Scanner<R> {
             .ok()
             .expect("Parse error.")
     }
-    pub fn read_vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
+    pub fn vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
         (0..n).map(|_| self.read()).collect()
     }
     pub fn chars(&mut self) -> Vec<char> {
