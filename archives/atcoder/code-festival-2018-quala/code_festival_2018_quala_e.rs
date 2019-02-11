@@ -1,6 +1,8 @@
+const INF: i64 = 1e17 as i64;
+
 fn main() {
     let s = std::io::stdin();
-    let mut sc = Scanner { reader: s.lock() };
+    let mut sc = Scanner { stdin: s.lock() };
     let x: i64 = sc.read();
     let y: i64 = sc.read();
     let n: usize = sc.read();
@@ -8,8 +10,8 @@ fn main() {
 
     let per_one = (x + y) / (n as i64);
     let mut v = vec![];
-    for (i, &(a, b)) in ab.iter().enumerate() {
-        for x in 0..(per_one + 1) {
+    for x in 0..(per_one + 1) {
+        for (i, &(a, b)) in ab.iter().enumerate() {
             let y = per_one - x;
             let happiness = a * x + b * y;
             v.push((happiness, i, x));
@@ -17,11 +19,11 @@ fn main() {
     }
     v.sort();
 
-    let mut ok = 1e15 as i64;
     let mut ng = -1;
+    let mut ok = INF;
     while ok - ng > 1 {
         let diff = (ok + ng) / 2;
-        if calc(x, n, &v, diff) {
+        if solve(x, n, diff, &v) {
             ok = diff;
         } else {
             ng = diff;
@@ -31,70 +33,73 @@ fn main() {
     println!("{}", ok);
 }
 
-fn calc(x_sum: i64, n: usize, v: &Vec<(i64, usize, i64)>, diff: i64) -> bool {
-    let mut status = vec![(-1, -1); n];
-
-    let mut lower_sum = 0;
-    let mut upper_sum = 0;
+fn solve(x_sum: i64, n: usize, diff: i64, happiness: &Vec<(i64, usize, i64)>) -> bool {
+    let mut low_high: Vec<Option<(_, _)>> = vec![None; n];
+    let mut low_sum = 0;
+    let mut high_sum = 0;
     let mut bad_count = n;
-    let mut right_head = 0;
-    for &(lowest_happiness, left_id, left_x) in v.iter() {
-        while right_head < v.len() {
-            let (max_happiness, head_id, new_x) = v[right_head];
-            if max_happiness > lowest_happiness + diff { break; }
 
-            let (lower, upper) = status[head_id];
-            if lower == -1 && upper == -1 {
-                status[head_id] = (new_x, new_x);
-                lower_sum += new_x;
-                upper_sum += new_x;
-                bad_count -= 1;
-            } else if lower - 1 == new_x {
-                status[head_id] = (lower - 1, upper);
-                lower_sum -= 1;
-            } else if upper + 1 == new_x {
-                status[head_id] = (lower, upper + 1);
-                upper_sum += 1;
-            } else {
-                unreachable!();
+    let mut tail_iter = happiness.iter().peekable();
+    for &(lowest_happiness, i, x) in happiness.iter() {
+        while let Some(&&(tail_happiness, tail_index, tail_x)) = tail_iter.peek() {
+            if tail_happiness > lowest_happiness + diff { break; }
+
+            match low_high[tail_index] {
+                Some((low, high)) => {
+                    if low - 1 == tail_x {
+                        low_high[tail_index] = Some((low - 1, high));
+                        low_sum -= 1;
+                    } else if high + 1 == tail_x {
+                        low_high[tail_index] = Some((low, high + 1));
+                        high_sum += 1;
+                    } else {
+                        unreachable!();
+                    }
+                }
+                None => {
+                    bad_count -= 1;
+                    low_high[tail_index] = Some((tail_x, tail_x));
+                    low_sum += tail_x;
+                    high_sum += tail_x;
+                }
             }
 
-            right_head += 1;
+            tail_iter.next();
         }
 
-        if bad_count == 0 && lower_sum <= x_sum && x_sum <= upper_sum {
+        if bad_count == 0 && low_sum <= x_sum && x_sum <= high_sum {
             return true;
         }
 
-        let (lower, upper) = status[left_id];
-        if lower == left_x && upper == left_x {
+
+        let (low, high) = low_high[i].unwrap();
+        if low == x && high == x {
             bad_count += 1;
-            lower_sum -= left_x;
-            upper_sum -= left_x;
-            status[left_id] = (-1, -1);
-        } else if lower == left_x {
-            status[left_id] = (lower + 1, upper);
-            lower_sum += 1;
-        } else if upper == left_x {
-            status[left_id] = (lower, upper - 1);
-            upper_sum -= 1;
+            low_high[i] = None;
+            low_sum -= low;
+            high_sum -= high;
+        } else if low == x {
+            low_high[i] = Some((low + 1, high));
+            low_sum += 1;
+        } else if high == x {
+            low_high[i] = Some((low, high - 1));
+            high_sum -= 1;
         } else {
             unreachable!();
         }
     }
-
     false
 }
 
 pub struct Scanner<R> {
-    reader: R,
+    stdin: R,
 }
 
 impl<R: std::io::Read> Scanner<R> {
     pub fn read<T: std::str::FromStr>(&mut self) -> T {
         use std::io::Read;
         let buf = self
-            .reader
+            .stdin
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
@@ -106,7 +111,7 @@ impl<R: std::io::Read> Scanner<R> {
             .ok()
             .expect("Parse error.")
     }
-    pub fn read_vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
+    pub fn vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
         (0..n).map(|_| self.read()).collect()
     }
     pub fn chars(&mut self) -> Vec<char> {
