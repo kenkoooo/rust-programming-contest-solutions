@@ -1,5 +1,3 @@
-use std::cmp;
-
 const INF: i64 = 1e17 as i64;
 
 fn main() {
@@ -19,13 +17,13 @@ fn main() {
     let mut dp2 = vec![vec![]; n];
     dfs(0, 0, &graph, &a, &mut dp1, &mut dp2);
 
-    for i in 1..(n + 1) {
+    for i in 0..n {
         if dp1[0][i] < INF {
-            println!("{}", i - 1);
+            println!("{}", i);
             return;
         }
         if dp2[0][i] < 0 {
-            println!("{}", i - 1);
+            println!("{}", i);
             return;
         }
     }
@@ -39,44 +37,42 @@ fn dfs(
     dp1: &mut Vec<Vec<i64>>,
     dp2: &mut Vec<Vec<i64>>,
 ) {
-    dp1[v].push(INF);
     dp1[v].push(if a[v] > 0 { a[v] } else { INF });
-    dp2[v].push(INF);
     dp2[v].push(a[v]);
     for &next in graph[v].iter() {
-        if next == p {
-            continue;
-        }
+        if next == p { continue; }
         dfs(next, v, graph, a, dp1, dp2);
 
-        dp1[v] = tr(&dp1[v], &dp1[next], &dp2[next], true);
-        dp2[v] = tr(&dp2[v], &dp1[next], &dp2[next], false);
+        dp1[v] = connect(&dp1[v], &dp1[next], &dp2[next], true);
+        dp2[v] = connect(&dp2[v], &dp1[next], &dp2[next], false);
     }
 }
 
-fn tr(dp: &Vec<i64>, ch1: &Vec<i64>, ch2: &Vec<i64>, flag: bool) -> Vec<i64> {
-    let child_cuts = ch1.len();
-    assert_eq!(child_cuts, ch2.len());
-    let mut ans = vec![INF; dp.len() + child_cuts - 1];
-    for i in 0..dp.len() {
-        if dp[i] == INF {
-            continue;
-        }
-        for j in 0..child_cuts {
-            if i + j >= 1 {
-                if ch1[j] != INF {
-                    ans[i + j - 1] = cmp::min(ans[i + j - 1], dp[i] + ch1[j]);
-                }
-                if ch2[j] != INF && !flag {
-                    ans[i + j - 1] = cmp::min(ans[i + j - 1], dp[i] + ch2[j]);
-                }
+fn connect(dp: &Vec<i64>, child1: &Vec<i64>, child2: &Vec<i64>, power_only: bool) -> Vec<i64> {
+    let mut ans = vec![INF; dp.len() + child1.len() + 1];
+    for cuts in 0..dp.len() {
+        if dp[cuts] == INF { continue; }
+        for child_cuts in 0..child1.len() {
+            let total_cuts = cuts + child_cuts + 1;
+
+            if child1[child_cuts] != INF {
+                ch_min(&mut ans[total_cuts - 1], dp[cuts] + child1[child_cuts]);
             }
-            if ch1[j] != INF || ch2[j] < 0 {
-                ans[i + j] = cmp::min(ans[i + j], dp[i]);
+            if child2[child_cuts] != INF && !power_only {
+                ch_min(&mut ans[total_cuts - 1], dp[cuts] + child2[child_cuts]);
+            }
+            if child1[child_cuts] != INF || child2[child_cuts] < 0 {
+                ch_min(&mut ans[total_cuts], dp[cuts]);
             }
         }
     }
     ans
+}
+
+fn ch_min<T: PartialOrd>(a: &mut T, b: T) {
+    if *a > b {
+        *a = b;
+    }
 }
 
 pub struct Scanner<R> {
