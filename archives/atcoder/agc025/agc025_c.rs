@@ -1,92 +1,76 @@
 use std::cmp;
-use std::collections::BinaryHeap;
 
 fn main() {
     let s = std::io::stdin();
-    let mut sc = Scanner { reader: s.lock() };
-    let n: usize = sc.read();
-    let mut right = vec![];
-    let mut left = vec![];
-    for _ in 0..n {
-        left.push(sc.read::<i64>());
-        right.push(sc.read::<i64>());
-    }
+    let mut sc = Scanner { stdin: s.lock() };
+    let n = sc.read();
+    let lr = (0..n)
+        .map(|_| (sc.read(), sc.read()))
+        .collect::<Vec<(i64, i64)>>();
 
-    let left_inv = left.iter().map(|&left| -left).collect();
-    let right_inv = right.iter().map(|&right| -right).collect();
-    let ans1 = solve(left, right);
-    let ans2 = solve(right_inv, left_inv);
+    let mut left = lr
+        .iter()
+        .enumerate()
+        .map(|(i, &(l, _))| (l, i))
+        .collect::<Vec<(i64, usize)>>();
+    left.sort();
+    left.reverse();
+    let left = left.iter().map(|&(_, i)| i).collect::<Vec<_>>();
+    let mut right = lr
+        .iter()
+        .enumerate()
+        .map(|(i, &(_, r))| (r, i))
+        .collect::<Vec<(i64, usize)>>();
+    right.sort();
+    let right = right.iter().map(|&(_, i)| i).collect::<Vec<_>>();
+
+    let ans1 = solve(&left, &right, &lr);
+    let ans2 = solve(&right, &left, &lr);
     println!("{}", cmp::max(ans1, ans2));
 }
-fn solve(left: Vec<i64>, right: Vec<i64>) -> i64 {
-    let n = left.len();
 
-    let mut left_heap = BinaryHeap::new();
-    let mut right_heap = BinaryHeap::new();
-    for i in 0..n {
-        left_heap.push((left[i], i));
-        right_heap.push((-right[i], i));
-    }
-
+fn solve(left: &Vec<usize>, right: &Vec<usize>, lr: &Vec<(i64, i64)>) -> i64 {
+    let n = lr.len();
     let mut ans = 0;
-    let mut cur = 0;
+    let mut left_iter = left.iter();
+    let mut right_iter = right.iter();
     let mut used = vec![false; n];
+    let mut cur = 0;
     for i in 0..n {
-        let k = if i % 2 == 0 {
-            {
-                let mut result;
-                loop {
-                    let (_, k) = left_heap.pop().unwrap();
-                    if used[k] {
-                        continue;
-                    }
-                    used[k] = true;
-                    result = k;
-                    break;
-                }
-                result
-            }
+        let iter = if i % 2 == 0 {
+            &mut left_iter
         } else {
-            {
-                let mut result;
-                loop {
-                    let (_, k) = right_heap.pop().unwrap();
-                    if used[k] {
-                        continue;
-                    }
-                    used[k] = true;
-                    result = k;
-                    break;
-                }
-                result
-            }
+            &mut right_iter
         };
 
-        if left[k] <= cur && cur <= right[k] {
-            continue;
-        }
-
-        if (left[k] - cur).abs() < (right[k] - cur).abs() {
-            ans += (left[k] - cur).abs();
-            cur = left[k];
-        } else {
-            ans += (right[k] - cur).abs();
-            cur = right[k];
+        while let Some(&index) = iter.next() {
+            if used[index] {
+                continue;
+            }
+            used[index] = true;
+            let (left, right) = lr[index];
+            if cur < left {
+                ans += left - cur;
+                cur = left;
+            } else if right < cur {
+                ans += cur - right;
+                cur = right;
+            }
+            break;
         }
     }
-    ans += cur.abs();
-    ans
+    ans + cur.abs()
 }
 
 pub struct Scanner<R> {
-    reader: R,
+    stdin: R,
 }
 
 impl<R: std::io::Read> Scanner<R> {
     pub fn read<T: std::str::FromStr>(&mut self) -> T {
         use std::io::Read;
         let buf = self
-            .reader
+            .stdin
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
@@ -98,7 +82,7 @@ impl<R: std::io::Read> Scanner<R> {
             .ok()
             .expect("Parse error.")
     }
-    pub fn read_vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
+    pub fn vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
         (0..n).map(|_| self.read()).collect()
     }
     pub fn chars(&mut self) -> Vec<char> {

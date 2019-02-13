@@ -1,62 +1,55 @@
 use std::cmp;
-
 fn main() {
-    let s = std::io::stdin();
-    let mut sc = Scanner { reader: s.lock() };
+    let sc = std::io::stdin();
+    let mut sc = Scanner { stdin: sc.lock() };
     let n: usize = sc.read();
     let a: usize = sc.read();
     let b: usize = sc.read();
-    if a + b > n + 1 || a < (n + b - 1) / b {
+
+    let segments = (n + b - 1) / b;
+    if a + b - 1 > n || (n + b - 1) / b > a {
         println!("-1");
         return;
     }
-    let mut ans = vec![];
-    let mut cur = 0;
-    if n % b != 0 {
-        ans.push(vec![]);
-        for _ in 0..(n % b) {
-            ans[0].push(cur);
-            cur += 1;
-        }
-        ans[0].reverse();
-    }
-    for _ in 0..(n / b) {
-        let mut lds = vec![];
-        for _ in 0..b {
-            lds.push(cur);
-            cur += 1;
-        }
-        lds.reverse();
-        ans.push(lds);
-    }
-    assert_eq!(cur, n);
 
-    let mut a = a - ans.len();
-    for i in 0..ans.len() {
-        if a > 0 {
-            let len = cmp::min(a + 1, ans[i].len());
-            ans[i][0..len].sort();
-            a -= len - 1;
-        }
+    let mut ans = (1..(n + 1)).collect::<Vec<usize>>();
+    for i in 0..segments {
+        let from = i * b;
+        let to = cmp::min(from + b, n);
+        ans[from..to].reverse();
     }
 
-    for ans in ans.iter() {
-        for &ans in ans.iter() {
-            print!("{} ", ans + 1);
+    let mut a = a - segments;
+    for i in (0..segments).rev() {
+        if a == 0 {
+            break;
         }
+        let length = cmp::min(a + 1, b);
+        let from = i * b;
+        let to = cmp::min(from + length, n);
+        ans[from..to].reverse();
+        a -= (to - from) - 1;
     }
+
+    for (i, a) in ans.into_iter().enumerate() {
+        if i > 0 {
+            print!(" ");
+        }
+        print!("{}", a);
+    }
+
     println!();
 }
 
 pub struct Scanner<R> {
-    reader: R,
+    stdin: R,
 }
 
 impl<R: std::io::Read> Scanner<R> {
     pub fn read<T: std::str::FromStr>(&mut self) -> T {
         use std::io::Read;
         let buf = self
-            .reader
+            .stdin
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
