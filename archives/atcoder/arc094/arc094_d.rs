@@ -1,105 +1,106 @@
+use std::collections::BTreeSet;
+
 const MOD: usize = 998244353;
 
 fn main() {
-    let sc = std::io::stdin();
-    let mut sc = Scanner { reader: sc.lock() };
-    let s: Vec<usize> = sc
-        .read::<String>()
+    let s = std::io::stdin();
+    let mut sc = Scanner { stdin: s.lock() };
+    let s = sc
         .chars()
-        .map(|c| c as usize - ('a' as usize))
-        .collect();
+        .into_iter()
+        .map(|c| c as usize - 'a' as usize)
+        .collect::<Vec<_>>();
     let n = s.len();
     if n <= 5 {
-        use std::collections::{BTreeSet, VecDeque};
-        let mut q = VecDeque::new();
-        let mut set = BTreeSet::new();
-        q.push_back(s.clone());
-        set.insert(s);
-        while let Some(v) = q.pop_front() {
-            for i in 1..v.len() {
-                if v[i] != v[i - 1] {
-                    let mut next = v.clone();
-                    let mut x = vec![v[i], v[i - 1]];
-                    x.sort();
-                    match (x[0], x[1]) {
-                        (0, 1) => {
-                            next[i - 1] = 2;
-                            next[i] = 2;
-                        }
-                        (0, 2) => {
-                            next[i - 1] = 1;
-                            next[i] = 1;
-                        }
-                        (1, 2) => {
-                            next[i - 1] = 0;
-                            next[i] = 0;
-                        }
-                        _ => unreachable!(),
-                    }
-                    if !set.contains(&next) {
-                        set.insert(next.clone());
-                        q.push_back(next);
-                    }
-                }
-            }
-        }
-        println!("{}", set.len());
+        println!("{}", brute_force(s));
         return;
     }
 
-    if s.iter().all(|&x| x == s[0]) {
+    if s.iter().all(|&c| c == s[0]) {
         println!("1");
         return;
     }
 
-    let remain = s.iter().sum::<usize>() % 3;
+    let mut dp = vec![vec![vec![0; 2]; 3]; 3];
+    dp[0][0][0] = 1;
 
-    let mut dp: Vec<Vec<Vec<Vec<usize>>>> = vec![vec![vec![vec![0; 2]; 3]; 3]; n + 1];
-    dp[0][0][0][0] = 1;
     for i in 0..n {
-        for tail in 0..3 {
-            for next in 0..3 {
-                for remain in 0..3 {
-                    let next_remain = (remain + next) % 3;
-                    let doubled = if tail == next && i > 0 { 1 } else { 0 };
-                    dp[i + 1][next][next_remain][doubled] += dp[i][tail][remain][0];
-                    dp[i + 1][next][next_remain][doubled] %= MOD;
-
-                    dp[i + 1][next][next_remain][1] += dp[i][tail][remain][1];
-                    dp[i + 1][next][next_remain][1] %= MOD;
+        let mut next = vec![vec![vec![0; 2]; 3]; 3];
+        for m in 0..3 {
+            for from in 0..3 {
+                for distinct in 0..2 {
+                    if dp[from][m][distinct] == 0 {
+                        continue;
+                    }
+                    for to in 0..3 {
+                        let next_distinct = if (distinct == 0 && from != to) || i == 0 {
+                            0
+                        } else {
+                            1
+                        };
+                        let next_m = (m + to) % 3;
+                        next[to][next_m][next_distinct] += dp[from][m][distinct];
+                        next[to][next_m][next_distinct] %= MOD;
+                    }
                 }
             }
         }
-    }
-    let mut ans: usize = 0;
-    for tail in 0..3 {
-        ans += dp[n][tail][remain][1];
-        ans %= MOD;
+        dp = next;
     }
 
-    let mut doubled = false;
-    for i in 1..n {
-        if s[i - 1] == s[i] {
-            doubled = true;
-            break;
-        }
+    let m = s.iter().sum::<usize>() % 3;
+    let is_distinct = (1..n).all(|i| s[i] != s[i - 1]);
+    let mut ans = 0;
+    for to in 0..3 {
+        ans += dp[to][m][1];
     }
-    if !doubled {
+    if is_distinct {
         ans += 1;
     }
     ans %= MOD;
     println!("{}", ans);
 }
 
+fn brute_force(s: Vec<usize>) -> usize {
+    let n = s.len();
+    let mut set = BTreeSet::new();
+    set.insert(s);
+    loop {
+        let mut next = BTreeSet::new();
+        for s in set.iter() {
+            for i in 1..n {
+                let mut t = s.clone();
+                if t[i - 1] != t[i] {
+                    let next = match t[i - 1] + t[i] {
+                        1 => 2,
+                        2 => 1,
+                        3 => 0,
+                        _ => unreachable!(),
+                    };
+                    t[i - 1] = next;
+                    t[i] = next;
+                }
+                next.insert(t);
+            }
+        }
+
+        let prev = set.len();
+        set.extend(next);
+        if set.len() == prev {
+            return set.len();
+        }
+    }
+}
+
 pub struct Scanner<R> {
-    reader: R,
+    stdin: R,
 }
 
 impl<R: std::io::Read> Scanner<R> {
     pub fn read<T: std::str::FromStr>(&mut self) -> T {
         use std::io::Read;
         let buf = self
-            .reader
+            .stdin
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
@@ -111,7 +112,7 @@ impl<R: std::io::Read> Scanner<R> {
             .ok()
             .expect("Parse error.")
     }
-    pub fn read_vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
+    pub fn vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
         (0..n).map(|_| self.read()).collect()
     }
     pub fn chars(&mut self) -> Vec<char> {
