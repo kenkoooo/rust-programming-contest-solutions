@@ -1,104 +1,88 @@
 fn main() {
     let s = std::io::stdin();
-    let mut sc = Scanner { reader: s.lock() };
+    let mut sc = Scanner { stdin: s.lock() };
 
     let n = sc.read();
     let m = sc.read();
-    let x: Vec<usize> = sc.read_vec(n);
+    let x: Vec<u64> = sc.vec(n);
 
     let mut edges = vec![];
     for _ in 0..m {
         let a = sc.read::<usize>() - 1;
         let b = sc.read::<usize>() - 1;
-        let y: usize = sc.read();
-        edges.push((y, a, b));
+        let w: u64 = sc.read();
+        edges.push((w, a, b));
     }
+
     edges.sort();
+    let mut uf = UnionFind::new(n, x);
+    let mut is_candidate = vec![false; m];
 
-    let mut can_use = vec![false; m];
-    let mut uf = UnionFind::new(x);
-
-    let mut cur = 0;
-    while cur < m {
-        let (cur_weight, _, _) = edges[cur];
-        let mut pos = cur;
-        while pos < m {
-            let (w, a, b) = edges[pos];
-            if w != cur_weight {
-                break;
-            }
-            uf.unite(a, b);
-            pos += 1;
+    let mut i = 0;
+    while i < m {
+        let (w, _, _) = edges[i];
+        let from = i;
+        while i + 1 < m && edges[i + 1].0 == w {
+            i += 1;
         }
 
-        let mut pos = cur;
-        while pos < m {
-            let (w, a, _) = edges[pos];
-            if w != cur_weight {
-                break;
-            }
+        for (_, a, b) in (from..(i + 1)).map(|i| edges[i]) {
+            uf.unite(a, b);
+        }
+        for i in from..(i + 1) {
+            let (_, a, _) = edges[i];
             let root = uf.find(a);
             if uf.weights[root] >= w {
-                can_use[pos] = true;
+                is_candidate[i] = true;
             }
-            pos += 1;
         }
-
-        cur = pos;
+        i += 1;
     }
 
     let mut graph = vec![vec![]; n];
     for i in 0..m {
         let (w, a, b) = edges[i];
-        graph[a].push((i, w, b));
-        graph[b].push((i, w, a));
+        graph[a].push((b, w, i));
+        graph[b].push((a, w, i));
     }
 
     let mut is_used = vec![false; m];
     for i in (0..m).rev() {
-        if is_used[i] || !can_use[i] {
+        if is_used[i] || !is_candidate[i] {
             continue;
         }
         let (w, a, b) = edges[i];
-        dfs(a, &mut is_used, &graph, w);
-        dfs(b, &mut is_used, &graph, w);
+        is_used[i] = true;
+        dfs(a, w, &mut is_used, &graph);
+        dfs(b, w, &mut is_used, &graph);
     }
 
-    println!("{}", is_used.iter().filter(|&&u| !u).count());
+    println!("{}", is_used.into_iter().filter(|&t| !t).count());
 }
 
-fn dfs(
-    v: usize,
-    is_used: &mut Vec<bool>,
-    graph: &Vec<Vec<(usize, usize, usize)>>,
-    max_weight: usize,
-) {
-    for &(edge_id, weight, next) in graph[v].iter() {
-        if is_used[edge_id] {
+fn dfs(v: usize, w: u64, used: &mut Vec<bool>, graph: &Vec<Vec<(usize, u64, usize)>>) {
+    for &(next, weight, i) in graph[v].iter() {
+        if used[i] || weight > w {
             continue;
         }
-        if weight > max_weight {
-            continue;
-        }
-        is_used[edge_id] = true;
-        dfs(next, is_used, graph, max_weight);
+        used[i] = true;
+        dfs(next, w, used, graph);
     }
 }
 
 pub struct UnionFind {
     parent: Vec<usize>,
+    weights: Vec<u64>,
     sizes: Vec<usize>,
-    weights: Vec<usize>,
     size: usize,
 }
 
 impl UnionFind {
-    pub fn new(weights: Vec<usize>) -> UnionFind {
-        let n = weights.len();
+    pub fn new(n: usize, weights: Vec<u64>) -> Self {
         UnionFind {
             parent: (0..n).map(|i| i).collect::<Vec<usize>>(),
-            sizes: vec![1; n],
             weights: weights,
+            sizes: vec![1; n],
             size: n,
         }
     }
@@ -130,7 +114,6 @@ impl UnionFind {
 
         self.sizes[large] += self.sizes[small];
         self.sizes[small] = 0;
-
         self.weights[large] += self.weights[small];
         self.weights[small] = 0;
 
@@ -140,14 +123,14 @@ impl UnionFind {
 }
 
 pub struct Scanner<R> {
-    reader: R,
+    stdin: R,
 }
 
 impl<R: std::io::Read> Scanner<R> {
     pub fn read<T: std::str::FromStr>(&mut self) -> T {
         use std::io::Read;
         let buf = self
-            .reader
+            .stdin
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
@@ -159,7 +142,7 @@ impl<R: std::io::Read> Scanner<R> {
             .ok()
             .expect("Parse error.")
     }
-    pub fn read_vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
+    pub fn vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
         (0..n).map(|_| self.read()).collect()
     }
     pub fn chars(&mut self) -> Vec<char> {
