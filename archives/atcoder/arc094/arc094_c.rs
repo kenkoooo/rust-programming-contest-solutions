@@ -1,38 +1,34 @@
-use std::cmp;
-
 fn main() {
     let s = std::io::stdin();
-    let mut sc = Scanner { reader: s.lock() };
-    let n: usize = sc.read();
-    let mut a = vec![];
-    let mut b = vec![];
-    for _ in 0..n {
-        a.push(sc.read::<usize>());
-        b.push(sc.read::<usize>());
-    }
-    let sum = a.iter().sum::<usize>();
-    let mut min = sum;
-    for i in 0..n {
-        if a[i] > b[i] {
-            min = cmp::min(min, b[i]);
-        }
-    }
-    if min == sum {
+    let mut sc = Scanner { stdin: s.lock() };
+    let n = sc.read();
+    let ab = (0..n)
+        .map(|_| (sc.read(), sc.read()))
+        .collect::<Vec<(usize, usize)>>();
+
+    if ab.iter().all(|&(a, b)| a == b) {
         println!("0");
     } else {
-        println!("{}", sum - min);
+        let sum: usize = ab.iter().map(|&(_, b)| b).sum();
+        let min_b = ab
+            .iter()
+            .filter(|&&(a, b)| a > b)
+            .map(|&(_, b)| b)
+            .min()
+            .unwrap();
+        println!("{}", sum - min_b);
     }
 }
 
 pub struct Scanner<R> {
-    reader: R,
+    stdin: R,
 }
 
 impl<R: std::io::Read> Scanner<R> {
     pub fn read<T: std::str::FromStr>(&mut self) -> T {
         use std::io::Read;
         let buf = self
-            .reader
+            .stdin
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
@@ -44,7 +40,7 @@ impl<R: std::io::Read> Scanner<R> {
             .ok()
             .expect("Parse error.")
     }
-    pub fn read_vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
+    pub fn vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
         (0..n).map(|_| self.read()).collect()
     }
     pub fn chars(&mut self) -> Vec<char> {

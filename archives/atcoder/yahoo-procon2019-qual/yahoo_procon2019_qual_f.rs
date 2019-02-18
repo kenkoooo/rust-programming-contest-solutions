@@ -5,33 +5,31 @@ const MOD: usize = 998244353;
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-    let red: Vec<usize> = sc.chars().iter().map(|&c| c as usize - '0' as usize).collect();
-    let n = red.len();
+    let s = sc.chars();
+    let n = s.len();
+    let a = s
+        .into_iter()
+        .map(|c| c as usize - '0' as usize)
+        .collect::<Vec<_>>();
 
     let mut dp = vec![0; 2 * n + 1];
-    dp[red[0]] = 1;
-    for turn in 0..(2 * n) {
+    dp[a[0]] = 1;
+    for turn in 1..(2 * n + 1) {
         let mut next = vec![0; 2 * n + 1];
+        let add = if turn < n { a[turn] } else { 0 };
+        let total = cmp::min(turn * 2, n * 2) - turn + 1;
 
-        let cur_balls = 2 * cmp::min(turn + 1, n) - turn;
-        let supplied_red = if turn + 1 < n { red[turn + 1] } else { 0 };
-
-        for cur_red in 0..(cur_balls + 1) {
-            if cur_red > 0 {
-                // pop red
-                next[cur_red + supplied_red - 1] += dp[cur_red];
-                next[cur_red + supplied_red - 1] %= MOD;
+        for red in 0..(total + 1) {
+            let blue = total - red;
+            if red > 0 {
+                next[red + add - 1] += dp[red];
             }
-            if cur_balls - cur_red > 0 {
-                // pop blue
-                next[cur_red + supplied_red] += dp[cur_red];
-                next[cur_red + supplied_red] %= MOD;
+            if blue > 0 {
+                next[red + add] += dp[red];
             }
         }
-
-        dp = next;
+        dp = next.into_iter().map(|next| next % MOD).collect();
     }
-
     println!("{}", dp[0]);
 }
 

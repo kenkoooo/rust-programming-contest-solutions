@@ -1,43 +1,36 @@
 use std::cmp;
+
 fn main() {
-    let sc = std::io::stdin();
-    let mut sc = Scanner { stdin: sc.lock() };
+    let s = std::io::stdin();
+    let mut sc = Scanner { stdin: s.lock() };
     let n: usize = sc.read();
     let a: usize = sc.read();
     let b: usize = sc.read();
-
-    let segments = (n + b - 1) / b;
-    if a + b - 1 > n || (n + b - 1) / b > a {
+    if a + b > n + 1 || (n + b - 1) / b > a {
         println!("-1");
         return;
     }
 
-    let mut ans = (1..(n + 1)).collect::<Vec<usize>>();
+    let mut ans = (1..(n + 1)).collect::<Vec<_>>();
+    let segments = (n + b - 1) / b;
+    let mut remain = n - a;
     for i in 0..segments {
         let from = i * b;
-        let to = cmp::min(from + b, n);
+        let to = cmp::min(from + cmp::min(b, remain + 1), n);
         ans[from..to].reverse();
-    }
-
-    let mut a = a - segments;
-    for i in (0..segments).rev() {
-        if a == 0 {
+        remain -= to - from - 1;
+        if remain == 0 {
             break;
         }
-        let length = cmp::min(a + 1, b);
-        let from = i * b;
-        let to = cmp::min(from + length, n);
-        ans[from..to].reverse();
-        a -= (to - from) - 1;
     }
 
-    for (i, a) in ans.into_iter().enumerate() {
+    assert_eq!(remain, 0);
+    for i in 0..n {
         if i > 0 {
             print!(" ");
         }
-        print!("{}", a);
+        print!("{}", ans[i]);
     }
-
     println!();
 }
 
@@ -61,7 +54,7 @@ impl<R: std::io::Read> Scanner<R> {
             .ok()
             .expect("Parse error.")
     }
-    pub fn read_vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
+    pub fn vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
         (0..n).map(|_| self.read()).collect()
     }
     pub fn chars(&mut self) -> Vec<char> {

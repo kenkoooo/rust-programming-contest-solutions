@@ -1,34 +1,54 @@
-use std::collections::BTreeMap;
-
+use std::collections::{BTreeMap, BTreeSet};
 const MOD: usize = 1e9 as usize + 7;
-
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-    let n: usize = sc.read();
-
-    let mut dp: BTreeMap<(usize, usize), usize> = BTreeMap::new();
-    println!("{}", rec(n, n, &mut dp));
+    let n: i64 = sc.read();
+    let mut memo = BTreeMap::new();
+    println!("{}", solve(n, n, &mut memo));
 }
 
-fn rec(xor: usize, sum: usize, dp: &mut BTreeMap<(usize, usize), usize>) -> usize {
-    if sum == 0 { return 1; }
-    if let Some(&ans) = dp.get(&(xor, sum)) {
-        return ans;
+fn naive(n: i64) -> usize {
+    let mut set = BTreeSet::new();
+
+    for a in 0..(n + 1) {
+        for b in 0..(n + 1) {
+            let u = a ^ b;
+            let v = a + b;
+            if u <= n && v <= n {
+                set.insert((u, v));
+            }
+        }
     }
+    println!("{:?}", set);
+    set.len()
+}
 
-    // odd & odd
-    let mut result = if sum >= 2 { rec(xor >> 1, (sum - 2) >> 1, dp) } else { 0 };
+fn solve(sum: i64, xor: i64, memo: &mut BTreeMap<(i64, i64), usize>) -> usize {
+    match memo.get(&(sum, xor)) {
+        Some(&ans) => ans,
+        None => {
+            if sum == 0 {
+                return 1;
+            }
+            let mut result = 0;
 
-    // odd & even
-    result += rec((xor - 1) >> 1, (sum - 1) >> 1, dp);
+            // odd & odd
+            if sum >= 2 {
+                result += solve((sum - 2) >> 1, xor >> 1, memo);
+            }
 
-    // even & even
-    result += rec(xor >> 1, sum >> 1, dp);
+            // odd & even
+            result += solve((sum - 1) >> 1, xor >> 1, memo);
 
-    result %= MOD;
-    dp.insert((xor, sum), result);
-    return result;
+            // even & even
+            result += solve(sum >> 1, xor >> 1, memo);
+
+            result %= MOD;
+            memo.insert((sum, xor), result);
+            result
+        }
+    }
 }
 
 pub struct Scanner<R> {

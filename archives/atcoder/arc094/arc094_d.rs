@@ -11,82 +11,74 @@ fn main() {
         .map(|c| c as usize - 'a' as usize)
         .collect::<Vec<_>>();
     let n = s.len();
-    if n <= 5 {
+    if n <= 3 {
         println!("{}", brute_force(s));
         return;
     }
-
-    if s.iter().all(|&c| c == s[0]) {
+    if (1..n).all(|i| s[i - 1] == s[i]) {
         println!("1");
         return;
     }
-
     let mut dp = vec![vec![vec![0; 2]; 3]; 3];
     dp[0][0][0] = 1;
-
     for i in 0..n {
-        let mut next = vec![vec![vec![0; 2]; 3]; 3];
-        for m in 0..3 {
-            for from in 0..3 {
-                for distinct in 0..2 {
-                    if dp[from][m][distinct] == 0 {
-                        continue;
-                    }
-                    for to in 0..3 {
-                        let next_distinct = if (distinct == 0 && from != to) || i == 0 {
-                            0
-                        } else {
+        let mut next_dp = vec![vec![vec![0; 2]; 3]; 3];
+        for last in 0..3 {
+            for cur_mod in 0..3 {
+                for next in 0..3 {
+                    let next_mod = (cur_mod + next) % 3;
+                    for in_a_row in 0..2 {
+                        let next_in_a_row = if (last == next && i > 0) || in_a_row == 1 {
                             1
+                        } else {
+                            0
                         };
-                        let next_m = (m + to) % 3;
-                        next[to][next_m][next_distinct] += dp[from][m][distinct];
-                        next[to][next_m][next_distinct] %= MOD;
+
+                        next_dp[next][next_mod][next_in_a_row] += dp[last][cur_mod][in_a_row];
+                        next_dp[next][next_mod][next_in_a_row] %= MOD;
                     }
                 }
             }
         }
-        dp = next;
+        dp = next_dp;
     }
 
-    let m = s.iter().sum::<usize>() % 3;
-    let is_distinct = (1..n).all(|i| s[i] != s[i - 1]);
+    let modulo = s.iter().sum::<usize>() % 3;
     let mut ans = 0;
-    for to in 0..3 {
-        ans += dp[to][m][1];
+    for last in 0..3 {
+        ans += dp[last][modulo][1];
     }
-    if is_distinct {
+    if (1..n).all(|i| s[i - 1] != s[i]) {
         ans += 1;
     }
-    ans %= MOD;
-    println!("{}", ans);
+    println!("{}", ans % MOD);
 }
 
 fn brute_force(s: Vec<usize>) -> usize {
-    let n = s.len();
     let mut set = BTreeSet::new();
+    let n = s.len();
     set.insert(s);
     loop {
         let mut next = BTreeSet::new();
         for s in set.iter() {
             for i in 1..n {
-                let mut t = s.clone();
-                if t[i - 1] != t[i] {
-                    let next = match t[i - 1] + t[i] {
+                if s[i - 1] != s[i] {
+                    let mut s = s.clone();
+                    let replace = match s[i - 1] + s[i] {
                         1 => 2,
                         2 => 1,
                         3 => 0,
                         _ => unreachable!(),
                     };
-                    t[i - 1] = next;
-                    t[i] = next;
+                    s[i - 1] = replace;
+                    s[i] = replace;
+                    next.insert(s);
                 }
-                next.insert(t);
             }
         }
-
         let prev = set.len();
         set.extend(next);
-        if set.len() == prev {
+        if prev == set.len() {
             return set.len();
         }
     }
