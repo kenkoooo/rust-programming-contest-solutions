@@ -1,14 +1,13 @@
 fn main() {
-    let sc = std::io::stdin();
-    let mut sc = Scanner { reader: sc.lock() };
-    let l: usize = sc.read();
+    let s = std::io::stdin();
+    let mut sc = Scanner { stdin: s.lock() };
+    let mut l: usize = sc.read();
 
     let mut r = 0;
     while (1 << (r + 1)) <= l {
         r += 1;
     }
 
-    let initial_length = 1 << r;
     let n = r + 1;
     let mut graph = vec![vec![]; n];
     for i in 0..r {
@@ -16,37 +15,39 @@ fn main() {
         graph[i].push((i + 1, 0));
     }
 
-    let mut l = l;
+    let sum = (1 << r) - 1;
     for i in (0..(n - 1)).rev() {
-        if l >= initial_length + (1 << i) {
-            let t = l - (1 << i);
-            graph[i].push((n - 1, t));
-            l = t;
+        let to_i = (1 << i) - 1;
+        if l >= to_i + 1 {
+            let new_edge = l - to_i - 1;
+            if new_edge > sum {
+                // add paths [new_edge, new_edge+1, ..., l-1]
+                graph[i].push((n - 1, new_edge));
+                l = new_edge;
+            }
         }
     }
 
-    let mut ans = vec![];
-    for i in 0..n {
-        for &(next, w) in graph[i].iter() {
-            ans.push((i, next, w));
-        }
-    }
+    println!("{} {}", n, graph.iter().map(|e| e.len()).sum::<usize>());
 
-    println!("{} {}", n, ans.len());
-    for &(i, next, w) in ans.iter() {
-        println!("{} {} {}", i + 1, next + 1, w);
+    for (from, to, w) in graph
+        .into_iter()
+        .enumerate()
+        .flat_map(|(i, e)| e.into_iter().map(move |(to, w)| (i, to, w)))
+    {
+        println!("{} {} {}", from + 1, to + 1, w);
     }
 }
 
 pub struct Scanner<R> {
-    reader: R,
+    stdin: R,
 }
 
 impl<R: std::io::Read> Scanner<R> {
     pub fn read<T: std::str::FromStr>(&mut self) -> T {
         use std::io::Read;
         let buf = self
-            .reader
+            .stdin
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
@@ -58,7 +59,7 @@ impl<R: std::io::Read> Scanner<R> {
             .ok()
             .expect("Parse error.")
     }
-    pub fn read_vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
+    pub fn vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
         (0..n).map(|_| self.read()).collect()
     }
     pub fn chars(&mut self) -> Vec<char> {

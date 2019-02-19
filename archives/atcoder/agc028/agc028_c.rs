@@ -1,57 +1,65 @@
 use std::cmp;
-
 fn main() {
     let s = std::io::stdin();
-    let mut sc = Scanner { reader: s.lock() };
+    let mut sc = Scanner { stdin: s.lock() };
     let n = sc.read();
     let ab = (0..n)
         .map(|_| (sc.read(), sc.read()))
-        .collect::<Vec<(i64, i64)>>();
+        .collect::<Vec<(u64, u64)>>();
+    let a_sum = ab.iter().map(|&(a, _)| a).sum::<u64>();
+    let b_sum = ab.iter().map(|&(_, b)| b).sum::<u64>();
 
-    let a_sum = ab.iter().map(|&(a, _)| a).sum::<i64>();
-    let b_sum = ab.iter().map(|&(_, b)| b).sum::<i64>();
+    println!("{}", cmp::min(cmp::min(a_sum, b_sum), solve(ab)));
+}
+
+fn solve(ab: Vec<(u64, u64)>) -> u64 {
+    let n = ab.len();
 
     let mut v = vec![];
-    for (i, &(a, b)) in ab.iter().enumerate() {
-        v.push((a, i));
-        v.push((b, i));
+    for (i, (a, b)) in ab.into_iter().enumerate() {
+        v.push((a, true, i));
+        v.push((b, false, i));
     }
     v.sort();
 
-    let mut used_count = vec![0; n];
-    let mut ans = 0;
-    for i in 0..n {
-        let (t, i) = v[i];
-        used_count[i] += 1;
-        ans += t;
+    let mut count = vec![0; n];
+    let mut sum = 0;
+    for &(x, _, i) in v.iter().take(n) {
+        count[i] += 1;
+        sum += x;
     }
-
-    if used_count.iter().any(|&c| c == 2) {
-        println!("{}", cmp::min(cmp::min(a_sum, b_sum), ans));
+    if count.into_iter().any(|c| c == 2) {
+        sum
     } else {
-        let mut min = 1e15 as i64;
-        for i in 0..n {
-            let (t, i) = v[i];
-            let ans = ans - t;
-            if i == v[n].1 {
-                min = cmp::min(min, ans + v[n + 1].0);
-            } else {
-                min = cmp::min(min, ans + v[n].0);
-            }
-        }
-        println!("{}", cmp::min(cmp::min(a_sum, b_sum), min));
+        let first = v
+            .iter()
+            .rev()
+            .skip(n)
+            .filter(|&&(_, _, i)| i != v[n].2)
+            .map(|&(x, _, _)| x)
+            .next()
+            .unwrap();
+        let second = v
+            .iter()
+            .rev()
+            .skip(n)
+            .filter(|&&(_, _, i)| i != v[n + 1].2)
+            .map(|&(x, _, _)| x)
+            .next()
+            .unwrap();
+        cmp::min(sum - first + v[n].0, sum - second + v[n + 1].0)
     }
 }
 
 pub struct Scanner<R> {
-    reader: R,
+    stdin: R,
 }
 
 impl<R: std::io::Read> Scanner<R> {
     pub fn read<T: std::str::FromStr>(&mut self) -> T {
         use std::io::Read;
         let buf = self
-            .reader
+            .stdin
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
@@ -63,7 +71,7 @@ impl<R: std::io::Read> Scanner<R> {
             .ok()
             .expect("Parse error.")
     }
-    pub fn read_vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
+    pub fn vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
         (0..n).map(|_| self.read()).collect()
     }
     pub fn chars(&mut self) -> Vec<char> {
