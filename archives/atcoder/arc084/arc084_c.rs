@@ -1,25 +1,26 @@
 fn main() {
-    let sc = std::io::stdin();
-    let mut sc = Scanner { reader: sc.lock() };
+    let s = std::io::stdin();
+    let mut sc = Scanner { stdin: s.lock() };
+
     let k: usize = sc.read();
     let n: usize = sc.read();
+
     if k % 2 == 0 {
-        assert_eq!(k % 2, 0);
         print!("{}", k / 2);
         for _ in 1..n {
             print!(" {}", k);
         }
         println!();
+        return;
     } else {
-        let mut ans = vec![(k + 1) / 2; n];
-        let elimination = (n - 1 + 1) / 2;
-        for _ in 0..elimination {
-            let len = ans.len();
-            let last = ans[len - 1];
-            if last == 1 {
+        let x = (k + 1) / 2;
+        let mut ans = vec![x; n];
+        for _ in 0..(n / 2) {
+            let length = ans.len();
+            if ans[length - 1] == 1 {
                 ans.pop();
             } else {
-                ans[len - 1] -= 1;
+                ans[length - 1] -= 1;
                 while ans.len() < n {
                     ans.push(k);
                 }
@@ -30,21 +31,23 @@ fn main() {
             if i > 0 {
                 print!(" ");
             }
-            print!("{}", ans[i]);
+            if ans[i] != 0 {
+                print!("{}", ans[i]);
+            }
         }
         println!();
     }
 }
 
 pub struct Scanner<R> {
-    reader: R,
+    stdin: R,
 }
 
 impl<R: std::io::Read> Scanner<R> {
     pub fn read<T: std::str::FromStr>(&mut self) -> T {
         use std::io::Read;
         let buf = self
-            .reader
+            .stdin
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
@@ -56,7 +59,7 @@ impl<R: std::io::Read> Scanner<R> {
             .ok()
             .expect("Parse error.")
     }
-    pub fn read_vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
+    pub fn vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
         (0..n).map(|_| self.read()).collect()
     }
     pub fn chars(&mut self) -> Vec<char> {
