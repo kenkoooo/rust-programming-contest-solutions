@@ -4,29 +4,30 @@ const MOD: usize = 1e9 as usize + 7;
 
 fn main() {
     let s = std::io::stdin();
-    let mut sc = Scanner { reader: s.lock() };
+    let mut sc = Scanner { stdin: s.lock() };
     let n: usize = sc.read();
     let s = sc.chars();
-    let m = s.len();
+    let length = s.len();
 
     let mut dp = vec![ModInt::new(0); n + 1];
     dp[0] = ModInt::new(1);
     for _ in 0..n {
         let mut next = vec![ModInt::new(0); n + 1];
-        for i in 0..n {
-            next[i + 1] += dp[i] * 2;
-            if i > 0 {
-                next[i - 1] += dp[i];
-            } else {
+        for l in 0..(n + 1) {
+            if l < n {
+                next[l + 1] += dp[l] * 2;
+            }
+            if l == 0 {
                 next[0] += dp[0];
+            } else {
+                next[l - 1] += dp[l];
             }
         }
         dp = next;
     }
 
-    let pow2 = ModInt::new(2).pow(m);
-    let inv_pow = pow2.pow(MOD - 2);
-    println!("{}", (dp[m] * inv_pow).0);
+    let inv_pow = ModInt::new(2).pow(length).pow(MOD - 2);
+    println!("{}", (dp[length] * inv_pow).0);
 }
 
 pub mod mod_int {
@@ -34,7 +35,6 @@ pub mod mod_int {
     use std::ops::{Add, AddAssign, Mul, MulAssign, Sub, SubAssign};
 
     type Num = usize;
-
     #[derive(Clone, Copy)]
     pub struct ModInt<T: Copy + Clone>(pub T);
 
@@ -145,26 +145,26 @@ pub mod mod_int {
 }
 
 pub struct Scanner<R> {
-    reader: R,
+    stdin: R,
 }
 
 impl<R: std::io::Read> Scanner<R> {
     pub fn read<T: std::str::FromStr>(&mut self) -> T {
         use std::io::Read;
         let buf = self
-            .reader
+            .stdin
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
-            .skip_while(|&b| b == b' ' || b == b'\n')
-            .take_while(|&b| b != b' ' && b != b'\n')
+            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r')
+            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r')
             .collect::<Vec<_>>();
         unsafe { std::str::from_utf8_unchecked(&buf) }
             .parse()
             .ok()
             .expect("Parse error.")
     }
-    pub fn read_vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
+    pub fn vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
         (0..n).map(|_| self.read()).collect()
     }
     pub fn chars(&mut self) -> Vec<char> {

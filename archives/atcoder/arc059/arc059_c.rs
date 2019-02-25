@@ -4,49 +4,33 @@ const MOD: usize = 1e9 as usize + 7;
 
 fn main() {
     let s = std::io::stdin();
-    let mut sc = Scanner { reader: s.lock() };
+    let mut sc = Scanner { stdin: s.lock() };
+
     let n = sc.read();
     let c: usize = sc.read();
-    let a: Vec<usize> = sc.read_vec(n);
-    let b: Vec<usize> = sc.read_vec(n);
-    let b_max = *b.iter().max().unwrap();
+    let a: Vec<usize> = sc.vec(n);
+    let b: Vec<usize> = sc.vec(n);
+    let max_b = *b.iter().max().unwrap();
 
-    // pow[x][a] := x^a
-    let mut pow = vec![vec![ModInt::new(0); c + 1]; b_max + 1];
-    for i in 1..(b_max + 1) {
-        pow[i][0] = ModInt::new(1);
-        for j in 0..c {
-            pow[i][j + 1] = pow[i][j] * i;
-        }
-    }
-
-    // sum[x+1][a] := pow[0][a] + pow[1][a] + ... + pow[x][a]
-    let mut sum = vec![vec![ModInt::new(0); c + 1]; b_max + 2];
-    for a in 0..(c + 1) {
-        for x in 0..(b_max + 1) {
-            sum[x + 1][a] = sum[x][a] + pow[x][a];
+    let mut sum = vec![vec![ModInt::new(0); max_b + 2]; c + 1];
+    for give in 0..(c + 1) {
+        for x in 0..(max_b + 1) {
+            sum[give][x + 1] = sum[give][x] + ModInt::new(x).pow(give);
         }
     }
 
     let mut dp = vec![ModInt::new(0); c + 1];
     dp[0] = ModInt::new(1);
+
     for i in 0..n {
         let mut next = vec![ModInt::new(0); c + 1];
-        let from = a[i];
-        let to = b[i];
-        for add in 0..(c + 1) {
-            for prev in 0..(c + 1) {
-                if prev + add > c {
-                    break;
-                }
-                let x = sum[to + 1][add] - sum[from][add];
-                next[prev + add] += dp[prev] * x;
-                // for x in from..(to + 1) {
-                //     next[prev + add] += dp[prev] * pow[x][add];
-                // }
+        let (a, b) = (a[i], b[i]);
+        for cur_candy in 0..(c + 1) {
+            for next_candy in cur_candy..(c + 1) {
+                let give = next_candy - cur_candy;
+                next[next_candy] += dp[cur_candy] * (sum[give][b + 1] - sum[give][a]);
             }
         }
-
         dp = next;
     }
 
@@ -169,26 +153,26 @@ pub mod mod_int {
 }
 
 pub struct Scanner<R> {
-    reader: R,
+    stdin: R,
 }
 
 impl<R: std::io::Read> Scanner<R> {
     pub fn read<T: std::str::FromStr>(&mut self) -> T {
         use std::io::Read;
         let buf = self
-            .reader
+            .stdin
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
-            .skip_while(|&b| b == b' ' || b == b'\n')
-            .take_while(|&b| b != b' ' && b != b'\n')
+            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r')
+            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r')
             .collect::<Vec<_>>();
         unsafe { std::str::from_utf8_unchecked(&buf) }
             .parse()
             .ok()
             .expect("Parse error.")
     }
-    pub fn read_vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
+    pub fn vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
         (0..n).map(|_| self.read()).collect()
     }
     pub fn chars(&mut self) -> Vec<char> {
