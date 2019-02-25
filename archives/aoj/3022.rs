@@ -2,10 +2,12 @@ use std::cmp;
 
 fn main() {
     let s = std::io::stdin();
-    let mut sc = Scanner { reader: s.lock() };
-    let n: usize = sc.read();
-    let m: usize = sc.read();
-    let w: Vec<usize> = sc.read_vec(n);
+    let mut sc = Scanner { stdin: s.lock() };
+
+    let n = sc.read();
+    let m = sc.read();
+    let power: Vec<u64> = sc.vec(n);
+
     let mut graph = vec![vec![]; n];
     for _ in 0..m {
         let u = sc.read::<usize>() - 1;
@@ -15,48 +17,55 @@ fn main() {
     }
 
     let detection = BridgeDetector::new(&graph);
-    let tree = detection.dfs_tree;
-    let order = detection.order;
-    let low_link = detection.low_link;
     let mut is_articulation = vec![false; n];
     for &v in detection.articulations.iter() {
         is_articulation[v] = true;
     }
 
-    let total_power: usize = w.iter().sum();
+    let order = detection.order;
+    let low_link = detection.low_link;
+    let dfs_tree = detection.dfs_tree;
     let mut subtree_power = vec![0; n];
+    calc_subtree_power(0, 0, &mut subtree_power, &power, &dfs_tree);
+
+    let power_sum: u64 = power.iter().sum();
     for v in 0..n {
         if is_articulation[v] {
+            let mut parent_cluster = power_sum - subtree_power[v];
             let mut max_child = 0;
-            let mut parent_connected = 0;
-            for &child in tree[v].iter() {
-                let child_power = dfs(child, &tree, &mut subtree_power, &w);
-                max_child = cmp::max(max_child, child_power);
+            for &child in dfs_tree[v].iter() {
+                if order[child] < order[v] {
+                    continue;
+                }
+
+                max_child = cmp::max(max_child, subtree_power[child]);
                 if low_link[child] < order[v] {
-                    parent_connected += child_power;
+                    parent_cluster += subtree_power[child];
                 }
             }
-            let subtree = dfs(v, &tree, &mut subtree_power, &w);
-            let parent = total_power - subtree;
-            println!("{}", cmp::max(max_child, parent + parent_connected));
+            println!("{}", cmp::max(max_child, parent_cluster));
         } else {
-            println!("{}", total_power - w[v]);
+            println!("{}", power_sum - power[v]);
         }
     }
 }
 
-fn dfs(v: usize, tree: &Vec<Vec<usize>>, subtree_power: &mut Vec<usize>, power: &Vec<usize>) -> usize {
-    if subtree_power[v] > 0 {
-        return subtree_power[v];
-    }
-
+fn calc_subtree_power(
+    v: usize,
+    p: usize,
+    subtree_power: &mut Vec<u64>,
+    power: &[u64],
+    dfs_tree: &[Vec<usize>],
+) {
     subtree_power[v] = power[v];
-    for &child in tree[v].iter() {
-        subtree_power[v] += dfs(child, tree, subtree_power, power);
+    for &next in dfs_tree[v].iter() {
+        if next == p {
+            continue;
+        }
+        calc_subtree_power(next, p, subtree_power, power, dfs_tree);
+        subtree_power[v] += subtree_power[next];
     }
-    subtree_power[v]
 }
-
 
 pub struct BridgeDetector {
     articulations: Vec<usize>,
@@ -69,7 +78,7 @@ pub struct BridgeDetector {
 }
 
 impl BridgeDetector {
-    pub fn new(graph: &Vec<Vec<usize>>) -> Self {
+    pub fn new(graph: &[Vec<usize>]) -> Self {
         let n = graph.len();
         let mut d = BridgeDetector {
             articulations: vec![],
@@ -84,7 +93,7 @@ impl BridgeDetector {
         d
     }
 
-    fn run(&mut self, graph: &Vec<Vec<usize>>) {
+    fn run(&mut self, graph: &[Vec<usize>]) {
         let n = graph.len();
         for i in 0..n {
             if !self.visit[i] {
@@ -93,7 +102,7 @@ impl BridgeDetector {
         }
     }
 
-    fn dfs(&mut self, v: usize, previous: usize, graph: &Vec<Vec<usize>>, root: usize) {
+    fn dfs(&mut self, v: usize, previous: usize, graph: &[Vec<usize>], root: usize) {
         self.visit[v] = true;
         self.order[v] = self.k;
         self.k += 1;
@@ -104,8 +113,8 @@ impl BridgeDetector {
         for &next in graph[v].iter() {
             if !self.visit[next] {
                 // The edge (v->next) is not a backedge.
-                self.dfs_tree[v].push(next);
                 dimension += 1;
+                self.dfs_tree[v].push(next);
                 self.dfs(next, v, graph, root);
                 self.low_link[v] = cmp::min(self.low_link[v], self.low_link[next]);
                 if v != root && self.order[v] <= self.low_link[next] {
@@ -132,26 +141,26 @@ impl BridgeDetector {
 }
 
 pub struct Scanner<R> {
-    reader: R,
+    stdin: R,
 }
 
 impl<R: std::io::Read> Scanner<R> {
     pub fn read<T: std::str::FromStr>(&mut self) -> T {
         use std::io::Read;
         let buf = self
-            .reader
+            .stdin
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
-            .skip_while(|&b| b == b' ' || b == b'\n')
-            .take_while(|&b| b != b' ' && b != b'\n')
+            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r')
+            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r')
             .collect::<Vec<_>>();
         unsafe { std::str::from_utf8_unchecked(&buf) }
             .parse()
             .ok()
             .expect("Parse error.")
     }
-    pub fn read_vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
+    pub fn vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
         (0..n).map(|_| self.read()).collect()
     }
     pub fn chars(&mut self) -> Vec<char> {
