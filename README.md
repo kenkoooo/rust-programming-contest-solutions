@@ -207,16 +207,16 @@
 | [cf16_exhibition_final_a](https://beta.atcoder.jp/contests/cf16-exhibition-final/tasks/cf16_exhibition_final_a) | [cf16_exhibition_final_a.rs](./archives/atcoder/cf16-exhibition-final/cf16_exhibition_final_a.rs) |
 | [cf16_exhibition_final_b](https://beta.atcoder.jp/contests/cf16-exhibition-final/tasks/cf16_exhibition_final_b) | [cf16_exhibition_final_b.rs](./archives/atcoder/cf16-exhibition-final/cf16_exhibition_final_b.rs) |
 | [cf16_exhibition_final_c](https://beta.atcoder.jp/contests/cf16-exhibition-final/tasks/cf16_exhibition_final_c) | [cf16_exhibition_final_c.rs](./archives/atcoder/cf16-exhibition-final/cf16_exhibition_final_c.rs) |
+| [codefestival_2016_final_d](https://beta.atcoder.jp/contests/cf16-final-open/tasks/codefestival_2016_final_d) | [codefestival_2016_final_d.rs](./archives/atcoder/cf16-final-open/codefestival_2016_final_d.rs) |
 | [cf17_final_a](https://beta.atcoder.jp/contests/cf17-final-open/tasks/cf17_final_a) | [cf17_final_a.rs](./archives/atcoder/cf17-final-open/cf17_final_a.rs) |
 | [cf17_final_b](https://beta.atcoder.jp/contests/cf17-final-open/tasks/cf17_final_b) | [cf17_final_b.rs](./archives/atcoder/cf17-final-open/cf17_final_b.rs) |
 | [cf17_final_c](https://beta.atcoder.jp/contests/cf17-final-open/tasks/cf17_final_c) | [cf17_final_c.rs](./archives/atcoder/cf17-final-open/cf17_final_c.rs) |
 | [cf17_final_d](https://beta.atcoder.jp/contests/cf17-final-open/tasks/cf17_final_d) | [cf17_final_d.rs](./archives/atcoder/cf17-final-open/cf17_final_d.rs) |
 | [cf17_final_e](https://beta.atcoder.jp/contests/cf17-final-open/tasks/cf17_final_e) | [cf17_final_e.rs](./archives/atcoder/cf17-final-open/cf17_final_e.rs) |
 | [relay2018_e](https://beta.atcoder.jp/contests/cf18-relay/tasks/relay2018_e) | [relay2018_e.rs](./archives/atcoder/cf18-relay/relay2018_e.rs) |
-| [codefestival_2016_final_d](https://beta.atcoder.jp/contests/codefestival-2016-final/tasks/codefestival_2016_final_d) | [codefestival_2016_final_d.rs](./archives/atcoder/codefestival-2016-final/codefestival_2016_final_d.rs) |
-| [codefestival_2016_qualB_c](https://beta.atcoder.jp/contests/codefestival-2016-qualB/tasks/codefestival_2016_qualB_c) | [codefestival_2016_qualB_c.rs](./archives/atcoder/codefestival-2016-qualB/codefestival_2016_qualB_c.rs) |
-| [codefestival_2016_qualB_d](https://beta.atcoder.jp/contests/codefestival-2016-qualB/tasks/codefestival_2016_qualB_d) | [codefestival_2016_qualB_d.rs](./archives/atcoder/codefestival-2016-qualB/codefestival_2016_qualB_d.rs) |
-| [codefestival_2016_qualC_d](https://beta.atcoder.jp/contests/codefestival-2016-qualC/tasks/codefestival_2016_qualC_d) | [codefestival_2016_qualC_d.rs](./archives/atcoder/codefestival-2016-qualC/codefestival_2016_qualC_d.rs) |
+| [codefestival_2016_qualB_c](https://beta.atcoder.jp/contests/code-festival-2016-qualb/tasks/codefestival_2016_qualB_c) | [codefestival_2016_qualB_c.rs](./archives/atcoder/code-festival-2016-qualb/codefestival_2016_qualB_c.rs) |
+| [codefestival_2016_qualB_d](https://beta.atcoder.jp/contests/code-festival-2016-qualb/tasks/codefestival_2016_qualB_d) | [codefestival_2016_qualB_d.rs](./archives/atcoder/code-festival-2016-qualb/codefestival_2016_qualB_d.rs) |
+| [codefestival_2016_qualC_d](https://beta.atcoder.jp/contests/code-festival-2016-qualc/tasks/codefestival_2016_qualC_d) | [codefestival_2016_qualC_d.rs](./archives/atcoder/code-festival-2016-qualc/codefestival_2016_qualC_d.rs) |
 | [code_festival_2017_quala_c](https://beta.atcoder.jp/contests/code-festival-2017-quala/tasks/code_festival_2017_quala_c) | [code_festival_2017_quala_c.rs](./archives/atcoder/code-festival-2017-quala/code_festival_2017_quala_c.rs) |
 | [code_festival_2017_quala_d](https://beta.atcoder.jp/contests/code-festival-2017-quala/tasks/code_festival_2017_quala_d) | [code_festival_2017_quala_d.rs](./archives/atcoder/code-festival-2017-quala/code_festival_2017_quala_d.rs) |
 | [code_festival_2017_quala_e](https://beta.atcoder.jp/contests/code-festival-2017-quala/tasks/code_festival_2017_quala_e) | [code_festival_2017_quala_e.rs](./archives/atcoder/code-festival-2017-quala/code_festival_2017_quala_e.rs) |
@@ -228,6 +228,7 @@
 | [code_festival_2018_quala_b](https://beta.atcoder.jp/contests/code-festival-2018-quala/tasks/code_festival_2018_quala_b) | [code_festival_2018_quala_b.rs](./archives/atcoder/code-festival-2018-quala/code_festival_2018_quala_b.rs) |
 | [code_festival_2018_quala_c](https://beta.atcoder.jp/contests/code-festival-2018-quala/tasks/code_festival_2018_quala_c) | [code_festival_2018_quala_c.rs](./archives/atcoder/code-festival-2018-quala/code_festival_2018_quala_c.rs) |
 | [code_festival_2018_quala_d](https://beta.atcoder.jp/contests/code-festival-2018-quala/tasks/code_festival_2018_quala_d) | [code_festival_2018_quala_d.rs](./archives/atcoder/code-festival-2018-quala/code_festival_2018_quala_d.rs) |
+| [code_festival_2018_quala_e](https://beta.atcoder.jp/contests/code-festival-2018-quala/tasks/code_festival_2018_quala_e) | [code_festival_2018_quala_e.rs](./archives/atcoder/code-festival-2018-quala/code_festival_2018_quala_e.rs) |
 | [code_festival_2018_qualb_e](https://beta.atcoder.jp/contests/code-festival-2018-qualb/tasks/code_festival_2018_qualb_e) | [code_festival_2018_qualb_e.rs](./archives/atcoder/code-festival-2018-qualb/code_festival_2018_qualb_e.rs) |
 | [code_thanks_festival_2017_f](https://beta.atcoder.jp/contests/code-thanks-festival-2017/tasks/code_thanks_festival_2017_f) | [code_thanks_festival_2017_f.rs](./archives/atcoder/code-thanks-festival-2017/code_thanks_festival_2017_f.rs) |
 | [colopl2018_final_b](https://beta.atcoder.jp/contests/colopl2018-final/tasks/colopl2018_final_b) | [colopl2018_final_b.rs](./archives/atcoder/colopl2018-final/colopl2018_final_b.rs) |
@@ -260,6 +261,8 @@
 | [yahoo_procon2018_qual_b](https://beta.atcoder.jp/contests/yahoo-procon2018-qual/tasks/yahoo_procon2018_qual_b) | [yahoo_procon2018_qual_b.rs](./archives/atcoder/yahoo-procon2018-qual/yahoo_procon2018_qual_b.rs) |
 | [yahoo_procon2018_qual_c](https://beta.atcoder.jp/contests/yahoo-procon2018-qual/tasks/yahoo_procon2018_qual_c) | [yahoo_procon2018_qual_c.rs](./archives/atcoder/yahoo-procon2018-qual/yahoo_procon2018_qual_c.rs) |
 | [yahoo_procon2018_qual_d](https://beta.atcoder.jp/contests/yahoo-procon2018-qual/tasks/yahoo_procon2018_qual_d) | [yahoo_procon2018_qual_d.rs](./archives/atcoder/yahoo-procon2018-qual/yahoo_procon2018_qual_d.rs) |
+| [yahoo_procon2019_qual_e](https://beta.atcoder.jp/contests/yahoo-procon2019-qual/tasks/yahoo_procon2019_qual_e) | [yahoo_procon2019_qual_e.rs](./archives/atcoder/yahoo-procon2019-qual/yahoo_procon2019_qual_e.rs) |
+| [yahoo_procon2019_qual_f](https://beta.atcoder.jp/contests/yahoo-procon2019-qual/tasks/yahoo_procon2019_qual_f) | [yahoo_procon2019_qual_f.rs](./archives/atcoder/yahoo-procon2019-qual/yahoo_procon2019_qual_f.rs) |
 ## CS Academy
 
 | Problem | Solution |
