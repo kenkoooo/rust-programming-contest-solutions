@@ -1,103 +1,55 @@
 use std::cmp;
 
-const INF: i64 = std::i64::MAX / 2;
+const INF: usize = 1e16 as usize;
 
 fn main() {
     let s = std::io::stdin();
-    let mut sc = Scanner { reader: s.lock() };
-
+    let mut sc = Scanner { stdin: s.lock() };
     let n = sc.read();
-    let d: i64 = sc.read();
-    let p: Vec<i64> = sc.read_vec(n);
-    let mut a = p
-        .iter()
-        .enumerate()
-        .map(|(i, &a)| (a, i))
-        .collect::<Vec<_>>();
-    a.sort();
-    let mut seg_l = SegmentTree::new(n, (INF, 0), |a, b| cmp::min(a, b));
-    let mut seg_r = SegmentTree::new(n, (INF, 0), |a, b| cmp::min(a, b));
-    let mut edges = vec![];
-    for &(a, i) in a.iter() {
-        let (left_a, left_i) = seg_l.query(0, i + 1);
-        if left_a < INF {
-            edges.push((left_i, i));
-        }
-        let (right_a, right_i) = seg_r.query(i, n);
-        if right_a < INF {
-            edges.push((i, right_i));
-        }
-        seg_l.update(i, ((n - i) as i64 * d + a, i));
-        seg_r.update(i, (i as i64 * d + a, i));
-    }
+    let d: usize = sc.read();
+    let a: Vec<usize> = sc.vec(n);
 
-    let mut edges = edges
-        .iter()
-        .map(|&(i, j)| {
-            assert!(i < j);
-            let cost = (j - i) as i64 * d + p[i] + p[j];
-            (cost, i, j)
-        })
-        .collect::<Vec<_>>();
+    let mut ai: Vec<(usize, usize)> = a.iter().enumerate().map(|(i, &a)| (a, i)).collect();
+    ai.sort();
+
+    let mut left_seg = SegmentTree::new(n, (INF, 0), |a, b| cmp::min(a, b));
+    let mut right_seg = SegmentTree::new(n, (INF, 0), |a, b| cmp::min(a, b));
+
+    let mut edges = vec![];
+    for (_, i) in ai.into_iter() {
+        if i > 0 {
+            let (tmp, j) = left_seg.query(0, i);
+            if tmp < INF {
+                let cost = (i - j) * d + a[i] + a[j];
+                edges.push((cost, i, j));
+            }
+        }
+        if i + 1 < n {
+            let (tmp, j) = right_seg.query(i + 1, n);
+            if tmp < INF {
+                let cost = (j - i) * d + a[i] + a[j];
+                edges.push((cost, i, j));
+            }
+        }
+        left_seg.update(i, (a[i] + (n - i) * d, i));
+        right_seg.update(i, (a[i] + i * d, i));
+    }
     edges.sort();
 
-    let mut uf = UnionFind::new(n);
     let mut ans = 0;
-    for &(cost, i, j) in edges.iter() {
-        if uf.find(i) != uf.find(j) {
-            uf.unite(i, j);
-            ans += cost;
+    let mut uf = UnionFind::new(n);
+
+    for (cost, i, j) in edges.into_iter() {
+        if uf.find(i) == uf.find(j) {
+            continue;
         }
+        uf.unite(i, j);
+        ans += cost;
     }
+
     println!("{}", ans);
 }
-pub struct UnionFind {
-    parent: Vec<usize>,
-    sizes: Vec<usize>,
-    size: usize,
-}
 
-impl UnionFind {
-    pub fn new(n: usize) -> UnionFind {
-        UnionFind {
-            parent: (0..n).map(|i| i).collect::<Vec<usize>>(),
-            sizes: vec![1; n],
-            size: n,
-        }
-    }
-
-    pub fn find(&mut self, x: usize) -> usize {
-        if x == self.parent[x] {
-            x
-        } else {
-            let px = self.parent[x];
-            self.parent[x] = self.find(px);
-            self.parent[x]
-        }
-    }
-
-    pub fn unite(&mut self, x: usize, y: usize) -> bool {
-        let parent_x = self.find(x);
-        let parent_y = self.find(y);
-        if parent_x == parent_y {
-            return false;
-        }
-
-        let (large, small) = if self.sizes[parent_x] < self.sizes[parent_y] {
-            (parent_y, parent_x)
-        } else {
-            (parent_x, parent_y)
-        };
-
-        self.parent[small] = large;
-        self.sizes[large] += self.sizes[small];
-        self.sizes[small] = 0;
-        self.size -= 1;
-        return true;
-    }
-}
-
-/// Segment Tree for range queries
 pub struct SegmentTree<T, F> {
     seg: Vec<T>,
     n: usize,
@@ -155,27 +107,73 @@ where
     }
 }
 
+pub struct UnionFind {
+    parent: Vec<usize>,
+    sizes: Vec<usize>,
+    size: usize,
+}
+
+impl UnionFind {
+    pub fn new(n: usize) -> UnionFind {
+        UnionFind {
+            parent: (0..n).map(|i| i).collect::<Vec<usize>>(),
+            sizes: vec![1; n],
+            size: n,
+        }
+    }
+
+    pub fn find(&mut self, x: usize) -> usize {
+        if x == self.parent[x] {
+            x
+        } else {
+            let px = self.parent[x];
+            self.parent[x] = self.find(px);
+            self.parent[x]
+        }
+    }
+
+    pub fn unite(&mut self, x: usize, y: usize) -> bool {
+        let parent_x = self.find(x);
+        let parent_y = self.find(y);
+        if parent_x == parent_y {
+            return false;
+        }
+
+        let (large, small) = if self.sizes[parent_x] < self.sizes[parent_y] {
+            (parent_y, parent_x)
+        } else {
+            (parent_x, parent_y)
+        };
+
+        self.parent[small] = large;
+        self.sizes[large] += self.sizes[small];
+        self.sizes[small] = 0;
+        self.size -= 1;
+        return true;
+    }
+}
+
 pub struct Scanner<R> {
-    reader: R,
+    stdin: R,
 }
 
 impl<R: std::io::Read> Scanner<R> {
     pub fn read<T: std::str::FromStr>(&mut self) -> T {
         use std::io::Read;
         let buf = self
-            .reader
+            .stdin
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
-            .skip_while(|&b| b == b' ' || b == b'\n')
-            .take_while(|&b| b != b' ' && b != b'\n')
+            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r')
+            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r')
             .collect::<Vec<_>>();
         unsafe { std::str::from_utf8_unchecked(&buf) }
             .parse()
             .ok()
             .expect("Parse error.")
     }
-    pub fn read_vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
+    pub fn vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
         (0..n).map(|_| self.read()).collect()
     }
     pub fn chars(&mut self) -> Vec<char> {

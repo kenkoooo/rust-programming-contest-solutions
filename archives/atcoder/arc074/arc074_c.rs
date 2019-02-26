@@ -6,40 +6,47 @@ fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
     let n: usize = sc.read();
-    let m = sc.read();
+    let m: usize = sc.read();
 
-    let mut left_x = vec![vec![]; n + 1];
+    let mut lx = vec![vec![]; n + 1];
     for _ in 0..m {
-        let left = sc.read::<usize>();
-        let right = sc.read::<usize>();
+        let l = sc.read::<usize>();
+        let r: usize = sc.read();
         let x: usize = sc.read();
-        left_x[right].push((left, x));
+        lx[r].push((l, x));
     }
+
+    let count = |j: usize, k: usize, left: usize| {
+        if cmp::min(j, k) >= left {
+            3
+        } else if cmp::max(j, k) >= left {
+            2
+        } else {
+            1
+        }
+    };
 
     let mut dp = vec![vec![vec![0; n + 1]; n + 1]; n + 1];
     dp[0][0][0] = 1;
-    for r in 0..n {
-        for g in 0..n {
-            for b in 0..n {
-                let max = cmp::max(cmp::max(r, g), b);
-                let check = |a: usize, b: usize| left_x[max + 1].iter().all(|&(left, x)| {
-                    let mut count = 1;
-                    if a >= left { count += 1; }
-                    if b >= left { count += 1; }
-                    count == x
-                });
 
-                if check(g, b) {
-                    dp[max + 1][g][b] += dp[r][g][b];
-                    dp[max + 1][g][b] %= MOD;
+    for i in 0..n {
+        for j in 0..n {
+            for k in 0..n {
+                if dp[i][j][k] == 0 {
+                    continue;
                 }
-                if check(r, g) {
-                    dp[r][g][max + 1] += dp[r][g][b];
-                    dp[r][g][max + 1] %= MOD;
+                let next = cmp::max(cmp::max(i, j), k) + 1;
+                if lx[next].iter().all(|&(left, x)| x == count(j, k, left)) {
+                    dp[next][j][k] += dp[i][j][k];
+                    dp[next][j][k] %= MOD;
                 }
-                if check(r, b) {
-                    dp[r][max + 1][b] += dp[r][g][b];
-                    dp[r][max + 1][b] %= MOD;
+                if lx[next].iter().all(|&(left, x)| x == count(i, j, left)) {
+                    dp[i][j][next] += dp[i][j][k];
+                    dp[i][j][next] %= MOD;
+                }
+                if lx[next].iter().all(|&(left, x)| x == count(i, k, left)) {
+                    dp[i][next][k] += dp[i][j][k];
+                    dp[i][next][k] %= MOD;
                 }
             }
         }
@@ -69,8 +76,8 @@ impl<R: std::io::Read> Scanner<R> {
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
-            .skip_while(|&b| b == b' ' || b == b'\n')
-            .take_while(|&b| b != b' ' && b != b'\n')
+            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r')
+            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r')
             .collect::<Vec<_>>();
         unsafe { std::str::from_utf8_unchecked(&buf) }
             .parse()
