@@ -1,5 +1,3 @@
-use self::fenwick_tree::FenwickTree;
-
 #[derive(PartialEq)]
 struct F64(f64);
 
@@ -25,55 +23,66 @@ impl Eq for F64 {}
 
 fn main() {
     let s = std::io::stdin();
-    let mut sc = Scanner { reader: s.lock() };
+    let mut sc = Scanner { stdin: s.lock() };
+
     let n = sc.read();
-    let lines = (0..n)
-        .map(|_| (sc.read(), sc.read(), sc.read()))
-        .collect::<Vec<(f64, f64, f64)>>();
-    let lines_y = lines.iter().map(|&(a, b, c)| (b, a, c)).collect();
-    let x = solve(lines);
-    let y = solve(lines_y);
+    let mut a: Vec<f64> = vec![];
+    let mut b: Vec<f64> = vec![];
+    let mut c: Vec<f64> = vec![];
+    for _ in 0..n {
+        a.push(sc.read());
+        b.push(sc.read());
+        c.push(sc.read());
+    }
+
+    let x = solve(&a, &b, &c);
+    let y = solve(&b, &a, &c);
     println!("{} {}", x, y);
 }
 
-fn solve(mut lines: Vec<(f64, f64, f64)>) -> f64 {
-    let n = lines.len();
-    let center = (n * (n - 1) / 2 + 1) / 2;
+fn solve(a: &[f64], b: &[f64], c: &[f64]) -> f64 {
+    let n = a.len();
+    let points = n * (n - 1) / 2;
+    let num = (points + 1) / 2;
+    let mut low = -1e15;
+    let mut high = 1e15;
+    let mut p_low = low;
+    let mut p_high = high;
 
-    let mut low = -1e9;
-    lines.sort_by_key(|&(a, b, c)| F64((-a * low + c) / b));
-    let mut high = 1e9;
-    let mut prev_low = low;
-    let mut prev_high = high;
+    let mut lines = (0..n)
+        .map(|i| (F64((c[i] - a[i] * low) / b[i]), i))
+        .collect::<Vec<_>>();
+    lines.sort();
+
     loop {
-        let x = (low + high) / 2.0;
-        let mut indices = (0..n)
-            .map(|i| {
-                let (a, b, c) = lines[i];
-                let y = (-a * x + c) / b;
-                (F64(y), i)
-            })
-            .collect::<Vec<_>>();
-        indices.sort();
+        let x = (high + low) / 2.0;
 
-        let mut bit = FenwickTree::new(n, 0);
-        let mut rotation = 0;
-        for &(_, i) in indices.iter() {
-            rotation += bit.sum(i, n);
+        let mut lines = lines
+            .iter()
+            .map(|&(_, i)| (a[i], b[i], c[i]))
+            .enumerate()
+            .map(|(i, (a, b, c))| (F64((c - a * x) / b), i))
+            .collect::<Vec<_>>();
+        lines.sort();
+
+        let mut bit = fenwick_tree::FenwickTree::new(n, 0);
+        let mut ans = 0;
+        for (_, i) in lines.into_iter().rev() {
+            ans += bit.sum_one(i);
             bit.add(i, 1);
         }
 
-        if rotation >= center {
+        if ans >= num {
             high = x;
         } else {
             low = x;
         }
 
-        if low == prev_low && high == prev_high {
+        if high == p_high && low == p_low {
             break;
         }
-        prev_high = high;
-        prev_low = low;
+        p_low = low;
+        p_high = high;
     }
     (high + low) / 2.0
 }
@@ -114,9 +123,7 @@ pub mod fenwick_tree {
 
         /// Returns a sum of range `[0, k)`
         pub fn sum_one(&self, k: usize) -> T {
-            if k >= self.n {
-                panic!("");
-            }
+            assert!(k < self.n, "k={} n={}", k, self.n);
 
             let mut result = self.init;
             let mut x = k as i32 - 1;
@@ -131,26 +138,26 @@ pub mod fenwick_tree {
 }
 
 pub struct Scanner<R> {
-    reader: R,
+    stdin: R,
 }
 
 impl<R: std::io::Read> Scanner<R> {
     pub fn read<T: std::str::FromStr>(&mut self) -> T {
         use std::io::Read;
         let buf = self
-            .reader
+            .stdin
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
-            .skip_while(|&b| b == b' ' || b == b'\n')
-            .take_while(|&b| b != b' ' && b != b'\n')
+            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r')
+            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r')
             .collect::<Vec<_>>();
         unsafe { std::str::from_utf8_unchecked(&buf) }
             .parse()
             .ok()
             .expect("Parse error.")
     }
-    pub fn read_vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
+    pub fn vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
         (0..n).map(|_| self.read()).collect()
     }
     pub fn chars(&mut self) -> Vec<char> {
