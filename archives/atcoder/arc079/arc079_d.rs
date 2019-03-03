@@ -2,132 +2,131 @@ use std::collections::BTreeSet;
 
 fn main() {
     let s = std::io::stdin();
-    let mut sc = Scanner { reader: s.lock() };
+    let mut sc = Scanner { stdin: s.lock() };
 
     let n = sc.read();
+    let p = (0..n).map(|_| sc.read::<usize>() - 1).collect::<Vec<_>>();
     let mut graph = vec![vec![]; n];
-    let mut parents = vec![0; n];
-    for i in 0..n {
-        let p = sc.read::<usize>() - 1;
+    for (i, &p) in p.iter().enumerate() {
         graph[p].push(i);
-        parents[i] = p;
-    }
-
-    let mut vis = vec![false; n];
-    let mut cur = 0;
-    loop {
-        if vis[cur] {
-            break;
-        }
-        vis[cur] = true;
-        cur = parents[cur];
     }
 
     let mut is_cycle = vec![false; n];
-    loop {
-        if is_cycle[cur] {
-            break;
+    {
+        let mut cur = 0;
+        let mut vis = vec![false; n];
+        while !vis[cur] {
+            vis[cur] = true;
+            cur = p[cur];
         }
+
         is_cycle[cur] = true;
-        cur = parents[cur];
-    }
-
-    let mut grundy = vec![n; n];
-    for i in 0..n {
-        if is_cycle[i] {
-            for &next in graph[i].iter() {
-                if !is_cycle[next] {
-                    dfs(next, &graph, &mut grundy);
-                }
-            }
+        let mut x = p[cur];
+        while x != cur {
+            is_cycle[x] = true;
+            x = p[x];
         }
     }
 
-    let head = is_cycle
+    let mut grundy = vec![0; n];
+    for v in (0..n).filter(|&i| is_cycle[i]) {
+        dfs(v, &mut grundy, &graph, &is_cycle);
+    }
+
+    let start = (0..n).filter(|&i| is_cycle[i]).next().unwrap();
+    let mut start_set = graph[start]
         .iter()
-        .enumerate()
-        .filter(|&(_, &is_cycle)| is_cycle)
-        .map(|(v, _)| v)
+        .filter(|&&next| !is_cycle[next])
+        .map(|&next| grundy[next])
+        .collect::<BTreeSet<_>>();
+    grundy[start] = (0..)
+        .skip_while(|&i| start_set.contains(&i))
         .next()
         .unwrap();
-    let mut set = graph[head]
-        .iter()
-        .map(|&next| grundy[next])
-        .collect::<BTreeSet<usize>>();
-
-    grundy[head] = (0..).filter(|i| !set.contains(i)).next().unwrap();
-    if solve(head, &mut grundy, &parents, &graph) {
-        println!("POSSIBLE");
-        return;
+    let mut cur = p[start];
+    while cur != start {
+        let set = graph[cur]
+            .iter()
+            .map(|&next| grundy[next])
+            .collect::<BTreeSet<_>>();
+        grundy[cur] = (0..).skip_while(|&i| set.contains(&i)).next().unwrap();
+        cur = p[cur];
     }
 
-    set.insert(grundy[head]);
-    grundy[head] = (0..).filter(|i| !set.contains(i)).next().unwrap();
-    if solve(head, &mut grundy, &parents, &graph) {
-        println!("POSSIBLE");
-        return;
+    {
+        let set = graph[start]
+            .iter()
+            .map(|&next| grundy[next])
+            .collect::<BTreeSet<_>>();
+        if grundy[start] == (0..).skip_while(|&i| set.contains(&i)).next().unwrap() {
+            println!("POSSIBLE");
+            return;
+        }
+    }
+
+    start_set.insert(grundy[start]);
+    grundy[start] = (0..)
+        .skip_while(|&i| start_set.contains(&i))
+        .next()
+        .unwrap();
+    let mut cur = p[start];
+    while cur != start {
+        let set = graph[cur]
+            .iter()
+            .map(|&next| grundy[next])
+            .collect::<BTreeSet<_>>();
+        grundy[cur] = (0..).skip_while(|&i| set.contains(&i)).next().unwrap();
+        cur = p[cur];
+    }
+    {
+        let set = graph[start]
+            .iter()
+            .map(|&next| grundy[next])
+            .collect::<BTreeSet<_>>();
+        if grundy[start] == (0..).skip_while(|&i| set.contains(&i)).next().unwrap() {
+            println!("POSSIBLE");
+            return;
+        }
     }
     println!("IMPOSSIBLE");
 }
 
-fn solve(
-    head: usize,
-    grundy: &mut Vec<usize>,
-    parents: &Vec<usize>,
-    graph: &Vec<Vec<usize>>,
-) -> bool {
-    let mut cur = parents[head];
-    while cur != head {
-        let set = graph[cur]
-            .iter()
-            .map(|&next| grundy[next])
-            .collect::<BTreeSet<usize>>();
-        grundy[cur] = (0..).filter(|i| !set.contains(i)).next().unwrap();
-        cur = parents[cur];
-    }
-    let set = graph[head]
+fn dfs(v: usize, grundy: &mut [usize], graph: &[Vec<usize>], is_cycle: &[bool]) {
+    let next_grundy = graph[v]
         .iter()
-        .map(|&next| grundy[next])
-        .collect::<BTreeSet<usize>>();
-    grundy[head] == (0..).filter(|i| !set.contains(i)).next().unwrap()
-}
-
-fn dfs(v: usize, graph: &Vec<Vec<usize>>, grundy: &mut Vec<usize>) {
-    let mut set = BTreeSet::new();
-    for &next in graph[v].iter() {
-        dfs(next, graph, grundy);
-        set.insert(grundy[next]);
-    }
-    for i in 0.. {
-        if set.contains(&i) {
-            continue;
-        }
-        grundy[v] = i;
-        break;
-    }
+        .filter(|&&next| !is_cycle[next])
+        .map(|&next| {
+            dfs(next, grundy, graph, is_cycle);
+            grundy[next]
+        })
+        .collect::<BTreeSet<_>>();
+    grundy[v] = (0..)
+        .skip_while(|i| next_grundy.contains(&i))
+        .next()
+        .unwrap();
 }
 
 pub struct Scanner<R> {
-    reader: R,
+    stdin: R,
 }
 
 impl<R: std::io::Read> Scanner<R> {
     pub fn read<T: std::str::FromStr>(&mut self) -> T {
         use std::io::Read;
         let buf = self
-            .reader
+            .stdin
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
-            .skip_while(|&b| b == b' ' || b == b'\n')
-            .take_while(|&b| b != b' ' && b != b'\n')
+            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r')
+            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r')
             .collect::<Vec<_>>();
         unsafe { std::str::from_utf8_unchecked(&buf) }
             .parse()
             .ok()
             .expect("Parse error.")
     }
-    pub fn read_vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
+    pub fn vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
         (0..n).map(|_| self.read()).collect()
     }
     pub fn chars(&mut self) -> Vec<char> {

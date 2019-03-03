@@ -1,39 +1,41 @@
 const INF: i64 = 1e15 as i64;
 fn main() {
     let s = std::io::stdin();
-    let mut sc = Scanner { reader: s.lock() };
-    let h = sc.read();
+    let mut sc = Scanner { stdin: s.lock() };
+    let h: usize = sc.read();
     let w: usize = sc.read();
-    let a: Vec<Vec<char>> = (0..h).map(|_| sc.chars()).collect();
-
-    let v = h + w + 2;
-    let source = h + w;
+    let board: Vec<Vec<char>> = (0..h).map(|_| sc.chars()).collect();
+    let v = h * w + 2;
+    let source = h * w;
     let sink = source + 1;
-    let mut max_flow = dinitz::Dinitz::new(v);
+    let mut dinitz = dinitz::Dinitz::new(v);
     for i in 0..h {
         for j in 0..w {
-            match a[i][j] {
+            match board[i][j] {
                 'S' => {
-                    max_flow.add_edge(source, i, INF);
-                    max_flow.add_edge(source, h + j, INF);
+                    dinitz.add_edge(source, i, INF);
+                    dinitz.add_edge(source, h + j, INF);
                 }
                 'T' => {
-                    max_flow.add_edge(i, sink, INF);
-                    max_flow.add_edge(h + j, sink, INF);
+                    dinitz.add_edge(i, sink, INF);
+                    dinitz.add_edge(h + j, sink, INF);
                 }
                 'o' => {
-                    max_flow.add_edge(i, h + j, 1);
-                    max_flow.add_edge(h + j, i, 1);
+                    dinitz.add_edge(i, h + j, 1);
+                    dinitz.add_edge(h + j, i, 1);
                 }
                 _ => {}
             }
         }
     }
 
-    let flow = max_flow.max_flow(source, sink);
-    println!("{}", if flow >= INF { -1 } else { flow });
+    let max_flow = dinitz.max_flow(source, sink);
+    if max_flow >= INF {
+        println!("-1");
+    } else {
+        println!("{}", max_flow);
+    }
 }
-
 pub mod dinitz {
     use std::cmp;
     use std::collections::VecDeque;
@@ -151,26 +153,26 @@ pub mod dinitz {
 }
 
 pub struct Scanner<R> {
-    reader: R,
+    stdin: R,
 }
 
 impl<R: std::io::Read> Scanner<R> {
     pub fn read<T: std::str::FromStr>(&mut self) -> T {
         use std::io::Read;
         let buf = self
-            .reader
+            .stdin
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
-            .skip_while(|&b| b == b' ' || b == b'\n')
-            .take_while(|&b| b != b' ' && b != b'\n')
+            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r')
+            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r')
             .collect::<Vec<_>>();
         unsafe { std::str::from_utf8_unchecked(&buf) }
             .parse()
             .ok()
             .expect("Parse error.")
     }
-    pub fn read_vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
+    pub fn vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
         (0..n).map(|_| self.read()).collect()
     }
     pub fn chars(&mut self) -> Vec<char> {
