@@ -1,7 +1,7 @@
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-    let mut l: usize = sc.read();
+    let l: usize = sc.read();
 
     let mut r = 0;
     while (1 << (r + 1)) <= l {
@@ -16,14 +16,15 @@ fn main() {
     }
 
     let sum = (1 << r) - 1;
+    let mut upper = l;
     for i in (0..(n - 1)).rev() {
         let to_i = (1 << i) - 1;
-        if l >= to_i + 1 {
-            let new_edge = l - to_i - 1;
+        if upper >= to_i + 1 {
+            let new_edge = upper - to_i - 1;
             if new_edge > sum {
                 // add paths [new_edge, new_edge+1, ..., l-1]
                 graph[i].push((n - 1, new_edge));
-                l = new_edge;
+                upper = new_edge;
             }
         }
     }
