@@ -2,53 +2,44 @@ use std::cmp;
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-    let n = sc.read();
+    let n: usize = sc.read();
     let ab = (0..n)
-        .map(|_| (sc.read(), sc.read()))
-        .collect::<Vec<(u64, u64)>>();
-    let a_sum = ab.iter().map(|&(a, _)| a).sum::<u64>();
-    let b_sum = ab.iter().map(|&(_, b)| b).sum::<u64>();
-
-    println!("{}", cmp::min(cmp::min(a_sum, b_sum), solve(ab)));
-}
-
-fn solve(ab: Vec<(u64, u64)>) -> u64 {
-    let n = ab.len();
+        .map(|_| (sc.read::<usize>(), sc.read::<usize>()))
+        .collect::<Vec<_>>();
+    let left_sum = ab.iter().map(|&(a, _)| a).sum::<usize>();
+    let right_sum = ab.iter().map(|&(_, b)| b).sum::<usize>();
 
     let mut v = vec![];
-    for (i, (a, b)) in ab.into_iter().enumerate() {
-        v.push((a, true, i));
-        v.push((b, false, i));
+    for i in 0..n {
+        let (a, b) = ab[i];
+        v.push((a, i, true));
+        v.push((b, i, false));
     }
     v.sort();
 
     let mut count = vec![0; n];
     let mut sum = 0;
-    for &(x, _, i) in v.iter().take(n) {
+    for i in 0..n {
+        let (v, i, _) = v[i];
+        sum += v;
         count[i] += 1;
-        sum += x;
     }
-    if count.into_iter().any(|c| c == 2) {
-        sum
+
+    let mut ans = cmp::min(left_sum, right_sum);
+    if count.iter().any(|&x| x == 2) {
+        ans = cmp::min(ans, sum);
+    } else if v[n - 1].1 != v[n].1 {
+        ans = cmp::min(sum - v[n - 1].0 + v[n].0, ans);
     } else {
-        let first = v
-            .iter()
-            .rev()
-            .skip(n)
-            .filter(|&&(_, _, i)| i != v[n].2)
-            .map(|&(x, _, _)| x)
-            .next()
-            .unwrap();
-        let second = v
-            .iter()
-            .rev()
-            .skip(n)
-            .filter(|&&(_, _, i)| i != v[n + 1].2)
-            .map(|&(x, _, _)| x)
-            .next()
-            .unwrap();
-        cmp::min(sum - first + v[n].0, sum - second + v[n + 1].0)
+        if v[n - 2].1 != v[n].1 {
+            ans = cmp::min(ans, sum - v[n - 2].0 + v[n].0);
+        }
+        if v[n - 1].1 != v[n + 1].1 {
+            ans = cmp::min(ans, sum - v[n - 1].0 + v[n + 1].0);
+        }
     }
+
+    println!("{}", ans);
 }
 
 pub struct Scanner<R> {
@@ -63,8 +54,8 @@ impl<R: std::io::Read> Scanner<R> {
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
-            .skip_while(|&b| b == b' ' || b == b'\n')
-            .take_while(|&b| b != b' ' && b != b'\n')
+            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r')
+            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r')
             .collect::<Vec<_>>();
         unsafe { std::str::from_utf8_unchecked(&buf) }
             .parse()
