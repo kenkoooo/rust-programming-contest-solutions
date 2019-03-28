@@ -1,136 +1,188 @@
 use std::cmp;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 fn main() {
     let s = std::io::stdin();
-    let mut sc = Scanner { reader: s.lock() };
+    let mut sc = Scanner { stdin: s.lock() };
     let h: usize = sc.read();
     let w: usize = sc.read();
     let s: Vec<Vec<char>> = (0..h).map(|_| sc.chars()).collect();
-    let mut points = vec![];
+
+    let mut positive_map = BTreeMap::new();
+    let mut negative_map = BTreeMap::new();
     for i in 0..h {
         for j in 0..w {
-            if s[i][j] == '#' {
-                let x = i as i64;
-                let y = j as i64;
-                points.push((x, y));
+            if s[i][j] != '#' {
+                continue;
+            }
+            let i = i as i64;
+            let j = j as i64;
+            let k = j - i;
+            let l = j + i;
+            positive_map.entry(k).or_insert(Vec::new()).push(j);
+            negative_map.entry(l).or_insert(Vec::new()).push(j);
+        }
+    }
+
+    for v in positive_map.values_mut() {
+        v.sort();
+    }
+    for v in negative_map.values_mut() {
+        v.sort();
+    }
+
+    let positive_sum = positive_map
+        .iter()
+        .map(|(k, v)| {
+            let mut value: Vec<usize> = vec![0; w];
+            for &v in v.iter() {
+                value[v as usize] = 1;
+            }
+            let mut sum = vec![0; w + 1];
+            for i in 0..w {
+                sum[i + 1] = sum[i] + value[i];
+            }
+            (*k, sum)
+        })
+        .collect::<BTreeMap<_, _>>();
+    let negative_sum = negative_map
+        .iter()
+        .map(|(k, v)| {
+            let mut value: Vec<usize> = vec![0; w];
+            for &v in v.iter() {
+                value[v as usize] = 1;
+            }
+            let mut sum = vec![0; w + 1];
+            for i in 0..w {
+                sum[i + 1] = sum[i] + value[i];
+            }
+            (*k, sum)
+        })
+        .collect::<BTreeMap<_, _>>();
+
+    let mut ans = 0;
+    for (k, v) in positive_map.iter() {
+        for i in 0..v.len() {
+            for j in (i + 1)..v.len() {
+                let (x1, y1) = (v[i] - *k, v[i]);
+                let (x2, y2) = (v[j] - *k, v[j]);
+                assert!(x1 < x2);
+                assert!(y1 < y2);
+                assert_eq!(x2 - x1, y2 - y1);
+                let d = x2 - x1;
+
+                if let Some(sum) = positive_sum.get(&(k + d * 2)) {
+                    let y3_from = y2;
+                    let y3_to = cmp::min(w as i64, y2 + d + 1);
+                    ans += sum[y3_to as usize] - sum[y3_from as usize];
+                }
+                if let Some(sum) = positive_sum.get(&(k - d * 2)) {
+                    let y3_from = cmp::max(0, y1 - d);
+                    let y3_to = y1 + 1;
+                    ans += sum[y3_to as usize] - sum[y3_from as usize];
+                }
+            }
+        }
+    }
+    for (l, v) in negative_map.iter() {
+        for i in 0..v.len() {
+            for j in (i + 1)..v.len() {
+                let (x1, y1) = (*l - v[i], v[i]);
+                let (x2, y2) = (*l - v[j], v[j]);
+                assert!(x1 > x2);
+                assert!(y1 < y2);
+                assert_eq!(x1 - x2, y2 - y1);
+                let d = x1 - x2;
+
+                if let Some(sum) = negative_sum.get(&(l - d * 2)) {
+                    let y3_from = cmp::max(0, y1 - d);
+                    let y3_to = y1 + 1;
+                    ans += sum[y3_to as usize] - sum[y3_from as usize];
+                }
+                if let Some(sum) = negative_sum.get(&(l + d * 2)) {
+                    let y3_from = cmp::max(0, y2);
+                    let y3_to = cmp::min(w as i64, y2 + d + 1);
+                    ans += sum[y3_to as usize] - sum[y3_from as usize];
+                }
             }
         }
     }
 
-    let pairs = points.iter().map(|&(x, y)| (y - x, x)).collect::<Vec<_>>();
-    let a1 = solve(h, pairs, false);
+    // let mut count = 0;
+    // let mut set = BTreeSet::new();
+    for (l, v) in negative_map.iter() {
+        for i in 0..v.len() {
+            for j in (i + 1)..v.len() {
+                let (x1, y1) = (*l - v[i], v[i]);
+                let (x2, y2) = (*l - v[j], v[j]);
+                assert!(x1 > x2);
+                assert!(y1 < y2);
+                assert_eq!(x1 - x2, y2 - y1);
+                let d = x1 - x2;
 
-    let pairs = points.iter().map(|&(x, y)| (y + x, x)).collect::<Vec<_>>();
-    let a2 = solve(h, pairs, true);
-
-    let mut ans = a1 + a2;
-    let mut map = BTreeMap::new();
-    for &(x, y) in points.iter() {
-        let k = y + x;
-        map.entry(k).or_insert(Vec::new()).push((x, y));
-    }
-    for t in map.values() {
-        let n = t.len();
-        for i in 0..n {
-            for j in 0..i {
-                let (x1, y1) = t[j];
-                let (x2, y2) = t[i];
-                let d = (x1 - x2).abs();
-                let v = vec![
+                for &(x3, y3) in [
                     (x1 - d, y1 - d),
                     (x2 - d, y2 - d),
                     (x1 + d, y1 + d),
                     (x2 + d, y2 + d),
-                ];
-                for &(x, y) in v.iter() {
-                    if x < 0 || y < 0 {
-                        continue;
-                    }
-                    let (x, y) = (x as usize, y as usize);
-                    if x >= h || y >= w {
-                        continue;
-                    }
-                    if s[x][y] == '#' {
+                ]
+                .into_iter()
+                {
+                    if 0 <= x3
+                        && x3 < (h as i64)
+                        && 0 <= y3
+                        && y3 < (w as i64)
+                        && s[x3 as usize][y3 as usize] == '#'
+                    {
+                        assert_eq!(s[x1 as usize][y1 as usize], '#');
+                        assert_eq!(s[x2 as usize][y2 as usize], '#');
+                        assert_eq!(
+                            (x1 - x2).abs() + (y1 - y2).abs(),
+                            (x1 - x3).abs() + (y1 - y3).abs()
+                        );
+                        assert_eq!(
+                            (x1 - x2).abs() + (y1 - y2).abs(),
+                            (x2 - x3).abs() + (y2 - y3).abs()
+                        );
+                        // let v = [(x1, y1), (x2, y2), (x3, y3)]
+                        //     .into_iter()
+                        //     .cloned()
+                        //     .collect::<BTreeSet<_>>();
+                        // set.insert(v);
+                        // count += 1;
                         ans -= 1;
                     }
                 }
             }
         }
     }
+
+    // assert_eq!(count, set.len());
+
     println!("{}", ans);
 }
 
-fn solve(h: usize, pairs: Vec<(i64, i64)>, s: bool) -> usize {
-    let sign = if s { 1 } else { -1 };
-    let mut map = BTreeMap::new();
-    let mut list_map = BTreeMap::new();
-    for &(k, x) in pairs.iter() {
-        map.entry(k).or_insert(vec![0; h])[x as usize] = 1;
-        list_map.entry(k).or_insert(Vec::new()).push(x);
-    }
-    for list in list_map.values_mut() {
-        list.sort();
-    }
-
-    let sum_map: BTreeMap<_, _> = map
-        .iter()
-        .map(|(&k, v)| {
-            let mut sum = vec![0; h + 1];
-            for i in 0..h {
-                sum[i + 1] = sum[i] + v[i];
-            }
-            (k, sum)
-        })
-        .collect();
-
-    let mut ans = 0;
-    for (k, list) in list_map.iter() {
-        let n = list.len();
-        for i in 0..n {
-            for j in 0..i {
-                let x1 = list[j];
-                let x2 = list[i];
-                let d = x2 - x1;
-                assert!(d > 0);
-
-                if let Some(sum) = sum_map.get(&(k - 2 * d * sign)) {
-                    let from = cmp::max(x1 - d, 0) as usize;
-                    let to = x1 as usize;
-                    ans += sum[to + 1] - sum[from];
-                }
-                if let Some(sum) = sum_map.get(&(k + 2 * d * sign)) {
-                    let from = x2 as usize;
-                    let to = cmp::min(h - 1, (x2 + d) as usize);
-                    ans += sum[to + 1] - sum[from];
-                }
-            }
-        }
-    }
-    ans
-}
-
 pub struct Scanner<R> {
-    reader: R,
+    stdin: R,
 }
 
 impl<R: std::io::Read> Scanner<R> {
     pub fn read<T: std::str::FromStr>(&mut self) -> T {
         use std::io::Read;
         let buf = self
-            .reader
+            .stdin
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
-            .skip_while(|&b| b == b' ' || b == b'\n')
-            .take_while(|&b| b != b' ' && b != b'\n')
+            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r')
+            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r')
             .collect::<Vec<_>>();
         unsafe { std::str::from_utf8_unchecked(&buf) }
             .parse()
             .ok()
             .expect("Parse error.")
     }
-    pub fn read_vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
+    pub fn vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
         (0..n).map(|_| self.read()).collect()
     }
     pub fn chars(&mut self) -> Vec<char> {
