@@ -1,7 +1,6 @@
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-
     let k: usize = sc.read();
     let n: usize = sc.read();
 
@@ -12,31 +11,31 @@ fn main() {
         }
         println!();
         return;
-    } else {
-        let x = (k + 1) / 2;
-        let mut ans = vec![x; n];
-        for _ in 0..(n / 2) {
-            let length = ans.len();
-            if ans[length - 1] == 1 {
-                ans.pop();
-            } else {
-                ans[length - 1] -= 1;
-                while ans.len() < n {
-                    ans.push(k);
-                }
-            }
-        }
-
-        for i in 0..ans.len() {
-            if i > 0 {
-                print!(" ");
-            }
-            if ans[i] != 0 {
-                print!("{}", ans[i]);
-            }
-        }
-        println!();
     }
+
+    let x = (k + 1) / 2;
+    let mut cur = vec![x; n];
+    let mut ptr = n - 1;
+    for _ in 0..(n / 2) {
+        cur[ptr] -= 1;
+        if cur[ptr] == 0 {
+            ptr -= 1;
+        } else {
+            while ptr + 1 < n {
+                ptr += 1;
+                cur[ptr] = k;
+            }
+        }
+    }
+
+    print!("{}", cur[0]);
+    for i in 1..n {
+        if cur[i] == 0 {
+            break;
+        }
+        print!(" {}", cur[i]);
+    }
+    println!();
 }
 
 pub struct Scanner<R> {
@@ -51,8 +50,8 @@ impl<R: std::io::Read> Scanner<R> {
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
-            .skip_while(|&b| b == b' ' || b == b'\n')
-            .take_while(|&b| b != b' ' && b != b'\n')
+            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r')
+            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r')
             .collect::<Vec<_>>();
         unsafe { std::str::from_utf8_unchecked(&buf) }
             .parse()
