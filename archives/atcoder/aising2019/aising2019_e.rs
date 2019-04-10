@@ -1,69 +1,72 @@
-use std::cmp;
-const INF: i64 = 1e18 as i64;
-
+const INF: i64 = 1 << 50;
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
+
     let n = sc.read();
     let a: Vec<i64> = sc.vec(n);
     let mut graph = vec![vec![]; n];
     for _ in 1..n {
         let u = sc.read::<usize>() - 1;
         let v = sc.read::<usize>() - 1;
-        graph[u].push(v);
         graph[v].push(u);
+        graph[u].push(v);
     }
 
-    let mut dp1 = vec![vec![]; n];
-    let mut dp2 = vec![vec![]; n];
-    dp(0, 0, &mut dp1, &mut dp2, &a, &graph);
-
+    let mut min_dp = vec![vec![]; n];
+    let mut power_dp = vec![vec![]; n];
+    dfs(0, 0, &a, &graph, &mut min_dp, &mut power_dp);
     for i in 0..n {
-        if dp1[0][i] < INF || dp2[0][i] < 0 {
+        if min_dp[0][i] < 0 || power_dp[0][i] < INF {
             println!("{}", i);
             return;
         }
     }
 }
 
-fn dp(
+fn dfs(
     v: usize,
     p: usize,
-    dp1: &mut Vec<Vec<i64>>,
-    dp2: &mut Vec<Vec<i64>>,
     a: &Vec<i64>,
     graph: &Vec<Vec<usize>>,
+    min_dp: &mut Vec<Vec<i64>>,
+    power_dp: &mut Vec<Vec<i64>>,
 ) {
-    dp1[v].push(if a[v] > 0 { a[v] } else { INF });
-    dp2[v].push(a[v]);
-    for &next in graph[v].iter() {
-        if next == p {
+    min_dp[v].push(a[v]);
+    power_dp[v].push(if a[v] > 0 { a[v] } else { INF });
+    for &child in graph[v].iter() {
+        if p == child {
             continue;
         }
-        dp(next, v, dp1, dp2, a, graph);
-        dp1[v] = connect(&dp1[v], &dp1[next], &dp2[next], true);
-        dp2[v] = connect(&dp2[v], &dp1[next], &dp2[next], false);
+        dfs(child, v, a, graph, min_dp, power_dp);
+        power_dp[v] = connect(&power_dp[v], &power_dp[child], &min_dp[child], true);
+        min_dp[v] = connect(&min_dp[v], &power_dp[child], &min_dp[child], false);
     }
 }
 
-fn connect(dp: &Vec<i64>, child1: &Vec<i64>, child2: &Vec<i64>, is_power: bool) -> Vec<i64> {
-    let mut next = vec![INF; dp.len() + child1.len() + 1];
+fn connect(dp: &Vec<i64>, power: &Vec<i64>, min: &Vec<i64>, is_power: bool) -> Vec<i64> {
+    let mut next = vec![INF; power.len() + dp.len() + 1];
     for parent_cut in 0..dp.len() {
-        for child_cut in 0..child1.len() {
+        for child_cut in 0..power.len() {
             let total_cut = parent_cut + child_cut;
-
-            if child1[child_cut] < INF {
-                next[total_cut] = cmp::min(next[total_cut], dp[parent_cut] + child1[child_cut]);
+            if !is_power {
+                chmin(&mut next[total_cut], dp[parent_cut] + min[child_cut]);
             }
-            if child2[child_cut] < INF && !is_power {
-                next[total_cut] = cmp::min(next[total_cut], dp[parent_cut] + child2[child_cut]);
+            if power[child_cut] < INF {
+                chmin(&mut next[total_cut], dp[parent_cut] + power[child_cut]);
             }
-            if child1[child_cut] < INF || child2[child_cut] < 0 {
-                next[total_cut + 1] = cmp::min(next[total_cut + 1], dp[parent_cut]);
+            if power[child_cut] < INF || min[child_cut] < 0 {
+                chmin(&mut next[total_cut + 1], dp[parent_cut]);
             }
         }
     }
     next
+}
+
+fn chmin<T: Ord>(a: &mut T, b: T) {
+    if *a > b {
+        *a = b;
+    }
 }
 
 pub struct Scanner<R> {
@@ -78,8 +81,8 @@ impl<R: std::io::Read> Scanner<R> {
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
-            .skip_while(|&b| b == b' ' || b == b'\n')
-            .take_while(|&b| b != b' ' && b != b'\n')
+            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r')
+            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r')
             .collect::<Vec<_>>();
         unsafe { std::str::from_utf8_unchecked(&buf) }
             .parse()
