@@ -3,14 +3,18 @@ const MOD: usize = 998244353;
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-    let n = sc.read();
-    let m = sc.read();
+
+    let n: usize = sc.read();
+    let m: usize = sc.read();
     let a: Vec<Vec<i64>> = (0..n).map(|_| sc.vec(m)).collect();
     let rank = f2_gauss_jordan(a);
 
-    let dim_kernel = n - rank;
-    let kernel_size = pow(2, dim_kernel);
-    let ans = (pow(2, n) + MOD - kernel_size) % MOD * pow(2, m - 1);
+    let mut pow2 = vec![1; n + m + 1];
+    for i in 1..pow2.len() {
+        pow2[i] = (pow2[i - 1] * 2) % MOD;
+    }
+
+    let ans = pow2[n + m - 1] + MOD - pow2[n + m - rank - 1];
     println!("{}", ans % MOD);
 }
 
@@ -44,20 +48,6 @@ fn f2_gauss_jordan(mut a: Vec<Vec<i64>>) -> usize {
     rank
 }
 
-fn pow(mut x: usize, mut e: usize) -> usize {
-    let mut result = 1;
-    while e > 0 {
-        if e & 1 == 1 {
-            result *= x;
-            result %= MOD;
-        }
-        e >>= 1;
-        x *= x;
-        x %= MOD;
-    }
-    result
-}
-
 pub struct Scanner<R> {
     stdin: R,
 }
@@ -70,8 +60,8 @@ impl<R: std::io::Read> Scanner<R> {
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
-            .skip_while(|&b| b == b' ' || b == b'\n')
-            .take_while(|&b| b != b' ' && b != b'\n')
+            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r')
+            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r')
             .collect::<Vec<_>>();
         unsafe { std::str::from_utf8_unchecked(&buf) }
             .parse()
