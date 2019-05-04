@@ -1,44 +1,30 @@
-use std::cmp;
-
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-    let n = sc.read();
-    let a: Vec<i64> = sc.vec(n);
-    let b = a.iter().map(|&a| -a).collect();
-    let a = solve(a);
-    let b = solve(b);
-    println!("{}", cmp::min(a, b));
-}
+    let t: usize = sc.read();
+    let _: usize = sc.read();
+    for _ in 0..t {
+        println!("200");
+        let day200: u64 = sc.read();
+        let ring4 = day200 / (1 << 50);
+        let ring5 = (day200 - ring4 * (1 << 50)) / (1 << 40);
+        let ring6 = (day200 - ring4 * (1 << 50) - ring5 * (1 << 40)) / (1 << 33);
 
-fn solve(mut a: Vec<i64>) -> usize {
-    let n = a.len();
-    let mut ans = 0;
-    for i in 0..(n - 1) {
-        if i % 2 == 1 {
-            a[i] *= -1;
-            a[i + 1] *= -1;
-            if i + 2 < n {
-                a[i + 2] *= -1;
-            }
-        }
-        if a[i] > a[i + 1] {
-            if i + 2 < n && a[i] < a[i + 2] {
-                a.swap(i + 1, i + 2);
-            } else {
-                a.swap(i, i + 1);
-            }
-            ans += 1;
-        }
-        if i % 2 == 1 {
-            a[i] *= -1;
-            a[i + 1] *= -1;
-            if i + 2 < n {
-                a[i + 2] *= -1;
-            }
-        }
+        println!("50");
+        let day50: u64 = sc.read();
+        let day50 = day50 - ring4 * (1 << 12) - ring5 * (1 << 10) - ring6 * (1 << 8);
+        let ring1 = day50 / (1 << 50);
+        let ring2 = (day50 - ring1 * (1 << 50)) / (1 << 25);
+        let ring3 = (day50 - ring1 * (1 << 50) - ring2 * (1 << 25)) / (1 << 16);
+
+        println!(
+            "{} {} {} {} {} {}",
+            ring1, ring2, ring3, ring4, ring5, ring6
+        );
+
+        let response: i64 = sc.read();
+        assert_eq!(response, 1);
     }
-    ans
 }
 
 pub struct Scanner<R> {

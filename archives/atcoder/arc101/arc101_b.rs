@@ -1,28 +1,31 @@
 use std::collections::{BTreeMap, BTreeSet};
-
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
 
     let n = sc.read();
-    let a: Vec<u32> = sc.vec(n);
+    let a: Vec<i64> = sc.vec(n);
 
     let mut ok = 0;
-    let mut ng = 2e9 as u32;
+    let mut ng = 1e10 as i64;
     while ng - ok > 1 {
-        let x = (ok + ng) / 2;
-        if solve(a.iter().map(|&a| if a >= x { 1 } else { -1 }).collect()) {
+        let x = (ng + ok) / 2;
+        if solve(&a, x) {
             ok = x;
         } else {
             ng = x;
         }
     }
-
     println!("{}", ok);
 }
 
-fn solve(a: Vec<i32>) -> bool {
+fn solve(a: &Vec<i64>, x: i64) -> bool {
     let n = a.len();
+    let a = a
+        .iter()
+        .map(|&a| if a >= x { 1 } else { -1 })
+        .collect::<Vec<_>>();
+
     let mut sum = vec![0; n + 1];
     for i in 0..n {
         sum[i + 1] = sum[i] + a[i];
@@ -31,21 +34,22 @@ fn solve(a: Vec<i32>) -> bool {
     let map = sum
         .iter()
         .cloned()
-        .collect::<BTreeSet<_>>()
+        .collect::<BTreeSet<i64>>()
         .into_iter()
         .enumerate()
         .map(|(i, s)| (s, i))
         .collect::<BTreeMap<_, _>>();
+    let sum = sum.into_iter().map(|x| map[&x]).collect::<Vec<_>>();
 
-    let mut bit = fenwick_tree::FenwickTree::new(map.len(), 0);
-    let mut ans = 0;
-    for i in sum.into_iter().map(|s| *map.get(&s).unwrap()) {
-        ans += bit.sum(i + 1, map.len());
-        bit.add(i, 1);
+    let mut bit = fenwick_tree::FenwickTree::new(n + 1, 0);
+    let mut count = 0;
+    for s in sum.into_iter() {
+        count += bit.sum_one(s + 1);
+        bit.add(s, 1);
     }
 
-    let total = n * (n - 1) / 2 + n;
-    total <= (total - ans) * 2
+    let total = (n + 1) * n / 2;
+    count * 2 >= total
 }
 
 pub mod fenwick_tree {
@@ -110,8 +114,8 @@ impl<R: std::io::Read> Scanner<R> {
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
-            .skip_while(|&b| b == b' ' || b == b'\n')
-            .take_while(|&b| b != b' ' && b != b'\n')
+            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r')
+            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r')
             .collect::<Vec<_>>();
         unsafe { std::str::from_utf8_unchecked(&buf) }
             .parse()

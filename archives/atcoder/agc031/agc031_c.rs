@@ -1,51 +1,68 @@
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
+
     let n: usize = sc.read();
-    let a: usize = sc.read();
-    let b: usize = sc.read();
-    if (a.count_ones() & 1) == (b.count_ones() & 1) {
-        println!("NO");
-        return;
-    }
-    let ans = solve(n, a, b);
-    println!("YES");
-    for (i, ans) in ans.into_iter().enumerate() {
-        if i > 0 {
-            print!(" ");
+    let a = sc.read();
+    let b = sc.read();
+    match solve(n, a, b) {
+        Some(ans) => {
+            println!("YES");
+            for ans in ans.into_iter() {
+                print!("{} ", ans);
+            }
+            println!();
         }
-        print!("{}", ans);
+        None => {
+            println!("NO");
+        }
     }
-    println!();
 }
 
-fn solve(n: usize, a: usize, b: usize) -> Vec<usize> {
-    if n == 1 {
-        vec![a, b]
-    } else {
-        assert!((a.count_ones() & 1) != (b.count_ones() & 1));
-        let x = (0..)
-            .filter(|&i| (a & (1 << i)) != (b & (1 << i)))
-            .next()
-            .unwrap();
-        let na = ((a >> (x + 1)) << x) + (((1 << x) - 1) & a);
-        let nb = ((b >> (x + 1)) << x) + (((1 << x) - 1) & b);
-        assert_eq!((na.count_ones() & 1), (nb.count_ones() & 1));
+fn solve(n: usize, a: i32, b: i32) -> Option<Vec<i32>> {
+    if n == 0 {
+        return Some(vec![a]);
+    }
+    let difference = (0..18).filter(|i| (1 << i) & a != (1 << i) & b).count();
+    if difference & 1 == 0 {
+        return None;
+    }
 
-        let c = na ^ 1;
-        let q = solve(n - 1, na, c);
-        let r = solve(n - 1, c, nb);
-        let m = 1 << n;
-        let mut ans = vec![0; m];
-        for i in 0..(m / 2) {
-            let q = q[i];
-            ans[i] = (a & (1 << x)) + ((q >> x) << (x + 1)) + (((1 << x) - 1) & q);
+    let k = (0..).find(|i| (1 << i) & a != (1 << i) & b).unwrap();
+    assert!((1 << k) & a != (1 << k) & b);
+    let mask = (1 << k) - 1;
+
+    let new_a = ((a >> (k + 1)) << k) + (a & mask);
+    let new_b = ((b >> (k + 1)) << k) + (b & mask);
+    let x = new_a ^ 1;
+    let prefix = if n == 1 {
+        Some(vec![new_a])
+    } else {
+        solve(n - 1, new_a, x)
+    };
+    let suffix = if n == 1 {
+        Some(vec![new_b])
+    } else {
+        solve(n - 1, x, new_b)
+    };
+    match (prefix, suffix) {
+        (Some(prefix), Some(suffix)) => {
+            let mut ans = vec![];
+            for p in prefix.into_iter() {
+                let prefix = (p >> k) << (k + 1);
+                let suffix = p & mask;
+                let v = prefix + suffix + ((1 << k) & a);
+                ans.push(v);
+            }
+            for p in suffix.into_iter() {
+                let prefix = (p >> k) << (k + 1);
+                let suffix = p & mask;
+                let v = prefix + suffix + ((1 << k) & b);
+                ans.push(v);
+            }
+            Some(ans)
         }
-        for i in (m / 2)..m {
-            let r = r[i - (m / 2)];
-            ans[i] = (b & (1 << x)) + ((r >> x) << (x + 1)) + (((1 << x) - 1) & r);
-        }
-        ans
+        _ => None,
     }
 }
 

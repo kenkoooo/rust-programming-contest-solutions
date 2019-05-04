@@ -3,11 +3,9 @@ use std::cmp;
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-
     let n = sc.read();
-    let m = sc.read();
-    let power: Vec<u64> = sc.vec(n);
-
+    let m: usize = sc.read();
+    let w: Vec<u64> = sc.vec(n);
     let mut graph = vec![vec![]; n];
     for _ in 0..m {
         let u = sc.read::<usize>() - 1;
@@ -16,84 +14,75 @@ fn main() {
         graph[v].push(u);
     }
 
-    let detection = BridgeDetector::new(&graph);
+    let detector = BridgeDetector::new(&graph);
     let mut is_articulation = vec![false; n];
-    for &v in detection.articulations.iter() {
+    for &v in detector.articulations.iter() {
         is_articulation[v] = true;
     }
+    let tree = detector.dfs_tree;
+    let low_link = detector.low_link;
+    let order = detector.order;
 
-    let order = detection.order;
-    let low_link = detection.low_link;
-    let dfs_tree = detection.dfs_tree;
-    let mut subtree_power = vec![0; n];
-    calc_subtree_power(0, 0, &mut subtree_power, &power, &dfs_tree);
-
-    let power_sum: u64 = power.iter().sum();
-    for v in 0..n {
-        if is_articulation[v] {
-            let mut parent_cluster = power_sum - subtree_power[v];
+    let sum = w.iter().sum::<u64>();
+    let mut tree_dp = vec![0; n];
+    for i in 0..n {
+        if is_articulation[i] {
+            let mut parent = sum - w[i];
             let mut max_child = 0;
-            for &child in dfs_tree[v].iter() {
-                if order[child] < order[v] {
-                    continue;
-                }
+            for &next in tree[i].iter() {
+                let child = dfs(next, &tree, &w, &mut tree_dp);
+                max_child = cmp::max(max_child, child);
+                parent -= child;
 
-                max_child = cmp::max(max_child, subtree_power[child]);
-                if low_link[child] < order[v] {
-                    parent_cluster += subtree_power[child];
+                if low_link[next] < order[i] {
+                    parent += child;
                 }
             }
-            println!("{}", cmp::max(max_child, parent_cluster));
+            println!("{}", cmp::max(max_child, parent));
         } else {
-            println!("{}", power_sum - power[v]);
+            println!("{}", sum - w[i]);
         }
     }
 }
 
-fn calc_subtree_power(
-    v: usize,
-    p: usize,
-    subtree_power: &mut Vec<u64>,
-    power: &[u64],
-    dfs_tree: &[Vec<usize>],
-) {
-    subtree_power[v] = power[v];
-    for &next in dfs_tree[v].iter() {
-        if next == p {
-            continue;
-        }
-        calc_subtree_power(next, p, subtree_power, power, dfs_tree);
-        subtree_power[v] += subtree_power[next];
+fn dfs(v: usize, tree: &Vec<Vec<usize>>, w: &Vec<u64>, dp: &mut Vec<u64>) -> u64 {
+    if dp[v] > 0 {
+        return dp[v];
     }
+    dp[v] = w[v];
+    for &next in tree[v].iter() {
+        dp[v] += dfs(next, tree, w, dp);
+    }
+    return dp[v];
 }
 
 pub struct BridgeDetector {
+    dfs_tree: Vec<Vec<usize>>,
     articulations: Vec<usize>,
     bridges: Vec<(usize, usize)>,
     visit: Vec<bool>,
     order: Vec<usize>,
     low_link: Vec<usize>,
-    dfs_tree: Vec<Vec<usize>>,
     k: usize,
 }
 
 impl BridgeDetector {
-    pub fn new(graph: &[Vec<usize>]) -> Self {
+    pub fn new(graph: &Vec<Vec<usize>>) -> Self {
         let n = graph.len();
         let mut d = BridgeDetector {
+            dfs_tree: vec![vec![]; n],
             articulations: vec![],
             bridges: vec![],
             visit: vec![false; n],
             order: vec![0; n],
             low_link: vec![0; n],
-            dfs_tree: vec![vec![]; n],
             k: 0,
         };
         d.run(graph);
         d
     }
 
-    fn run(&mut self, graph: &[Vec<usize>]) {
+    fn run(&mut self, graph: &Vec<Vec<usize>>) {
         let n = graph.len();
         for i in 0..n {
             if !self.visit[i] {
@@ -102,7 +91,7 @@ impl BridgeDetector {
         }
     }
 
-    fn dfs(&mut self, v: usize, previous: usize, graph: &[Vec<usize>], root: usize) {
+    fn dfs(&mut self, v: usize, previous: usize, graph: &Vec<Vec<usize>>, root: usize) {
         self.visit[v] = true;
         self.order[v] = self.k;
         self.k += 1;
@@ -113,8 +102,8 @@ impl BridgeDetector {
         for &next in graph[v].iter() {
             if !self.visit[next] {
                 // The edge (v->next) is not a backedge.
-                dimension += 1;
                 self.dfs_tree[v].push(next);
+                dimension += 1;
                 self.dfs(next, v, graph, root);
                 self.low_link[v] = cmp::min(self.low_link[v], self.low_link[next]);
                 if v != root && self.order[v] <= self.low_link[next] {

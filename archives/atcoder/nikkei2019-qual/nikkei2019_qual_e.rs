@@ -1,87 +1,86 @@
+use std::collections::VecDeque;
+
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-
     let n = sc.read();
     let m = sc.read();
     let x: Vec<u64> = sc.vec(n);
 
-    let mut edges = vec![];
-    for _ in 0..m {
-        let a = sc.read::<usize>() - 1;
-        let b = sc.read::<usize>() - 1;
-        let w: u64 = sc.read();
-        edges.push((w, a, b));
-    }
-
+    let mut edges = (0..m)
+        .map(|_| {
+            let a = sc.read::<usize>() - 1;
+            let b = sc.read::<usize>() - 1;
+            let w = sc.read::<u64>();
+            (w, a, b)
+        })
+        .collect::<Vec<_>>();
     edges.sort();
-    let mut uf = UnionFind::new(n, x);
-    let mut is_candidate = vec![false; m];
 
-    let mut i = 0;
-    while i < m {
-        let (w, _, _) = edges[i];
-        let from = i;
-        while i + 1 < m && edges[i + 1].0 == w {
-            i += 1;
+    let mut uf = UnionFind::new(n, &x);
+
+    let mut ok = VecDeque::new();
+    let mut cur = 0;
+    while cur < m {
+        let (cost, _, _) = edges[cur];
+        let from = cur;
+        while cur < m && edges[cur].0 == cost {
+            cur += 1;
         }
 
-        for (_, a, b) in (from..(i + 1)).map(|i| edges[i]) {
+        for i in from..cur {
+            let (_, a, b) = edges[i];
             uf.unite(a, b);
         }
-        for i in from..(i + 1) {
-            let (_, a, _) = edges[i];
+        for i in from..cur {
+            let (w, a, _) = edges[i];
             let root = uf.find(a);
-            if uf.weights[root] >= w {
-                is_candidate[i] = true;
+            let sum = uf.weights[root];
+            if sum >= w {
+                ok.push_front(i);
             }
         }
-        i += 1;
     }
 
     let mut graph = vec![vec![]; n];
-    for i in 0..m {
-        let (w, a, b) = edges[i];
+    for (i, &(w, a, b)) in edges.iter().enumerate() {
         graph[a].push((b, w, i));
         graph[b].push((a, w, i));
     }
 
-    let mut is_used = vec![false; m];
-    for i in (0..m).rev() {
-        if is_used[i] || !is_candidate[i] {
-            continue;
-        }
+    let mut used = vec![false; m];
+    while let Some(i) = ok.pop_front() {
         let (w, a, b) = edges[i];
-        is_used[i] = true;
-        dfs(a, w, &mut is_used, &graph);
-        dfs(b, w, &mut is_used, &graph);
+        dfs(a, &graph, &mut used, w);
+        dfs(b, &graph, &mut used, w);
     }
 
-    println!("{}", is_used.into_iter().filter(|&t| !t).count());
+    let used_count = used.into_iter().filter(|&x| x).count();
+    println!("{}", m - used_count);
 }
 
-fn dfs(v: usize, w: u64, used: &mut Vec<bool>, graph: &Vec<Vec<(usize, u64, usize)>>) {
-    for &(next, weight, i) in graph[v].iter() {
-        if used[i] || weight > w {
+fn dfs(v: usize, graph: &Vec<Vec<(usize, u64, usize)>>, used: &mut Vec<bool>, max_weight: u64) {
+    for &(next, edge_weight, edge_id) in graph[v].iter() {
+        if used[edge_id] || edge_weight > max_weight {
             continue;
         }
-        used[i] = true;
-        dfs(next, w, used, graph);
+        used[edge_id] = true;
+        dfs(next, graph, used, max_weight);
     }
 }
 
 pub struct UnionFind {
     parent: Vec<usize>,
-    weights: Vec<u64>,
     sizes: Vec<usize>,
+    weights: Vec<u64>,
     size: usize,
 }
 
 impl UnionFind {
-    pub fn new(n: usize, weights: Vec<u64>) -> Self {
+    pub fn new(n: usize, x: &Vec<u64>) -> UnionFind {
         UnionFind {
             parent: (0..n).map(|i| i).collect::<Vec<usize>>(),
-            weights: weights,
+            weights: x.clone(),
             sizes: vec![1; n],
             size: n,
         }
@@ -111,17 +110,14 @@ impl UnionFind {
         };
 
         self.parent[small] = large;
-
         self.sizes[large] += self.sizes[small];
         self.sizes[small] = 0;
         self.weights[large] += self.weights[small];
         self.weights[small] = 0;
-
         self.size -= 1;
         return true;
     }
 }
-
 pub struct Scanner<R> {
     stdin: R,
 }
@@ -134,8 +130,8 @@ impl<R: std::io::Read> Scanner<R> {
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
-            .skip_while(|&b| b == b' ' || b == b'\n')
-            .take_while(|&b| b != b' ' && b != b'\n')
+            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r')
+            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r')
             .collect::<Vec<_>>();
         unsafe { std::str::from_utf8_unchecked(&buf) }
             .parse()
