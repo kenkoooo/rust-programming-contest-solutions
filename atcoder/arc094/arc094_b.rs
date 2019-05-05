@@ -1,75 +1,87 @@
-/// Thank you tanakh!!!
-///  https://qiita.com/tanakh/items/0ba42c7ca36cd29d0ac8
-macro_rules! input {
-    (source = $s:expr, $($r:tt)*) => {
-        let mut iter = $s.split_whitespace();
-        input_inner!{iter, $($r)*}
-    };
-    ($($r:tt)*) => {
-        let mut s = {
-            use std::io::Read;
-            let mut s = String::new();
-            std::io::stdin().read_to_string(&mut s).unwrap();
-            s
-        };
-        let mut iter = s.split_whitespace();
-        input_inner!{iter, $($r)*}
-    };
-}
-
-macro_rules! input_inner {
-    ($iter:expr) => {};
-    ($iter:expr, ) => {};
-
-    ($iter:expr, $var:ident : $t:tt $($r:tt)*) => {
-        let $var = read_value!($iter, $t);
-        input_inner!{$iter $($r)*}
-    };
-}
-
-macro_rules! read_value {
-    ($iter:expr, ( $($t:tt),* )) => {
-        ( $(read_value!($iter, $t)),* )
-    };
-
-    ($iter:expr, [ $t:tt ; $len:expr ]) => {
-        (0..$len).map(|_| read_value!($iter, $t)).collect::<Vec<_>>()
-    };
-
-    ($iter:expr, chars) => {
-        read_value!($iter, String).chars().collect::<Vec<char>>()
-    };
-
-    ($iter:expr, usize1) => {
-        read_value!($iter, usize) - 1
-    };
-
-    ($iter:expr, $t:ty) => {
-        $iter.next().unwrap().parse::<$t>().expect("Parse error")
-    };
-}
+use std::cmp;
 
 fn main() {
-    input!(q: usize, ab: [(usize, usize); q]);
-    for &(a, b) in ab.iter() {
+    let s = std::io::stdin();
+    let mut sc = Scanner { stdin: s.lock() };
+    let q: usize = sc.read();
+    for _ in 0..q {
+        let a: usize = sc.read();
+        let b: usize = sc.read();
         let (a, b) = if a > b { (b, a) } else { (a, b) };
-        if a == b {
-            println!("{}", 2 * a - 2);
-        } else if a + 1 == b {
-            println!("{}", 2 * a - 2);
-        } else {
-            println!("{}", solve2(a, b));
+
+        let mut ok = a - 1;
+        let mut ng = 1e10 as usize;
+        while ng - ok > 1 {
+            let x = (ok + ng) / 2;
+            let mut max = 0;
+            if x >= b - 1 {
+                // 1 ... a-1    a+1   ... x-b+1 x-b+2 ... x
+                // x ... x-a+2  x-a+1 ... b+1   b-1   ... 1
+                max = get_max(1, a - 1, x, x + 2 - a);
+                max = cmp::max(max, get_max(a + 1, x - (b - 1), x - (a - 1), b + 1));
+                max = cmp::max(max, get_max(x + 2 - b, x, b - 1, 1));
+            } else {
+                // 1 ... a-1      a+1 ... x
+                // x-1 ... x-a+1  x-a ... 1
+                max = get_max(1, a - 1, x - 1, x - (a - 1));
+                max = cmp::max(max, get_max(a + 1, x, x - a, 1));
+            }
+
+            if max < a * b {
+                ok = x;
+            } else {
+                ng = x;
+            }
         }
+        println!("{}", if a <= ok { ok - 1 } else { ok });
     }
 }
 
-fn solve2(a: usize, b: usize) -> usize {
-    let mut x = (((a * b) as f64).sqrt() * 2.0) as usize - a - 1;
-    let t = if x > a { (x - a - 1) / 2 } else { 0 };
-    if (x - t) * (a + 1 + t) >= a * b {
-        x -= 1;
-    } else if (x - (t + 1)) * (a + 1 + (t + 1)) >= a * b {
-        x -= 1;
+fn get_max(from_a: usize, to_a: usize, from_b: usize, to_b: usize) -> usize {
+    if from_a > to_a {
+        return 0;
     }
-    a - 1 + x
+    assert_eq!(to_a + 1 - from_a, from_b + 1 - to_b);
+    let mut m = (from_a + from_b) / 2;
+    let mut max = cmp::max(from_a * from_b, to_a * to_b);
+    if from_a <= m && m <= to_a {
+        let da = m - from_a;
+        let b = from_b - da;
+        max = cmp::max(max, m * b);
+    }
+    m += 1;
+    if from_a <= m && m <= to_a {
+        let da = m - from_a;
+        let b = from_b - da;
+        max = cmp::max(max, m * b);
+    }
+    max
+}
+
+pub struct Scanner<R> {
+    stdin: R,
+}
+
+impl<R: std::io::Read> Scanner<R> {
+    pub fn read<T: std::str::FromStr>(&mut self) -> T {
+        use std::io::Read;
+        let buf = self
+            .stdin
+            .by_ref()
+            .bytes()
+            .map(|b| b.unwrap())
+            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r')
+            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r')
+            .collect::<Vec<_>>();
+        unsafe { std::str::from_utf8_unchecked(&buf) }
+            .parse()
+            .ok()
+            .expect("Parse error.")
+    }
+    pub fn vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
+        (0..n).map(|_| self.read()).collect()
+    }
+    pub fn chars(&mut self) -> Vec<char> {
+        self.read::<String>().chars().collect()
+    }
 }

@@ -1,124 +1,79 @@
 use std::collections::VecDeque;
+
 fn main() {
-    let mut sc = Scanner::new();
-    let n = sc.usize_read();
-    let m = sc.usize_read();
+    let s = std::io::stdin();
+    let mut sc = Scanner { stdin: s.lock() };
+    let n = sc.read();
+    let m: usize = sc.read();
     let mut graph = vec![vec![]; n];
     for _ in 0..m {
-        let a = sc.usize_read() - 1;
-        let b = sc.usize_read() - 1;
+        let a = sc.read::<usize>() - 1;
+        let b = sc.read::<usize>() - 1;
         graph[a].push(b);
         graph[b].push(a);
     }
-
-    let q = sc.usize_read();
-    let queries: Vec<(usize, usize, usize)> = (0..q)
-        .map(|_| (sc.usize_read() - 1, sc.usize_read(), sc.usize_read()))
+    let q: usize = sc.read();
+    let mut potential = vec![-1; n];
+    let mut color = vec![0; n];
+    let vdc: Vec<_> = (0..q)
+        .map(|_| (sc.read::<usize>() - 1, sc.read::<i64>(), sc.read::<usize>()))
         .collect();
 
-    let mut ans = vec![0; n];
-    let mut max_d = vec![-1; n];
-    for q in (0..q).rev() {
-        let (v, d, c) = queries[q];
-        let mut queue = VecDeque::new();
-        queue.push_back((v, d as i32));
-        while let Some((v, d)) = queue.pop_front() {
-            if max_d[v] >= d {
+    for (root, distance, c) in vdc.into_iter().rev() {
+        if potential[root] >= distance {
+            continue;
+        }
+        let mut q = VecDeque::new();
+        q.push_back(root);
+        if color[root] == 0 {
+            color[root] = c;
+        }
+        potential[root] = distance;
+        while let Some(v) = q.pop_front() {
+            if potential[v] == 0 {
                 continue;
             }
-            max_d[v] = d;
-            if ans[v] == 0 {
-                ans[v] = c;
-            }
-            for &to in &graph[v] {
-                queue.push_back((to, d - 1));
+            for &next in graph[v].iter() {
+                if color[next] == 0 {
+                    color[next] = c;
+                }
+                if potential[next] < potential[v] - 1 {
+                    potential[next] = potential[v] - 1;
+                    q.push_back(next);
+                }
             }
         }
     }
-    for &c in &ans {
+
+    for c in color.into_iter() {
         println!("{}", c);
     }
 }
 
-struct Scanner {
-    ptr: usize,
-    length: usize,
-    buf: Vec<u8>,
-    small_cache: Vec<u8>,
+pub struct Scanner<R> {
+    stdin: R,
 }
 
-#[allow(dead_code)]
-impl Scanner {
-    fn new() -> Scanner {
-        Scanner {
-            ptr: 0,
-            length: 0,
-            buf: vec![0; 1024],
-            small_cache: vec![0; 1024],
-        }
-    }
-
-    fn load(&mut self) {
+impl<R: std::io::Read> Scanner<R> {
+    pub fn read<T: std::str::FromStr>(&mut self) -> T {
         use std::io::Read;
-        let mut s = std::io::stdin();
-        self.length = s.read(&mut self.buf).unwrap();
+        let buf = self
+            .stdin
+            .by_ref()
+            .bytes()
+            .map(|b| b.unwrap())
+            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r')
+            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r')
+            .collect::<Vec<_>>();
+        unsafe { std::str::from_utf8_unchecked(&buf) }
+            .parse()
+            .ok()
+            .expect("Parse error.")
     }
-
-    fn byte(&mut self) -> u8 {
-        if self.ptr >= self.length {
-            self.ptr = 0;
-            self.load();
-            if self.length == 0 {
-                self.buf[0] = b'\n';
-                self.length = 1;
-            }
-        }
-
-        self.ptr += 1;
-        return self.buf[self.ptr - 1];
-    }
-
-    fn is_space(b: u8) -> bool {
-        b == b'\n' || b == b'\r' || b == b'\t' || b == b' '
-    }
-
-    fn read_vec<T>(&mut self, n: usize) -> Vec<T>
-    where
-        T: std::str::FromStr,
-        T::Err: std::fmt::Debug,
-    {
+    pub fn vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
         (0..n).map(|_| self.read()).collect()
     }
-
-    fn usize_read(&mut self) -> usize {
-        self.read()
-    }
-
-    fn read<T>(&mut self) -> T
-    where
-        T: std::str::FromStr,
-        T::Err: std::fmt::Debug,
-    {
-        let mut b = self.byte();
-        while Scanner::is_space(b) {
-            b = self.byte();
-        }
-
-        for pos in 0..self.small_cache.len() {
-            self.small_cache[pos] = b;
-            b = self.byte();
-            if Scanner::is_space(b) {
-                return String::from_utf8_lossy(&self.small_cache[0..(pos + 1)])
-                    .parse()
-                    .unwrap();
-            }
-        }
-
-        let mut v = self.small_cache.clone();
-        while !Scanner::is_space(b) {
-            v.push(b);
-            b = self.byte();
-        }
-        return String::from_utf8_lossy(&v).parse().unwrap();
+    pub fn chars(&mut self) -> Vec<char> {
+        self.read::<String>().chars().collect()
     }
 }
