@@ -3,31 +3,31 @@ use std::cmp;
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-    let s: Vec<_> = sc
+    let s: Vec<usize> = sc
         .chars()
         .into_iter()
         .map(|c| c as usize - 'a' as usize)
         .collect();
     let n = s.len();
+    let mut prefix_dp = vec![n as u32; 1 << 26];
 
-    let mut hash: usize = 0;
-    let mut min: Vec<u32> = vec![n as u32; 1 << 26];
-    for i in 0..n {
-        hash ^= 1 << s[i];
-        let mut ans = n as u32;
-        if hash.count_ones() <= 1 {
-            ans = 1;
+    let mut cur: usize = 0;
+    for c in s.into_iter() {
+        cur ^= 1 << c;
+        if cur.count_ones() <= 1 {
+            prefix_dp[cur] = 1;
         } else {
-            for j in 0..26 {
-                ans = cmp::min(ans, min[hash ^ (1 << j)] + 1);
+            let mut min = prefix_dp[cur];
+            for i in 0..26 {
+                let suffix = 1 << i;
+                let prefix = cur ^ suffix;
+                min = cmp::min(min, prefix_dp[prefix] + 1);
             }
-            ans = cmp::min(ans, min[hash]);
-        }
-        min[hash] = cmp::min(min[hash], ans);
-        if i == n - 1 {
-            println!("{}", ans);
+            prefix_dp[cur] = min;
         }
     }
+
+    println!("{}", prefix_dp[cur]);
 }
 
 pub struct Scanner<R> {

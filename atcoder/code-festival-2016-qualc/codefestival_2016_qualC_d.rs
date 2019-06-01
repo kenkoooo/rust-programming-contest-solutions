@@ -1,5 +1,6 @@
 use std::cmp;
-const INF: u32 = 1e9 as u32;
+
+const INF: u64 = 1e9 as u64;
 
 fn main() {
     let s = std::io::stdin();
@@ -7,49 +8,72 @@ fn main() {
 
     let h: usize = sc.read();
     let w: usize = sc.read();
-    let board: Vec<Vec<char>> = (0..h).map(|_| sc.chars()).collect();
-    let rotated: Vec<Vec<char>> = (0..w)
-        .map(|i| (0..h).map(|j| board[j][i]).collect())
-        .collect();
+    let c: Vec<Vec<char>> = (0..h).map(|_| sc.chars()).collect();
+    let mut d = vec![vec![' '; h]; w];
+    for i in 0..h {
+        for j in 0..w {
+            d[j][i] = c[i][j];
+        }
+    }
 
     let mut ans = 0;
     for i in 1..w {
-        ans += solve(&rotated[i - 1], &rotated[i]);
+        ans += solve(&d[i - 1], &d[i]);
     }
     println!("{}", ans);
 }
 
-fn solve<T: PartialEq>(a: &[T], b: &[T]) -> u32 {
-    let n = a.len();
-    let mut cost = vec![vec![0; n + 1]; n + 1];
-    for removed in 0..n {
-        cost[0][removed] = (0..(n - removed))
-            .filter(|&i| a[i + removed] == b[i])
-            .count() as u32;
-        cost[removed][0] = (0..(n - removed))
-            .filter(|&i| a[i] == b[i + removed])
-            .count() as u32;
-    }
+fn solve(a: &[char], b: &[char]) -> u64 {
+    let h = a.len();
+    let mut cost = vec![vec![0; h + 1]; h + 1];
+    for i in 0..(h + 1) {
+        cost[0][i] = 0;
+        for j in 0..h {
+            if i + j < h && a[i + j] == b[j] {
+                cost[0][i] += 1;
+            }
+        }
 
-    for i in 0..n {
-        for j in 0..n {
-            cost[i + 1][j + 1] = cost[i][j] - if a[n - 1 - i] == b[n - 1 - j] { 1 } else { 0 };
+        cost[i][0] = 0;
+        for j in 0..h {
+            if i + j < h && a[j] == b[i + j] {
+                cost[i][0] += 1;
+            }
         }
     }
 
-    let mut dp = vec![vec![INF; n + 1]; n + 1];
+    for i in 0..h {
+        for j in 0..h {
+            if i + j < h {
+                cost[j + 1][i + j + 1] = cost[j][i + j]
+                    - if a[h - 1 - j] == b[h - 1 - (i + j)] {
+                        1
+                    } else {
+                        0
+                    };
+                cost[i + j + 1][j + 1] = cost[i + j][j]
+                    - if a[h - 1 - (i + j)] == b[h - 1 - j] {
+                        1
+                    } else {
+                        0
+                    };
+            }
+        }
+    }
+
+    let mut dp = vec![vec![INF; h + 1]; h + 1];
     dp[0][0] = 0;
-    for i in 0..(n + 1) {
-        for j in 0..(n + 1) {
-            if i + 1 <= n {
+    for i in 0..(h + 1) {
+        for j in 0..(h + 1) {
+            if i + 1 <= h {
                 dp[i + 1][j] = cmp::min(dp[i + 1][j], dp[i][j] + cost[i][j]);
             }
-            if j + 1 <= n {
+            if j + 1 <= h {
                 dp[i][j + 1] = cmp::min(dp[i][j + 1], dp[i][j] + cost[i][j]);
             }
         }
     }
-    dp[n][n]
+    dp[h][h]
 }
 
 pub struct Scanner<R> {
