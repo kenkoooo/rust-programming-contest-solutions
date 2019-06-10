@@ -1,84 +1,93 @@
-const INF: i64 = 1e17 as i64;
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-    let x: i64 = sc.read();
-    let y: i64 = sc.read();
-    let n: usize = sc.read();
-    let ab: Vec<(i64, i64)> = (0..n).map(|_| (sc.read(), sc.read())).collect();
-    let n = ab.len() as i64;
-    let per_one = (x + y) / n;
+    let x: u64 = sc.read();
+    let y: u64 = sc.read();
+    let n: u64 = sc.read();
+    let one = (x + y) / n;
+
     let mut candidates = vec![];
-    for i in 0..n {
-        let (a, b) = ab[i as usize];
-        for j in 0..(per_one + 1) {
-            let happiness = a * j + b * (per_one - j);
-            candidates.push((happiness, j, i as usize));
+    for i in 0..(n as usize) {
+        let a: u64 = sc.read();
+        let b: u64 = sc.read();
+        for x in 0..(one + 1) {
+            let y = one - x;
+            let happiness = x * a + b * y;
+            candidates.push((happiness, i, x));
         }
     }
     candidates.sort();
 
-    let mut ng = -1;
-    let mut ok = INF;
+    if solve(x, one, 0, &candidates) {
+        println!("0");
+        return;
+    }
+
+    let mut ok = 1e15 as u64;
+    let mut ng = 0;
     while ok - ng > 1 {
-        let difference = (ok + ng) / 2;
-        if solve(difference, x, n, &candidates) {
-            ok = difference;
+        let m = (ok + ng) / 2;
+        if solve(x, one, m, &candidates) {
+            ok = m;
         } else {
-            ng = difference;
+            ng = m;
         }
     }
     println!("{}", ok);
 }
 
-fn solve(difference: i64, x: i64, n: i64, candidates: &Vec<(i64, i64, usize)>) -> bool {
-    let mut from_to = vec![(-1, -1); n as usize];
-    let mut alive = 0;
-    let mut from_sum = 0;
-    let mut to_sum = 0;
+fn solve(total_x: u64, one: u64, difference: u64, candidates: &Vec<(u64, usize, u64)>) -> bool {
+    let n = candidates.len() / (one as usize + 1);
+    let mut ranges: Vec<Option<(u64, u64)>> = vec![None; n];
+    let mut lower_sum = 0;
+    let mut upper_sum = 0;
+    let mut count = 0;
 
-    let mut tail = candidates.iter().peekable();
-    for &(head_happiness, head_j, head_i) in candidates.iter() {
-        while let Some(&&(tail_hapiness, tail_j, tail_i)) = tail.peek() {
-            if tail_hapiness > head_happiness + difference {
-                break;
+    let mut tail = 0;
+    for &(lowest, i, x) in candidates.iter() {
+        while tail < candidates.len() && candidates[tail].0 <= difference + lowest {
+            let (_, i, x) = candidates[tail];
+            match ranges[i] {
+                Some((lower, upper)) => {
+                    if x + 1 == lower {
+                        ranges[i] = Some((x, upper));
+                        lower_sum -= 1;
+                    } else if x == upper + 1 {
+                        ranges[i] = Some((lower, x));
+                        upper_sum += 1;
+                    } else {
+                        unreachable!();
+                    }
+                }
+                None => {
+                    ranges[i] = Some((x, x));
+                    lower_sum += x;
+                    upper_sum += x;
+                    count += 1;
+                }
             }
-
-            if from_to[tail_i].0 == -1 {
-                from_to[tail_i] = (tail_j, tail_j);
-                alive += 1;
-                from_sum += tail_j;
-                to_sum += tail_j;
-            } else if from_to[tail_i].0 - 1 == tail_j {
-                from_to[tail_i].0 -= 1;
-                from_sum -= 1;
-            } else if from_to[tail_i].1 + 1 == tail_j {
-                from_to[tail_i].1 += 1;
-                to_sum += 1;
-            } else {
-                unreachable!();
-            }
-            tail.next();
+            tail += 1;
         }
 
-        if alive == n && from_sum <= x && x <= to_sum {
+        if count == n && lower_sum <= total_x && total_x <= upper_sum {
             return true;
         }
 
-        if from_to[head_i].0 == from_to[head_i].1 {
-            assert_eq!(from_to[head_i], (head_j, head_j));
-            from_to[head_i] = (-1, -1);
-            alive -= 1;
-            from_sum -= head_j;
-            to_sum -= head_j;
-        } else if from_to[head_i].0 == head_j {
-            from_to[head_i].0 += 1;
-            from_sum += 1;
-        } else if from_to[head_i].1 == head_j {
-            from_to[head_i].1 -= 1;
-            to_sum -= 1;
+        let (lower, upper) = ranges[i].unwrap();
+        if lower == upper {
+            assert_eq!(lower, x);
+            ranges[i] = None;
+            lower_sum -= x;
+            upper_sum -= x;
+            count -= 1;
+        } else if lower == x {
+            ranges[i] = Some((lower + 1, upper));
+            lower_sum += 1;
+        } else if upper == x {
+            ranges[i] = Some((lower, upper - 1));
+            upper_sum -= 1;
         } else {
-            unreachable!();
+            unreachable!()
         }
     }
     false
@@ -96,8 +105,8 @@ impl<R: std::io::Read> Scanner<R> {
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
-            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r')
-            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r')
+            .skip_while(|&b| b == b' ' || b == b'\n')
+            .take_while(|&b| b != b' ' && b != b'\n')
             .collect::<Vec<_>>();
         unsafe { std::str::from_utf8_unchecked(&buf) }
             .parse()

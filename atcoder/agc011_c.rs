@@ -1,9 +1,8 @@
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-
-    let n = sc.read();
-    let m = sc.read();
+    let n: usize = sc.read();
+    let m: usize = sc.read();
     let mut graph = vec![vec![]; n];
     let mut uf = UnionFind::new(n);
     for _ in 0..m {
@@ -14,43 +13,45 @@ fn main() {
         uf.unite(u, v);
     }
 
-    let mut color = vec![0; n];
+    let mut vis = vec![false; n];
+    let mut color = vec![2; n];
     let mut single = 0;
     let mut bipartite = 0;
-    let mut other = 0;
+    let mut non_bipartite = 0;
 
     for i in 0..n {
         let root = uf.find(i);
-        if color[root] == 0 {
+        if !vis[root] {
+            vis[root] = true;
             color[root] = 1;
-            let is_bipartite = color_dfs(root, &mut color, &graph);
             if uf.sizes[root] == 1 {
                 single += 1;
-            } else if is_bipartite {
+            } else if color_dfs(root, &graph, &mut color) {
                 bipartite += 1;
             } else {
-                other += 1;
+                non_bipartite += 1;
             }
         }
     }
 
     let mut ans = 0;
     ans += single * n * 2 - single * single;
+    ans += non_bipartite * non_bipartite + non_bipartite * bipartite * 2;
     ans += bipartite * bipartite * 2;
-    ans += other * (bipartite + other) * 2 - other * other;
     println!("{}", ans);
 }
 
-fn color_dfs(v: usize, color: &mut Vec<usize>, graph: &Vec<Vec<usize>>) -> bool {
-    let next_color = if color[v] == 1 { 2 } else { 1 };
-    for &u in graph[v].iter() {
-        if color[u] == 0 {
-            color[u] = next_color;
-            if !color_dfs(u, color, graph) {
+fn color_dfs(v: usize, graph: &Vec<Vec<usize>>, color: &mut Vec<usize>) -> bool {
+    let next_color = color[v] ^ 1;
+    for &next in graph[v].iter() {
+        if color[next] == color[v] {
+            return false;
+        }
+        if color[next] != next_color {
+            color[next] = next_color;
+            if !color_dfs(next, graph, color) {
                 return false;
             }
-        } else if color[u] != next_color {
-            return false;
         }
     }
     true
@@ -114,8 +115,8 @@ impl<R: std::io::Read> Scanner<R> {
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
-            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r')
-            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r')
+            .skip_while(|&b| b == b' ' || b == b'\n')
+            .take_while(|&b| b != b' ' && b != b'\n')
             .collect::<Vec<_>>();
         unsafe { std::str::from_utf8_unchecked(&buf) }
             .parse()

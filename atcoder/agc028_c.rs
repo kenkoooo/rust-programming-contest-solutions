@@ -1,44 +1,47 @@
 use std::cmp;
+
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
     let n: usize = sc.read();
-    let ab = (0..n)
-        .map(|_| (sc.read::<usize>(), sc.read::<usize>()))
-        .collect::<Vec<_>>();
-    let left_sum = ab.iter().map(|&(a, _)| a).sum::<usize>();
-    let right_sum = ab.iter().map(|&(_, b)| b).sum::<usize>();
+    let mut edges = vec![];
 
-    let mut v = vec![];
+    let mut left = 0;
+    let mut right = 0;
     for i in 0..n {
-        let (a, b) = ab[i];
-        v.push((a, i, true));
-        v.push((b, i, false));
+        let a: u64 = sc.read();
+        let b: u64 = sc.read();
+        left += a;
+        right += b;
+        edges.push((a, i, true));
+        edges.push((b, i, false));
     }
-    v.sort();
+    edges.sort();
+
+    let mut ans = cmp::min(left, right);
 
     let mut count = vec![0; n];
     let mut sum = 0;
     for i in 0..n {
-        let (v, i, _) = v[i];
-        sum += v;
+        let (cost, i, _) = edges[i];
         count[i] += 1;
+        sum += cost;
     }
 
-    let mut ans = cmp::min(left_sum, right_sum);
-    if count.iter().any(|&x| x == 2) {
-        ans = cmp::min(ans, sum);
-    } else if v[n - 1].1 != v[n].1 {
-        ans = cmp::min(sum - v[n - 1].0 + v[n].0, ans);
-    } else {
-        if v[n - 2].1 != v[n].1 {
-            ans = cmp::min(ans, sum - v[n - 2].0 + v[n].0);
-        }
-        if v[n - 1].1 != v[n + 1].1 {
-            ans = cmp::min(ans, sum - v[n - 1].0 + v[n + 1].0);
-        }
+    if count.iter().any(|&x| x != 1) {
+        println!("{}", cmp::min(ans, sum));
+        return;
     }
 
+    if edges[n - 1].1 != edges[n].1 {
+        sum -= edges[n - 1].0;
+        sum += edges[n].0;
+        println!("{}", cmp::min(ans, sum));
+        return;
+    }
+
+    ans = cmp::min(ans, sum - edges[n - 2].0 + edges[n].0);
+    ans = cmp::min(ans, sum - edges[n - 1].0 + edges[n + 1].0);
     println!("{}", ans);
 }
 
@@ -54,8 +57,8 @@ impl<R: std::io::Read> Scanner<R> {
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
-            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r')
-            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r')
+            .skip_while(|&b| b == b' ' || b == b'\n')
+            .take_while(|&b| b != b' ' && b != b'\n')
             .collect::<Vec<_>>();
         unsafe { std::str::from_utf8_unchecked(&buf) }
             .parse()

@@ -1,4 +1,4 @@
-use mod_int::ModInt;
+use self::mod_int::ModInt;
 
 const MOD: usize = 1e9 as usize + 7;
 
@@ -7,34 +7,73 @@ fn main() {
     let mut sc = Scanner { stdin: s.lock() };
     let b: usize = sc.read();
     let w: usize = sc.read();
-    let combination = Combination::new(b + w + 1, MOD);
-    let mut inv_pow2 = vec![ModInt::new(1); b + w + 1];
+    let n = b + w;
+
+    let mut inv_pow2 = vec![ModInt::new(1); n + 1];
     inv_pow2[1] = ModInt::new(2).pow(MOD - 2);
-    for i in 1..(b + w) {
+    for i in 1..n {
         inv_pow2[i + 1] = inv_pow2[i] * inv_pow2[1];
     }
-    let mut w_zero = vec![ModInt::new(0); b + w + 1];
-    for i in 0..(w + b) {
-        if i + 1 > w {
-            w_zero[i + 1] = w_zero[i] + combination.get(i - 1, w - 1) * inv_pow2[i];
-        }
-    }
-    let mut b_zero = vec![ModInt::new(0); b + w + 1];
-    for i in 0..(b + w) {
-        if i + 1 > b {
-            b_zero[i + 1] = b_zero[i] + combination.get(i - 1, b - 1) * inv_pow2[i];
+
+    let c = Combination::new(n, MOD);
+    let mut black_zero = vec![ModInt::new(0); n + 1];
+    for i in 0..n {
+        if i + 1 >= b {
+            black_zero[i + 1] = black_zero[i] + c.get(i, b - 1) * inv_pow2[i + 1];
         }
     }
 
-    for i in 1..(b + w + 1) {
-        // black==0
-        let b_zero = if i > b { b_zero[i] } else { ModInt::new(0) };
-        // white==0
-        let w_zero = if i > w { w_zero[i] } else { ModInt::new(0) };
-        let other = ModInt::new(1) - b_zero - w_zero;
-        let ans = other * inv_pow2[1] + w_zero;
-        // eprintln!("b_zero={} w_zero={} other={}", b_zero.0, w_zero.0, other.0);
+    let mut white_zero = vec![ModInt::new(0); n + 1];
+    for i in 0..n {
+        if i + 1 >= w {
+            white_zero[i + 1] = white_zero[i] + c.get(i, w - 1) * inv_pow2[i + 1];
+        }
+    }
+
+    for i in 1..(n + 1) {
+        let black_zero = black_zero[i - 1];
+        let white_zero = white_zero[i - 1];
+        let other = ModInt::new(1) - black_zero - white_zero;
+        let ans = other * inv_pow2[1] + white_zero;
         println!("{}", ans.0);
+    }
+}
+
+pub struct Combination {
+    fact: Vec<usize>,
+    inv_fact: Vec<usize>,
+    modulo: usize,
+}
+
+impl Combination {
+    pub fn new(max: usize, modulo: usize) -> Combination {
+        let mut inv = vec![0; max + 1];
+        let mut fact = vec![0; max + 1];
+        let mut inv_fact = vec![0; max + 1];
+        inv[1] = 1;
+        for i in 2..(max + 1) {
+            inv[i] = inv[modulo % i] * (modulo - modulo / i) % modulo;
+        }
+        fact[0] = 1;
+        inv_fact[0] = 1;
+        for i in 0..max {
+            fact[i + 1] = fact[i] * (i + 1) % modulo;
+        }
+        for i in 0..max {
+            inv_fact[i + 1] = inv_fact[i] * inv[i + 1] % modulo;
+        }
+        Combination {
+            fact: fact,
+            inv_fact: inv_fact,
+            modulo: modulo,
+        }
+    }
+
+    pub fn get(&self, x: usize, y: usize) -> ModInt<usize> {
+        assert!(x >= y);
+        let result =
+            self.fact[x] * self.inv_fact[y] % self.modulo * self.inv_fact[x - y] % self.modulo;
+        ModInt::new(result)
     }
 }
 
@@ -44,7 +83,7 @@ pub mod mod_int {
 
     type Num = usize;
 
-    #[derive(Clone, Copy, Debug)]
+    #[derive(Clone, Copy)]
     pub struct ModInt<T: Copy + Clone>(pub T);
 
     impl Add<ModInt<Num>> for ModInt<Num> {
@@ -153,48 +192,6 @@ pub mod mod_int {
     }
 }
 
-pub struct Combination {
-    fact: Vec<usize>,
-    inv_fact: Vec<usize>,
-    modulo: usize,
-}
-
-impl Combination {
-    pub fn new(max: usize, modulo: usize) -> Combination {
-        let mut inv = vec![0; max + 1];
-        let mut fact = vec![0; max + 1];
-        let mut inv_fact = vec![0; max + 1];
-        inv[1] = 1;
-        for i in 2..(max + 1) {
-            inv[i] = inv[modulo % i] * (modulo - modulo / i) % modulo;
-        }
-        fact[0] = 1;
-        inv_fact[0] = 1;
-        for i in 0..max {
-            fact[i + 1] = fact[i] * (i + 1) % modulo;
-        }
-        for i in 0..max {
-            inv_fact[i + 1] = inv_fact[i] * inv[i + 1] % modulo;
-        }
-        Combination {
-            fact: fact,
-            inv_fact: inv_fact,
-            modulo: modulo,
-        }
-    }
-
-    pub fn get(&self, x: usize, y: usize) -> ModInt<usize> {
-        assert!(x >= y);
-        ModInt::new(
-            self.fact[x] * self.inv_fact[y] % self.modulo * self.inv_fact[x - y] % self.modulo,
-        )
-    }
-
-    pub fn h(&self, n: usize, r: usize) -> ModInt<usize> {
-        self.get(n + r - 1, r)
-    }
-}
-
 pub struct Scanner<R> {
     stdin: R,
 }
@@ -207,8 +204,8 @@ impl<R: std::io::Read> Scanner<R> {
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
-            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r')
-            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r')
+            .skip_while(|&b| b == b' ' || b == b'\n')
+            .take_while(|&b| b != b' ' && b != b'\n')
             .collect::<Vec<_>>();
         unsafe { std::str::from_utf8_unchecked(&buf) }
             .parse()

@@ -6,30 +6,35 @@ fn main() {
     let n: usize = sc.read();
     let a: usize = sc.read();
     let b: usize = sc.read();
-    if a + b > n + 1 || (n + b - 1) / b > a {
+    if a + b > n + 1 {
         println!("-1");
         return;
     }
 
-    let mut ans = (1..(n + 1)).collect::<Vec<_>>();
-    let segments = (n + b - 1) / b;
-    let mut remain = n - a;
-    for i in 0..segments {
-        let from = i * b;
-        let to = cmp::min(from + cmp::min(b, remain + 1), n);
-        ans[from..to].reverse();
-        remain -= to - from - 1;
-        if remain == 0 {
+    let mut ans = (1..(n + 1)).collect::<Vec<usize>>();
+    for i in 0..((n + b - 1) / b) {
+        ans[(i * b)..cmp::min(n, i * b + b)].reverse();
+    }
+
+    let mut cur = (n + b - 1) / b;
+    if cur > a {
+        println!("-1");
+        return;
+    }
+    for i in (0..((n + b - 1) / b)).rev() {
+        let from = (i * b);
+        let to = cmp::min(n, i * b + b);
+        let element = to - from;
+        let reversing = cmp::min(element, a - cur + 1);
+        ans[from..(reversing + from)].reverse();
+        cur += reversing - 1;
+        if a == cur {
             break;
         }
     }
 
-    assert_eq!(remain, 0);
-    for i in 0..n {
-        if i > 0 {
-            print!(" ");
-        }
-        print!("{}", ans[i]);
+    for x in ans.into_iter() {
+        print!("{} ", x);
     }
     println!();
 }
