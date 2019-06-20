@@ -1,38 +1,33 @@
-use std::collections::BTreeMap;
-
-const MOD: u64 = 1e9 as u64 + 7;
-
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-    let n: u64 = sc.read();
-    let mut map = BTreeMap::new();
-    println!("{}", solve(n, n, &mut map));
-}
+    let n: usize = sc.read();
+    let k: u64 = sc.read();
+    let a: Vec<u64> = sc.vec(n);
+    let mut tail = 0;
+    let mut sum = 0;
+    let mut ans = 0;
+    for head in 0..n {
+        while tail <= head {
+            sum += a[tail];
+            tail += 1;
+        }
+        while tail < n && sum + a[tail] < k {
+            sum += a[tail];
+            tail += 1;
+        }
 
-fn solve(sum: u64, xor: u64, map: &mut BTreeMap<(u64, u64), u64>) -> u64 {
-    if sum == 0 {
-        return 1;
-    }
-    if let Some(&ans) = map.get(&(sum, xor)) {
-        return ans;
-    }
-    let mut result = 0;
+        // [head, tail)
+        //        let z: u64 = a[head..tail].iter().sum();
+        //        eprintln!("head={} tail={} {:?} {}", head, tail, &a[head..tail], z);
+        ans += tail - head;
+        if tail - head == 1 && a[head] >= k {
+            ans -= 1;
+        }
 
-    // odd + odd
-    if sum >= 2 {
-        result += solve((sum - 2) >> 1, xor >> 1, map);
+        sum -= a[head];
     }
-
-    // even + even
-    result += solve(sum >> 1, xor >> 1, map);
-
-    // odd + even
-    if sum > 0 {
-        result += solve((sum - 1) >> 1, xor >> 1, map);
-    }
-    map.insert((sum, xor), result % MOD);
-    result % MOD
+    println!("{}", n * (n + 1) / 2 - ans);
 }
 
 pub struct Scanner<R> {

@@ -1,23 +1,28 @@
-const INF: i64 = 1 << 50;
+const INF: i64 = 1e15 as i64;
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
 
-    let n = sc.read();
+    let n: usize = sc.read();
     let a: Vec<i64> = sc.vec(n);
-    let mut graph = vec![vec![]; n];
+    let mut tree = vec![vec![]; n];
     for _ in 1..n {
         let u = sc.read::<usize>() - 1;
         let v = sc.read::<usize>() - 1;
-        graph[v].push(u);
-        graph[u].push(v);
+        tree[u].push(v);
+        tree[v].push(u);
     }
 
-    let mut min_dp = vec![vec![]; n];
     let mut power_dp = vec![vec![]; n];
-    dfs(0, 0, &a, &graph, &mut min_dp, &mut power_dp);
-    for i in 0..n {
-        if min_dp[0][i] < 0 || power_dp[0][i] < INF {
+    let mut dp = vec![vec![]; n];
+    dfs(0, 0, &tree, &mut power_dp, &mut dp, &a);
+
+    for i in 0..power_dp[0].len() {
+        if power_dp[0][i] > 0 && power_dp[0][i] < INF {
+            println!("{}", i);
+            return;
+        }
+        if dp[0][i] < 0 {
             println!("{}", i);
             return;
         }
@@ -27,45 +32,57 @@ fn main() {
 fn dfs(
     v: usize,
     p: usize,
-    a: &Vec<i64>,
-    graph: &Vec<Vec<usize>>,
-    min_dp: &mut Vec<Vec<i64>>,
+    tree: &Vec<Vec<usize>>,
     power_dp: &mut Vec<Vec<i64>>,
+    dp: &mut Vec<Vec<i64>>,
+    a: &[i64],
 ) {
-    min_dp[v].push(a[v]);
-    power_dp[v].push(if a[v] > 0 { a[v] } else { INF });
-    for &child in graph[v].iter() {
-        if p == child {
+    power_dp[v] = if a[v] > 0 { vec![a[v]] } else { vec![INF] };
+    dp[v] = vec![a[v]];
+    for &next in tree[v].iter() {
+        if p == next {
             continue;
         }
-        dfs(child, v, a, graph, min_dp, power_dp);
-        power_dp[v] = connect(&power_dp[v], &power_dp[child], &min_dp[child], true);
-        min_dp[v] = connect(&min_dp[v], &power_dp[child], &min_dp[child], false);
+        dfs(next, v, tree, power_dp, dp, a);
+        power_dp[v] = connect(&power_dp[v], &power_dp[next], &dp[next], true);
+        dp[v] = connect(&dp[v], &power_dp[next], &dp[next], false);
     }
 }
 
-fn connect(dp: &Vec<i64>, power: &Vec<i64>, min: &Vec<i64>, is_power: bool) -> Vec<i64> {
-    let mut next = vec![INF; power.len() + dp.len() + 1];
-    for parent_cut in 0..dp.len() {
-        for child_cut in 0..power.len() {
-            let total_cut = parent_cut + child_cut;
-            if !is_power {
-                chmin(&mut next[total_cut], dp[parent_cut] + min[child_cut]);
+fn connect(cur: &[i64], power: &[i64], dp: &[i64], for_power: bool) -> Vec<i64> {
+    let main_cuts = cur.len();
+    let child_cuts = power.len();
+    let mut next = vec![INF; main_cuts + child_cuts + 1];
+    for main_cut in 0..main_cuts {
+        let main_top = cur[main_cut];
+        if main_top >= INF {
+            continue;
+        }
+        for child_cut in 0..child_cuts {
+            let child_power_top = power[child_cut];
+            let child_top = dp[child_cut];
+            if child_power_top < INF {
+                apply_min(&mut next[child_cut + main_cut], main_top + child_power_top);
             }
-            if power[child_cut] < INF {
-                chmin(&mut next[total_cut], dp[parent_cut] + power[child_cut]);
+            if !for_power && child_top < INF {
+                apply_min(&mut next[child_cut + main_cut], main_top + child_top);
             }
-            if power[child_cut] < INF || min[child_cut] < 0 {
-                chmin(&mut next[total_cut + 1], dp[parent_cut]);
+
+            if child_top < 0 || (child_power_top > 0 && child_power_top < INF) {
+                if !for_power {
+                    apply_min(&mut next[child_cut + main_cut + 1], main_top);
+                } else if main_top > 0 {
+                    apply_min(&mut next[child_cut + main_cut + 1], main_top);
+                }
             }
         }
     }
     next
 }
 
-fn chmin<T: Ord>(a: &mut T, b: T) {
-    if *a > b {
-        *a = b;
+fn apply_min<T: Ord>(x: &mut T, y: T) {
+    if *x > y {
+        *x = y;
     }
 }
 
@@ -81,8 +98,8 @@ impl<R: std::io::Read> Scanner<R> {
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
-            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r')
-            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r')
+            .skip_while(|&b| b == b' ' || b == b'\n')
+            .take_while(|&b| b != b' ' && b != b'\n')
             .collect::<Vec<_>>();
         unsafe { std::str::from_utf8_unchecked(&buf) }
             .parse()

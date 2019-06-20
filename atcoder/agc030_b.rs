@@ -3,40 +3,45 @@ use std::cmp;
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
+
     let l: u64 = sc.read();
-    let n = sc.read();
-    let mut x: Vec<u64> = sc.vec(n);
-    let ans1 = solve(&x, l);
-    x = x.into_iter().rev().map(|x| l - x).collect();
-    let ans2 = solve(&x, l);
+    let n: usize = sc.read();
+    let x: Vec<u64> = sc.vec(n);
+    let x2 = x.iter().rev().map(|&x| l - x).collect();
+
+    let ans1 = solve(x, l);
+    let ans2 = solve(x2, l);
     println!("{}", cmp::max(ans1, ans2));
 }
 
-fn solve(x: &Vec<u64>, l: u64) -> u64 {
+fn solve(x: Vec<u64>, l: u64) -> u64 {
     let n = x.len();
     let mut left_sum = vec![0; n + 1];
     for i in 0..n {
-        left_sum[i + 1] = left_sum[i] + (l - x[n - 1 - i]);
-    }
-    let mut right_sum = vec![0; n + 1];
-    for i in 0..n {
-        right_sum[i + 1] = right_sum[i] + x[i];
+        left_sum[i + 1] = left_sum[i] + x[i];
     }
 
-    let mut result = 0;
+    let mut right_sum = vec![0; n + 1];
+    for i in 0..n {
+        right_sum[i + 1] = right_sum[i] + l - x[n - 1 - i];
+    }
+
+    let mut ans = 0;
     for i in 0..n {
         let rest = n - i;
-        let mut ans = 0;
-        ans += (right_sum[rest / 2 + i] - right_sum[i]) * 2;
-        ans += left_sum[rest / 2] * 2;
-        if rest % 2 == 0 && rest / 2 > 0 {
-            ans -= l - x[n - rest / 2];
-        } else {
-            ans += x[rest / 2 + i];
+        let left = (rest + 1) / 2;
+        let right = rest - left;
+        let mut sum = right_sum[right] * 2 + (left_sum[left + i] - left_sum[i]) * 2;
+        if left > right {
+            sum -= x[left + i - 1];
+        } else if right > 0 {
+            sum -= l - x[n - right];
         }
-        result = cmp::max(result, ans);
+        //        eprintln!("i={} sum={} left={} right={}", i, sum, left, right);
+        //        eprintln!("{:?} {:?}", left_sum, right_sum);
+        ans = cmp::max(ans, sum);
     }
-    result
+    ans
 }
 
 pub struct Scanner<R> {
@@ -51,8 +56,8 @@ impl<R: std::io::Read> Scanner<R> {
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
-            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r')
-            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r')
+            .skip_while(|&b| b == b' ' || b == b'\n')
+            .take_while(|&b| b != b' ' && b != b'\n')
             .collect::<Vec<_>>();
         unsafe { std::str::from_utf8_unchecked(&buf) }
             .parse()

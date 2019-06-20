@@ -1,38 +1,40 @@
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-
     let l: usize = sc.read();
-    let mut r = 1;
-    while (1 << (r + 1)) <= l {
-        r += 1;
+    let mut n = 0;
+    while (1 << (n + 1)) <= l {
+        n += 1;
     }
 
-    let n = r + 1;
-    let mut graph = vec![vec![]; n + 1];
-    for i in 0..r {
-        graph[i].push((i + 1, 1 << i));
-        graph[i].push((i + 1, 0));
+    n += 1;
+    let mut graph = vec![vec![]; n];
+    for i in 1..n {
+        graph[i - 1].push((i, 1 << (i - 1)));
+        graph[i - 1].push((i, 0));
     }
 
-    let sum = (1 << r) - 1;
-    let mut upper = l;
-    for i in (0..r).rev() {
-        let to_i = (1 << i) - 1;
-        if upper <= to_i {
+    let lower = (1 << (n - 1)) - 1;
+    let mut upper = l - 1;
+    for i in (0..(n - 1)).rev() {
+        let sum = (1 << i) - 1;
+        if upper <= sum {
             continue;
         }
-        let new_edge = upper - to_i - 1;
-        // add [new_edge, ..., to_i+new_edge]
-        if new_edge > sum {
-            graph[i].push((n - 1, new_edge));
-            upper = new_edge;
+        let edge = upper - sum;
+
+        // sum + edge == upper
+        // 0 + edge
+        if edge <= lower {
+            continue;
         }
+        upper = edge - 1;
+        graph[i].push((n - 1, edge));
     }
 
     let mut ans = vec![];
-    for (from, v) in graph.into_iter().enumerate() {
-        for (to, w) in v.into_iter() {
+    for from in 0..n {
+        for &(to, w) in graph[from].iter() {
             ans.push((from, to, w));
         }
     }
@@ -55,8 +57,8 @@ impl<R: std::io::Read> Scanner<R> {
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
-            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r')
-            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r')
+            .skip_while(|&b| b == b' ' || b == b'\n')
+            .take_while(|&b| b != b' ' && b != b'\n')
             .collect::<Vec<_>>();
         unsafe { std::str::from_utf8_unchecked(&buf) }
             .parse()

@@ -5,57 +5,48 @@ fn main() {
     let mut sc = Scanner { stdin: s.lock() };
     let q: usize = sc.read();
     for _ in 0..q {
-        let a: usize = sc.read();
-        let b: usize = sc.read();
-        let (a, b) = if a > b { (b, a) } else { (a, b) };
-
-        let mut ok = a - 1;
-        let mut ng = 1e10 as usize;
-        while ng - ok > 1 {
-            let x = (ok + ng) / 2;
-            let mut max = 0;
-            if x >= b - 1 {
-                // 1 ... a-1    a+1   ... x-b+1 x-b+2 ... x
-                // x ... x-a+2  x-a+1 ... b+1   b-1   ... 1
-                max = get_max(1, a - 1, x, x + 2 - a);
-                max = cmp::max(max, get_max(a + 1, x - (b - 1), x - (a - 1), b + 1));
-                max = cmp::max(max, get_max(x + 2 - b, x, b - 1, 1));
-            } else {
-                // 1 ... a-1      a+1 ... x
-                // x-1 ... x-a+1  x-a ... 1
-                max = get_max(1, a - 1, x - 1, x - (a - 1));
-                max = cmp::max(max, get_max(a + 1, x, x - a, 1));
-            }
-
-            if max < a * b {
-                ok = x;
-            } else {
-                ng = x;
-            }
-        }
-        println!("{}", if a <= ok { ok - 1 } else { ok });
+        let a: i64 = sc.read();
+        let b: i64 = sc.read();
+        println!("{}", solve(a, b));
     }
 }
 
-fn get_max(from_a: usize, to_a: usize, from_b: usize, to_b: usize) -> usize {
-    if from_a > to_a {
-        return 0;
+fn solve(a: i64, b: i64) -> i64 {
+    let (a, b) = if a > b { (b, a) } else { (a, b) };
+
+    let mut ok = 0;
+    let mut ng = b;
+    while ng - ok > 1 {
+        let m = (ok + ng) / 2;
+        if get_max(a, m) < a * b {
+            ok = m;
+        } else {
+            ng = m;
+        }
     }
-    assert_eq!(to_a + 1 - from_a, from_b + 1 - to_b);
-    let mut m = (from_a + from_b) / 2;
-    let mut max = cmp::max(from_a * from_b, to_a * to_b);
-    if from_a <= m && m <= to_a {
-        let da = m - from_a;
-        let b = from_b - da;
-        max = cmp::max(max, m * b);
+    ok + a - 1
+}
+// (a+1)*m, (a+2)(m-1), ... (a+m-1)*2, (a+m)
+// 1 <= x <= m
+// (a+x)(m+1-x) = -(x-m-1)(x+a)
+// -(xx +(a-m-1)x +..)
+// -(x+(a-m-1)/2)^2...
+// x= -(a-m-1)/2
+fn get_max(a: i64, m: i64) -> i64 {
+    // 1 <= -(a-m-1)/2 <= m
+    // 2 <= -(a-m-1) <= 2m
+    if 2 <= -(a - m - 1) && -(a - m - 1) <= 2 * m {
+        let x1 = -(a - m - 1) / 2;
+        let x2 = x1 + 1;
+        [x1, x2]
+            .into_iter()
+            .filter(|&&x| 1 <= x && x <= m)
+            .map(|&x| (a + x) * (m + 1 - x))
+            .max()
+            .unwrap()
+    } else {
+        cmp::max((a + 1) * m, a + m)
     }
-    m += 1;
-    if from_a <= m && m <= to_a {
-        let da = m - from_a;
-        let b = from_b - da;
-        max = cmp::max(max, m * b);
-    }
-    max
 }
 
 pub struct Scanner<R> {
@@ -70,8 +61,8 @@ impl<R: std::io::Read> Scanner<R> {
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
-            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r')
-            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r')
+            .skip_while(|&b| b == b' ' || b == b'\n')
+            .take_while(|&b| b != b' ' && b != b'\n')
             .collect::<Vec<_>>();
         unsafe { std::str::from_utf8_unchecked(&buf) }
             .parse()

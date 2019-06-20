@@ -1,38 +1,16 @@
-use std::collections::BTreeMap;
-
-const MOD: u64 = 1e9 as u64 + 7;
-
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-    let n: u64 = sc.read();
-    let mut map = BTreeMap::new();
-    println!("{}", solve(n, n, &mut map));
-}
-
-fn solve(sum: u64, xor: u64, map: &mut BTreeMap<(u64, u64), u64>) -> u64 {
-    if sum == 0 {
-        return 1;
-    }
-    if let Some(&ans) = map.get(&(sum, xor)) {
-        return ans;
-    }
-    let mut result = 0;
-
-    // odd + odd
-    if sum >= 2 {
-        result += solve((sum - 2) >> 1, xor >> 1, map);
-    }
-
-    // even + even
-    result += solve(sum >> 1, xor >> 1, map);
-
-    // odd + even
-    if sum > 0 {
-        result += solve((sum - 1) >> 1, xor >> 1, map);
-    }
-    map.insert((sum, xor), result % MOD);
-    result % MOD
+    let w: f64 = sc.read();
+    let h: f64 = sc.read();
+    let x: f64 = sc.read();
+    let y: f64 = sc.read();
+    let s = w * h;
+    println!(
+        "{} {}",
+        s / 2.0,
+        if x * 2.0 == w && y * 2.0 == h { 1 } else { 0 }
+    );
 }
 
 pub struct Scanner<R> {

@@ -1,50 +1,51 @@
 use std::cmp;
-const INF: i64 = 1e15 as i64;
+
+const INF: usize = 1e15 as usize;
+
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-    let n = sc.read();
-    let d: i64 = sc.read();
-    let a: Vec<i64> = sc.vec(n);
-    let mut ai: Vec<_> = a.iter().cloned().enumerate().map(|(i, a)| (a, i)).collect();
-    ai.sort();
+    let n: usize = sc.read();
+    let d: usize = sc.read();
+    let a: Vec<usize> = sc.vec(n);
+
+    let mut s: Vec<_> = a.iter().enumerate().map(|(i, &v)| (v, i)).collect();
+    s.sort();
 
     let mut left_seg = SegmentTree::new(n, (INF, 0), cmp::min);
     let mut right_seg = SegmentTree::new(n, (INF, 0), cmp::min);
-
-    let mut candidates = vec![];
-    for (_, i) in ai.into_iter() {
+    let mut edges = vec![];
+    for (_, i) in s.into_iter() {
         if i > 0 {
-            let (cost, left) = left_seg.query(0, i);
-            if cost < INF {
-                let cost = (i - left) as i64 * d + a[i] + a[left];
-                candidates.push((cost, i, left));
+            let (left_v, left_i) = left_seg.query(0, i);
+            if left_v < INF {
+                let cost = (i - left_i) * d + a[left_i] + a[i];
+                edges.push((cost, i, left_i));
             }
         }
         if i < n - 1 {
-            let (cost, right) = right_seg.query(i + 1, n);
-            if cost < INF {
-                let cost = (right - i) as i64 * d + a[i] + a[right];
-                candidates.push((cost, i, right));
+            let (right_v, right_i) = right_seg.query(i + 1, n);
+            if right_v < INF {
+                let cost = (right_i - i) * d + a[right_i] + a[i];
+                edges.push((cost, i, right_i));
             }
         }
-
-        left_seg.update(i, ((n - i) as i64 * d + a[i], i));
-        right_seg.update(i, (i as i64 * d + a[i], i));
+        left_seg.update(i, ((n - i) * d + a[i], i));
+        right_seg.update(i, (i * d + a[i], i));
     }
-    candidates.sort();
 
     let mut uf = UnionFind::new(n);
+    edges.sort();
     let mut ans = 0;
-    for (cost, i, j) in candidates.into_iter() {
+    for (cost, i, j) in edges.into_iter() {
         if uf.find(i) != uf.find(j) {
             uf.unite(i, j);
             ans += cost;
         }
     }
+
     println!("{}", ans);
 }
-
 pub struct UnionFind {
     parent: Vec<usize>,
     sizes: Vec<usize>,
@@ -148,7 +149,6 @@ where
         }
     }
 }
-
 pub struct Scanner<R> {
     stdin: R,
 }
@@ -161,8 +161,8 @@ impl<R: std::io::Read> Scanner<R> {
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
-            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r')
-            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r')
+            .skip_while(|&b| b == b' ' || b == b'\n')
+            .take_while(|&b| b != b' ' && b != b'\n')
             .collect::<Vec<_>>();
         unsafe { std::str::from_utf8_unchecked(&buf) }
             .parse()
