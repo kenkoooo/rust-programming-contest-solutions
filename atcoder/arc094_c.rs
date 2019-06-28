@@ -1,22 +1,23 @@
+use std::cmp;
+
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-    let n = sc.read();
-    let ab = (0..n)
-        .map(|_| (sc.read(), sc.read()))
-        .collect::<Vec<(usize, usize)>>();
-
-    if ab.iter().all(|&(a, b)| a == b) {
+    let n: usize = sc.read();
+    let mut sum = 0;
+    let mut min = std::i64::MAX;
+    for _ in 0..n {
+        let a: i64 = sc.read();
+        let b: i64 = sc.read();
+        sum += a;
+        if a > b {
+            min = cmp::min(min, b);
+        }
+    }
+    if min == std::i64::MAX {
         println!("0");
     } else {
-        let sum: usize = ab.iter().map(|&(_, b)| b).sum();
-        let min_b = ab
-            .iter()
-            .filter(|&&(a, b)| a > b)
-            .map(|&(_, b)| b)
-            .min()
-            .unwrap();
-        println!("{}", sum - min_b);
+        println!("{}", sum - min);
     }
 }
 

@@ -4,63 +4,54 @@ fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
     let t: usize = sc.read();
-    for t in 1..(t + 1) {
-        let n = sc.read();
-        let k = sc.read::<i64>();
-        let c = sc.vec::<i64>(n);
-        let d = sc.vec::<i64>(n);
-        let ans = n * (n + 1) / 2 - solve(&c, &d, k) - solve(&d, &c, k);
-        println!("Case #{}: {}", t, ans);
+    for t in 0..t {
+        let n: usize = sc.read();
+        let k: i64 = sc.read();
+        let c: Vec<i64> = sc.vec(n);
+        let d: Vec<i64> = sc.vec(n);
+
+        let ans1 = solve(&c, &d, k);
+        let ans2 = solve(&d, &c, k);
+        println!("Case #{}: {}", t + 1, (n + 1) * n / 2 - ans1 - ans2);
     }
 }
 
-fn solve(c: &[i64], d: &[i64], k: i64) -> usize {
-    let c_st = sparse_table::SparseTable::from(c, 0, cmp::max);
-    let d_st = sparse_table::SparseTable::from(d, 0, cmp::max);
+fn solve(c: &Vec<i64>, d: &Vec<i64>, k: i64) -> usize {
     let n = c.len();
+    let c_table = sparse_table::SparseTable::from(&c, 0, cmp::max);
+    let d_table = sparse_table::SparseTable::from(&d, 0, cmp::max);
     (0..n)
-        .filter(|&i| c[i] > d[i] + k)
+        .filter(|&i| c[i] - d[i] > k)
         .map(|i| {
-            let mut ng = -1;
-            let mut ok = i as i64;
-            while ok - ng > 1 {
-                let m = ((ok + ng) / 2) as usize;
-                if c_st.get(m, i) < c[i] {
-                    ok = m as i64;
-                } else {
-                    ng = m as i64;
-                }
-            }
-            let left = ok;
-
-            let mut ng = left - 1;
-            let mut ok = i as i64;
-            while ok - ng > 1 {
+            let mut ng = n;
+            let mut ok = i;
+            while ng - ok > 1 {
                 let m = (ng + ok) / 2;
-                if d_st.get(m as usize, i) < c[i] - k {
+                if c_table.get(i, m + 1) <= c[i] {
                     ok = m;
                 } else {
                     ng = m;
                 }
             }
-            let left = ok as usize;
+            let c_right = ok;
 
-            let mut ng = n + 1;
-            let mut ok = i + 1;
-            while ng - ok > 1 {
+            let mut ng: i64 = -1;
+            let mut ok: i64 = i as i64;
+            while ok - ng > 1 {
                 let m = (ok + ng) / 2;
-                if c_st.get(i, m) <= c[i] {
+                if c_table.get(m as usize, i) < c[i] {
                     ok = m;
                 } else {
                     ng = m;
                 }
             }
+            let c_left = ok as usize;
 
-            let mut ng = ok + 1;
-            let mut ok = i + 1;
+            let mut ok = i;
+            let mut ng = c_right + 1;
             while ng - ok > 1 {
                 let m = (ok + ng) / 2;
-                if d_st.get(i, m) < c[i] - k {
+                if d_table.get(i, m + 1) < c[i] - k {
                     ok = m;
                 } else {
                     ng = m;
@@ -68,12 +59,22 @@ fn solve(c: &[i64], d: &[i64], k: i64) -> usize {
             }
             let right = ok;
 
-            // [left, right)
-            (right - i) * (i - left + 1)
+            let mut ok = i as i64;
+            let mut ng = (c_left as i64) - 1;
+            while ok - ng > 1 {
+                let m = (ok + ng) / 2;
+                if d_table.get(m as usize, i + 1) < c[i] - k {
+                    ok = m;
+                } else {
+                    ng = m;
+                }
+            }
+            let left = ok as usize;
+
+            (i - left + 1) * (right - i + 1)
         })
         .sum::<usize>()
 }
-
 pub mod sparse_table {
     use std::cmp;
 
@@ -119,7 +120,6 @@ pub mod sparse_table {
         }
     }
 }
-
 pub struct Scanner<R> {
     stdin: R,
 }

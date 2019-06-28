@@ -3,41 +3,61 @@ fn main() {
     let mut sc = Scanner { stdin: s.lock() };
     let k: usize = sc.read();
     let n: usize = sc.read();
-
     if k % 2 == 0 {
         print!("{}", k / 2);
         for _ in 1..n {
             print!(" {}", k);
         }
         println!();
-        return;
-    }
-
-    let x = (k + 1) / 2;
-    let mut cur = vec![x; n];
-    let mut ptr = n - 1;
-    for _ in 0..(n / 2) {
-        cur[ptr] -= 1;
-        if cur[ptr] == 0 {
-            ptr -= 1;
-        } else {
-            while ptr + 1 < n {
-                ptr += 1;
-                cur[ptr] = k;
+    } else {
+        let mut ans = vec![(k + 1) / 2; n];
+        let mut tail = ans.len() - 1;
+        for _ in 0..(n / 2) {
+            ans[tail] -= 1;
+            if ans[tail] == 0 {
+                tail -= 1;
+            } else {
+                for i in (tail + 1)..n {
+                    ans[i] = k;
+                }
+                tail = ans.len() - 1;
             }
         }
-    }
-
-    print!("{}", cur[0]);
-    for i in 1..n {
-        if cur[i] == 0 {
-            break;
+        for i in 0..n {
+            if ans[i] == 0 {
+                break;
+            }
+            if i > 0 {
+                print!(" ");
+            }
+            print!("{}", ans[i]);
         }
-        print!(" {}", cur[i]);
+        println!();
     }
-    println!();
 }
 
+/// 1 ...
+/// 2 ...
+/// 3
+/// 3 1 ...
+/// 3 2 ...
+/// 3 3 ...
+/// 3 4 ...
+/// 3 5 ...
+/// 4 ...
+/// 5 ...
+///
+/// 3 3 3 3 3 3 3 3 3 3 3 3 0 0
+/// 3 3 3 3 3 3 3 3 3 3 3 3 1 0
+/// 3 3 3 3 3 3 3 3 3 3 3 3 1 1
+/// 3 3 3 3 3 3 3 3 3 3 3 3 2 2
+/// 3 3 3 3 3 3 3 3 3 3 3 3 2 3
+/// 3 3 3 3 3 3 3 3 3 3 3 3 2 4
+/// 3 3 3 3 3 3 3 3 3 3 3 3 2 5
+/// 3 3 3 3 3 3 3 3 3 3 3 3 3
+/// 3 3 3 3 3 3 3 3 3 3 3 3 3 1
+/// 3 3 3 3 3 3 3 3 3 3 3 3 3 2
+/// 3 3 3 3 3 3 3 3 3 3 3 3 3 3
 pub struct Scanner<R> {
     stdin: R,
 }
@@ -50,8 +70,8 @@ impl<R: std::io::Read> Scanner<R> {
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
-            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r')
-            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r')
+            .skip_while(|&b| b == b' ' || b == b'\n')
+            .take_while(|&b| b != b' ' && b != b'\n')
             .collect::<Vec<_>>();
         unsafe { std::str::from_utf8_unchecked(&buf) }
             .parse()

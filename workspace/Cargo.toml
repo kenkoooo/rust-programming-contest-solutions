@@ -5,4 +5,3 @@ authors = ["kenkoooo <kenkou.n@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-num-bigint = "0.2"

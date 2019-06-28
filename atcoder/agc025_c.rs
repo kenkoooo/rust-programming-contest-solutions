@@ -4,58 +4,59 @@ fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
     let n = sc.read();
-    let lr = (0..n)
-        .map(|_| (sc.read(), sc.read()))
-        .collect::<Vec<(i64, i64)>>();
+    let lr: Vec<(i64, i64)> = (0..n).map(|_| (sc.read(), sc.read())).collect::<Vec<_>>();
+    let inv = lr.iter().map(|&(l, r)| (-r, -l)).collect();
 
-    let mut left = lr
-        .iter()
-        .enumerate()
-        .map(|(i, &(l, _))| (l, i))
-        .collect::<Vec<(i64, usize)>>();
-    left.sort();
-    left.reverse();
-    let left = left.iter().map(|&(_, i)| i).collect::<Vec<_>>();
-    let mut right = lr
-        .iter()
-        .enumerate()
-        .map(|(i, &(_, r))| (r, i))
-        .collect::<Vec<(i64, usize)>>();
-    right.sort();
-    let right = right.iter().map(|&(_, i)| i).collect::<Vec<_>>();
-
-    let ans1 = solve(&left, &right, &lr);
-    let ans2 = solve(&right, &left, &lr);
+    let ans1 = solve(lr);
+    let ans2 = solve(inv);
     println!("{}", cmp::max(ans1, ans2));
 }
 
-fn solve(left: &Vec<usize>, right: &Vec<usize>, lr: &Vec<(i64, i64)>) -> i64 {
+fn solve(lr: Vec<(i64, i64)>) -> i64 {
     let n = lr.len();
-    let mut ans = 0;
-    let mut left_iter = left.iter();
-    let mut right_iter = right.iter();
-    let mut used = vec![false; n];
-    let mut cur = 0;
-    for i in 0..n {
-        let iter = if i % 2 == 0 {
-            &mut left_iter
-        } else {
-            &mut right_iter
-        };
+    let mut left = vec![];
+    let mut right = vec![];
+    for (i, &(l, r)) in lr.iter().enumerate() {
+        left.push((l, i));
+        right.push((r, i));
+    }
+    left.sort();
+    right.sort();
 
-        while let Some(&index) = iter.next() {
-            if used[index] {
+    let mut cur = 0;
+    let mut ans = 0;
+    let mut left = left.into_iter().rev().peekable();
+    let mut right = right.into_iter().peekable();
+    let mut used = vec![false; n];
+    while left.peek().is_some() || right.peek().is_some() {
+        while let Some((_, i)) = left.next() {
+            if used[i] {
                 continue;
             }
-            used[index] = true;
-            let (left, right) = lr[index];
-            if cur < left {
-                ans += left - cur;
-                cur = left;
-            } else if right < cur {
-                ans += cur - right;
-                cur = right;
+            let (l, r) = lr[i];
+            if cur < l {
+                ans += l - cur;
+                cur = l;
+            } else if r < cur {
+                ans += cur - r;
+                cur = r;
             }
+            used[i] = true;
+            break;
+        }
+        while let Some((_, i)) = right.next() {
+            if used[i] {
+                continue;
+            }
+            let (l, r) = lr[i];
+            if cur < l {
+                ans += l - cur;
+                cur = l;
+            } else if r < cur {
+                ans += cur - r;
+                cur = r;
+            }
+            used[i] = true;
             break;
         }
     }
