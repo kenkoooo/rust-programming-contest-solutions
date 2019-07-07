@@ -1,38 +1,25 @@
 use std::cmp;
 
+const INF: u64 = std::u64::MAX;
+
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-
-    let n: usize = sc.read();
-    let m: usize = sc.read();
-    let a: Vec<Vec<usize>> = (0..n)
-        .map(|_| (0..m).map(|_| sc.read::<usize>() - 1).collect())
-        .collect();
-
-    let mut ans = n;
-    let mut pos: Vec<usize> = vec![0; n];
-    let mut dead = vec![false; m];
-    for _ in 0..m {
-        let mut count = vec![0; m];
-        for i in 0..n {
-            count[a[i][pos[i]]] += 1;
-        }
-        let (max, max_i) = count
-            .iter()
-            .enumerate()
-            .map(|(i, &c)| (c, i))
-            .max()
-            .unwrap();
-        ans = cmp::min(ans, max);
-        dead[max_i] = true;
-        for i in 0..n {
-            while pos[i] < m && dead[a[i][pos[i]]] {
-                pos[i] += 1;
+    let l: u64 = sc.read();
+    let r: u64 = sc.read();
+    if r - l > 10000 {
+        println!("0");
+    } else {
+        let mut ans = INF;
+        for i in l..(r + 1) {
+            for j in (i + 1)..(r + 1) {
+                ans = cmp::min(ans, (i * j) % 2019);
             }
         }
+
+        assert_ne!(ans, INF);
+        println!("{}", ans);
     }
-    println!("{}", ans);
 }
 
 pub struct Scanner<R> {

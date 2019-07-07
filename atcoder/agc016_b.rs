@@ -1,110 +1,75 @@
 fn main() {
-    let mut sc = Scanner::new();
-    let n = sc.usize_read();
-    let a: Vec<usize> = sc.read_vec(n);
-    let mut count = vec![0; n];
-    for &a in &a {
+    let s = std::io::stdin();
+    let mut sc = Scanner { stdin: s.lock() };
+
+    let n: usize = sc.read();
+    let a: Vec<usize> = sc.vec(n);
+    let max: usize = a.iter().cloned().max().unwrap();
+    let mut count = vec![0; max + 1];
+    for a in a.into_iter() {
         count[a] += 1;
     }
-    let max: usize = a.iter().map(|&i| i).max().unwrap();
-    let min: usize = a.iter().map(|&i| i).min().unwrap();
-    if max - min > 1 {
+
+    let candidates = count
+        .iter()
+        .enumerate()
+        .filter(|&(_, &count)| count > 0)
+        .map(|(i, _)| i)
+        .collect::<Vec<_>>();
+    if candidates.len() > 2 {
         println!("No");
-    } else if max == min {
-        if max == n - 1 || max * 2 <= n {
+        return;
+    }
+
+    if candidates.len() == 1 {
+        let count = candidates[0];
+        if count <= n / 2 || count == n - 1 {
             println!("Yes");
         } else {
             println!("No");
         }
-    } else {
-        let unique = count[min];
-        if max > unique && (max - unique) * 2 + unique <= n {
-            println!("Yes");
-        } else {
-            println!("No");
-        }
+        return;
     }
-}
-
-struct Scanner {
-    ptr: usize,
-    length: usize,
-    buf: Vec<u8>,
-    small_cache: Vec<u8>,
-}
-
-#[allow(dead_code)]
-impl Scanner {
-    fn new() -> Scanner {
-        Scanner {
-            ptr: 0,
-            length: 0,
-            buf: vec![0; 1024],
-            small_cache: vec![0; 1024],
-        }
+    let (c1, c2) = (candidates[0], candidates[1]);
+    if count[c2] <= 1 || c1 + 1 != c2 {
+        println!("No");
+        return;
     }
 
-    fn load(&mut self) {
+    let different = count[c1];
+    let same = count[c2];
+    if c2 < different + 1 || different + same / 2 < c2 {
+        println!("No");
+        return;
+    }
+
+    println!("Yes");
+}
+
+pub struct Scanner<R> {
+    stdin: R,
+}
+
+impl<R: std::io::Read> Scanner<R> {
+    pub fn read<T: std::str::FromStr>(&mut self) -> T {
         use std::io::Read;
-        let mut s = std::io::stdin();
-        self.length = s.read(&mut self.buf).unwrap();
+        let buf = self
+            .stdin
+            .by_ref()
+            .bytes()
+            .map(|b| b.unwrap())
+            .skip_while(|&b| b == b' ' || b == b'\n')
+            .take_while(|&b| b != b' ' && b != b'\n')
+            .collect::<Vec<_>>();
+        unsafe { std::str::from_utf8_unchecked(&buf) }
+            .parse()
+            .ok()
+            .expect("Parse error.")
     }
-
-    fn byte(&mut self) -> u8 {
-        if self.ptr >= self.length {
-            self.ptr = 0;
-            self.load();
-            if self.length == 0 {
-                self.buf[0] = b'\n';
-                self.length = 1;
-            }
-        }
-
-        self.ptr += 1;
-        return self.buf[self.ptr - 1];
-    }
-
-    fn is_space(b: u8) -> bool {
-        b == b'\n' || b == b'\r' || b == b'\t' || b == b' '
-    }
-
-    fn read_vec<T>(&mut self, n: usize) -> Vec<T>
-    where
-        T: std::str::FromStr,
-        T::Err: std::fmt::Debug,
-    {
+    pub fn vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
         (0..n).map(|_| self.read()).collect()
     }
-
-    fn usize_read(&mut self) -> usize {
-        self.read()
-    }
-
-    fn read<T>(&mut self) -> T
-    where
-        T: std::str::FromStr,
-        T::Err: std::fmt::Debug,
-    {
-        let mut b = self.byte();
-        while Scanner::is_space(b) {
-            b = self.byte();
-        }
-
-        for pos in 0..self.small_cache.len() {
-            self.small_cache[pos] = b;
-            b = self.byte();
-            if Scanner::is_space(b) {
-                return String::from_utf8_lossy(&self.small_cache[0..(pos + 1)])
-                    .parse()
-                    .unwrap();
-            }
-        }
-
-        let mut v = self.small_cache.clone();
-        while !Scanner::is_space(b) {
-            v.push(b);
-            b = self.byte();
-        }
-        return String::from_utf8_lossy(&v).parse().unwrap();
+    pub fn chars(&mut self) -> Vec<char> {
+        self.read::<String>().chars().collect()
     }
 }

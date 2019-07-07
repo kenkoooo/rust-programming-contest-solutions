@@ -1,74 +1,53 @@
 use self::mod_int::ModInt;
 
-const MOD: usize = 998244353;
+const MOD: usize = 1e9 as usize + 7;
 
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
     let n: usize = sc.read();
-    let a: usize = sc.read();
-    let b: usize = sc.read();
     let k: usize = sc.read();
-
-    let mut candidates = vec![];
-    for a_count in 0..(n + 1) {
-        if k < a_count * a {
-            break;
-        }
-        let b_sum = k - a_count * a;
-        if b_sum % b != 0 || b_sum / b > n {
-            continue;
-        }
-
-        candidates.push((a_count, b_sum / b));
+    let mut tree = vec![vec![]; n];
+    for _ in 1..n {
+        let a = sc.read::<usize>() - 1;
+        let b = sc.read::<usize>() - 1;
+        tree[a].push(b);
+        tree[b].push(a);
     }
 
-    let c = Combination::new(n + 1, MOD);
+    let mut dp = vec![0; n];
+    dp[0] = k;
+    dfs(0, 0, &tree, k, &mut dp);
 
-    let mut ans = ModInt(0);
-    for (a_count, b_count) in candidates.into_iter() {
-        ans += c.get(n, a_count) * c.get(n, b_count);
+    let mut ans = 1;
+    for i in 0..n {
+        ans *= dp[i];
+        ans %= MOD;
     }
-    println!("{}", ans.0);
+    println!("{}", ans);
 }
 
-pub struct Combination {
-    fact: Vec<usize>,
-    inv_fact: Vec<usize>,
-    modulo: usize,
-}
-
-impl Combination {
-    pub fn new(max: usize, modulo: usize) -> Combination {
-        let mut inv = vec![0; max + 1];
-        let mut fact = vec![0; max + 1];
-        let mut inv_fact = vec![0; max + 1];
-        inv[1] = 1;
-        for i in 2..(max + 1) {
-            inv[i] = inv[modulo % i] * (modulo - modulo / i) % modulo;
-        }
-        fact[0] = 1;
-        inv_fact[0] = 1;
-        for i in 0..max {
-            fact[i + 1] = fact[i] * (i + 1) % modulo;
-        }
-        for i in 0..max {
-            inv_fact[i + 1] = inv_fact[i] * inv[i + 1] % modulo;
-        }
-        Combination {
-            fact: fact,
-            inv_fact: inv_fact,
-            modulo: modulo,
-        }
-    }
-
-    pub fn get(&self, x: usize, y: usize) -> ModInt<usize> {
-        assert!(x >= y);
-        ModInt(self.fact[x] * self.inv_fact[y] % self.modulo * self.inv_fact[x - y] % self.modulo)
+fn dfs(v: usize, p: usize, tree: &Vec<Vec<usize>>, k: usize, dp: &mut Vec<usize>) {
+    for (i, &next) in tree[v].iter().filter(|&&next| next != p).enumerate() {
+        dp[next] = if v == p {
+            if k >= 1 + i {
+                k - 1 - i
+            } else {
+                0
+            }
+        } else {
+            if k >= 2 + i {
+                k - 2 - i
+            } else {
+                0
+            }
+        };
+        dfs(next, v, tree, k, dp);
     }
 }
 
 pub mod mod_int {
+
     use super::MOD;
     use std::ops::{Add, AddAssign, Mul, MulAssign, Sub, SubAssign};
 
@@ -180,6 +159,44 @@ pub mod mod_int {
             }
             result
         }
+    }
+}
+
+pub struct Combination {
+    fact: Vec<usize>,
+    inv_fact: Vec<usize>,
+    modulo: usize,
+}
+
+impl Combination {
+    pub fn new(max: usize, modulo: usize) -> Combination {
+        let mut inv = vec![0; max + 1];
+        let mut fact = vec![0; max + 1];
+        let mut inv_fact = vec![0; max + 1];
+        inv[1] = 1;
+        for i in 2..(max + 1) {
+            inv[i] = inv[modulo % i] * (modulo - modulo / i) % modulo;
+        }
+        fact[0] = 1;
+        inv_fact[0] = 1;
+        for i in 0..max {
+            fact[i + 1] = fact[i] * (i + 1) % modulo;
+        }
+        for i in 0..max {
+            inv_fact[i + 1] = inv_fact[i] * inv[i + 1] % modulo;
+        }
+        Combination {
+            fact: fact,
+            inv_fact: inv_fact,
+            modulo: modulo,
+        }
+    }
+
+    pub fn get(&self, x: usize, y: usize) -> ModInt<usize> {
+        assert!(x >= y);
+        let tmp =
+            self.fact[x] * self.inv_fact[y] % self.modulo * self.inv_fact[x - y] % self.modulo;
+        ModInt(tmp)
     }
 }
 

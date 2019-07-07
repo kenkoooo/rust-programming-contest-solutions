@@ -1,37 +1,26 @@
-use std::cmp;
-
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-
     let n: usize = sc.read();
-    let m: usize = sc.read();
-    let a: Vec<Vec<usize>> = (0..n)
-        .map(|_| (0..m).map(|_| sc.read::<usize>() - 1).collect())
-        .collect();
+    let d: usize = sc.read();
+    let x: Vec<Vec<i64>> = (0..n).map(|_| sc.vec(d)).collect();
 
-    let mut ans = n;
-    let mut pos: Vec<usize> = vec![0; n];
-    let mut dead = vec![false; m];
-    for _ in 0..m {
-        let mut count = vec![0; m];
-        for i in 0..n {
-            count[a[i][pos[i]]] += 1;
-        }
-        let (max, max_i) = count
-            .iter()
-            .enumerate()
-            .map(|(i, &c)| (c, i))
-            .max()
-            .unwrap();
-        ans = cmp::min(ans, max);
-        dead[max_i] = true;
-        for i in 0..n {
-            while pos[i] < m && dead[a[i][pos[i]]] {
-                pos[i] += 1;
+    let mut ans = 0;
+    for i in 0..n {
+        for j in 0..i {
+            let mut dist2 = 0;
+            for k in 0..d {
+                let dx = x[i][k] - x[j][k];
+                dist2 += dx * dx;
+            }
+
+            let sq = (dist2 as f64).sqrt() as i64;
+            if sq * sq == dist2 {
+                ans += 1;
             }
         }
     }
+
     println!("{}", ans);
 }
 

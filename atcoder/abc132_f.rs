@@ -1,71 +1,55 @@
-use self::mod_int::ModInt;
+use mod_int::ModInt;
+use std::collections::BTreeSet;
 
-const MOD: usize = 998244353;
+const MOD: usize = 1e9 as usize + 7;
 
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
     let n: usize = sc.read();
-    let a: usize = sc.read();
-    let b: usize = sc.read();
     let k: usize = sc.read();
 
-    let mut candidates = vec![];
-    for a_count in 0..(n + 1) {
-        if k < a_count * a {
+    let mut seg = BTreeSet::new();
+    for i in 1.. {
+        if i * i > n {
             break;
         }
-        let b_sum = k - a_count * a;
-        if b_sum % b != 0 || b_sum / b > n {
-            continue;
-        }
+        let j = i + 1;
+        let m = n / j;
+        let from = m + 1;
+        let to = n / i;
 
-        candidates.push((a_count, b_sum / b));
+        seg.insert((from, to));
+        seg.insert((i, i));
     }
 
-    let c = Combination::new(n + 1, MOD);
+    let seg = seg.into_iter().collect::<Vec<_>>();
+    let n = seg.len();
+    let mut dp = vec![ModInt::new(1); n];
+    for _ in 1..k {
+        let mut sum = vec![ModInt::new(0); n + 1];
+        for i in 0..n {
+            // i -> [0, n-1-i]
+            let (from, to) = seg[i];
+            let tmp = dp[i] * (to - from + 1);
+            sum[n - i] -= tmp;
+            sum[0] += tmp;
+        }
+        let mut next = vec![ModInt::new(0); n];
+        let mut cur = ModInt::new(0);
+        for i in 0..n {
+            cur += sum[i];
+            next[i] = cur;
+        }
+        dp = next;
+    }
 
-    let mut ans = ModInt(0);
-    for (a_count, b_count) in candidates.into_iter() {
-        ans += c.get(n, a_count) * c.get(n, b_count);
+    let mut ans = ModInt::new(0);
+    for i in 0..n {
+        let (from, to) = seg[i];
+        ans += dp[i] * (to - from + 1);
     }
     println!("{}", ans.0);
-}
-
-pub struct Combination {
-    fact: Vec<usize>,
-    inv_fact: Vec<usize>,
-    modulo: usize,
-}
-
-impl Combination {
-    pub fn new(max: usize, modulo: usize) -> Combination {
-        let mut inv = vec![0; max + 1];
-        let mut fact = vec![0; max + 1];
-        let mut inv_fact = vec![0; max + 1];
-        inv[1] = 1;
-        for i in 2..(max + 1) {
-            inv[i] = inv[modulo % i] * (modulo - modulo / i) % modulo;
-        }
-        fact[0] = 1;
-        inv_fact[0] = 1;
-        for i in 0..max {
-            fact[i + 1] = fact[i] * (i + 1) % modulo;
-        }
-        for i in 0..max {
-            inv_fact[i + 1] = inv_fact[i] * inv[i + 1] % modulo;
-        }
-        Combination {
-            fact: fact,
-            inv_fact: inv_fact,
-            modulo: modulo,
-        }
-    }
-
-    pub fn get(&self, x: usize, y: usize) -> ModInt<usize> {
-        assert!(x >= y);
-        ModInt(self.fact[x] * self.inv_fact[y] % self.modulo * self.inv_fact[x - y] % self.modulo)
-    }
 }
 
 pub mod mod_int {
@@ -74,7 +58,7 @@ pub mod mod_int {
 
     type Num = usize;
 
-    #[derive(Clone, Copy)]
+    #[derive(Clone, Copy, Debug)]
     pub struct ModInt<T: Copy + Clone>(pub T);
 
     impl Add<ModInt<Num>> for ModInt<Num> {

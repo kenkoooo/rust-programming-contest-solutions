@@ -1,125 +1,78 @@
 fn main() {
-    let mut sc = Scanner::new();
-    let h = sc.usize_read();
-    let w = sc.usize_read();
-    let sh = sc.usize_read();
-    let sw = sc.usize_read();
-
-    if h % sh == 0 && w % sw == 0 {
+    let s = std::io::stdin();
+    let mut sc = Scanner { stdin: s.lock() };
+    let height: usize = sc.read();
+    let width: usize = sc.read();
+    let h: usize = sc.read();
+    let w: usize = sc.read();
+    if height % h == 0 && width % w == 0 {
         println!("No");
         return;
     }
-
     println!("Yes");
-    if w % sw == 0 {
-        let one = create_one(h, sh);
-        for i in 0..h {
-            for _ in 0..w {
-                print!("{} ", one[i]);
+    if width % w != 0 {
+        let row = construct(w, width);
+        for _ in 0..height {
+            for j in 0..width {
+                print!("{} ", row[j]);
             }
             println!();
         }
     } else {
-        let one = create_one(w, sw);
-        for _ in 0..h {
-            for j in 0..w {
-                print!("{} ", one[j]);
+        let column = construct(h, height);
+        for i in 0..height {
+            for _ in 0..width {
+                print!("{} ", column[i]);
             }
             println!();
         }
     }
 }
 
-fn create_one(w: usize, sw: usize) -> Vec<i64> {
-    let mut sum = vec![1e6 as i64; w + 1];
-    sum[0] = 0;
-    for i in 1..(w + 1) {
-        if i >= sw {
-            sum[i] = sum[i - sw] - 1;
+fn construct(w: usize, width: usize) -> Vec<i64> {
+    let mut sum = vec![0; width + 1];
+    for i in 0..width {
+        if i >= w {
+            sum[i] = sum[i - w] - 1;
         }
     }
-    (0..w).map(|i| sum[i + 1] - sum[i]).collect()
-}
-
-struct Scanner {
-    ptr: usize,
-    length: usize,
-    buf: Vec<u8>,
-    small_cache: Vec<u8>,
-}
-
-#[allow(dead_code)]
-impl Scanner {
-    fn new() -> Scanner {
-        Scanner {
-            ptr: 0,
-            length: 0,
-            buf: vec![0; 1024],
-            small_cache: vec![0; 1024],
-        }
+    sum[width] = 1;
+    let mut cur = width;
+    while cur >= w {
+        cur -= w;
+        sum[cur] = sum[cur + w] + 1;
     }
+    let mut a = vec![0; width];
+    for i in 0..width {
+        a[i] = sum[i + 1] - sum[i];
+    }
+    a
+}
 
-    fn load(&mut self) {
+pub struct Scanner<R> {
+    stdin: R,
+}
+
+impl<R: std::io::Read> Scanner<R> {
+    pub fn read<T: std::str::FromStr>(&mut self) -> T {
         use std::io::Read;
-        let mut s = std::io::stdin();
-        self.length = s.read(&mut self.buf).unwrap();
+        let buf = self
+            .stdin
+            .by_ref()
+            .bytes()
+            .map(|b| b.unwrap())
+            .skip_while(|&b| b == b' ' || b == b'\n')
+            .take_while(|&b| b != b' ' && b != b'\n')
+            .collect::<Vec<_>>();
+        unsafe { std::str::from_utf8_unchecked(&buf) }
+            .parse()
+            .ok()
+            .expect("Parse error.")
     }
-
-    fn byte(&mut self) -> u8 {
-        if self.ptr >= self.length {
-            self.ptr = 0;
-            self.load();
-            if self.length == 0 {
-                self.buf[0] = b'\n';
-                self.length = 1;
-            }
-        }
-
-        self.ptr += 1;
-        return self.buf[self.ptr - 1];
-    }
-
-    fn is_space(b: u8) -> bool {
-        b == b'\n' || b == b'\r' || b == b'\t' || b == b' '
-    }
-
-    fn read_vec<T>(&mut self, n: usize) -> Vec<T>
-    where
-        T: std::str::FromStr,
-        T::Err: std::fmt::Debug,
-    {
+    pub fn vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
         (0..n).map(|_| self.read()).collect()
     }
-
-    fn usize_read(&mut self) -> usize {
-        self.read()
-    }
-
-    fn read<T>(&mut self) -> T
-    where
-        T: std::str::FromStr,
-        T::Err: std::fmt::Debug,
-    {
-        let mut b = self.byte();
-        while Scanner::is_space(b) {
-            b = self.byte();
-        }
-
-        for pos in 0..self.small_cache.len() {
-            self.small_cache[pos] = b;
-            b = self.byte();
-            if Scanner::is_space(b) {
-                return String::from_utf8_lossy(&self.small_cache[0..(pos + 1)])
-                    .parse()
-                    .unwrap();
-            }
-        }
-
-        let mut v = self.small_cache.clone();
-        while !Scanner::is_space(b) {
-            v.push(b);
-            b = self.byte();
-        }
-        return String::from_utf8_lossy(&v).parse().unwrap();
+    pub fn chars(&mut self) -> Vec<char> {
+        self.read::<String>().chars().collect()
     }
 }

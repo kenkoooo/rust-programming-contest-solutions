@@ -1,51 +1,40 @@
 use std::collections::VecDeque;
 
+const INF: u64 = std::u64::MAX / 2;
+
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-
     let n: usize = sc.read();
     let m: usize = sc.read();
     let mut graph = vec![vec![]; n];
     for _ in 0..m {
-        let u = sc.read::<usize>() - 1;
         let v = sc.read::<usize>() - 1;
+        let u = sc.read::<usize>() - 1;
         graph[v].push(u);
-        graph[u].push(v);
     }
+    let s = sc.read::<usize>() - 1;
+    let t = sc.read::<usize>() - 1;
 
-    let q: usize = sc.read();
-    let queries = (0..q)
-        .map(|_| (sc.read::<usize>() - 1, sc.read::<usize>(), sc.read::<u32>()))
-        .collect::<Vec<_>>();
-    let mut color = vec![0; n];
+    let mut dist = vec![vec![INF; n]; 3];
+    dist[0][s] = 0;
 
-    let mut dist = vec![0; n];
-    for (v, d, c) in queries.into_iter().rev() {
-        let mut q = VecDeque::new();
-        if color[v] == 0 {
-            color[v] = c;
+    let mut q = VecDeque::new();
+    q.push_back((s, 0));
+    while let Some((v, step)) = q.pop_front() {
+        if v == t && step == 0 {
+            println!("{}", dist[step][t] / 3);
+            return;
         }
-        q.push_back((v, d));
-        while let Some((v, d)) = q.pop_front() {
-            if d == 0 {
-                continue;
-            }
-            for &next in graph[v].iter() {
-                if color[next] == 0 {
-                    color[next] = c;
-                }
-                if dist[next] < d - 1 {
-                    dist[next] = d - 1;
-                    q.push_back((next, dist[next]));
-                }
+        let next_step = (step + 1) % 3;
+        for &next in graph[v].iter() {
+            if dist[next_step][next] > dist[step][v] + 1 {
+                dist[next_step][next] = dist[step][v] + 1;
+                q.push_back((next, next_step));
             }
         }
     }
-
-    for color in color.into_iter() {
-        println!("{}", color);
-    }
+    println!("-1");
 }
 
 pub struct Scanner<R> {

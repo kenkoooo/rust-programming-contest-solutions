@@ -1,48 +1,46 @@
 use std::cmp;
 
 fn main() {
-    let sc = std::io::stdin();
-    let mut sc = Scanner { reader: sc.lock() };
-    let n: usize = sc.read();
-    let fixed_cost: usize = sc.read();
-    let x: Vec<usize> = sc.read_vec(n);
+    let s = std::io::stdin();
+    let mut sc = Scanner { stdin: s.lock() };
+    let n = sc.read();
+    let x: u64 = sc.read();
+    let v: Vec<u64> = sc.vec(n);
+
     let mut sum = vec![0; n + 1];
     for i in 0..n {
-        sum[i + 1] = sum[i] + x[i];
+        sum[i + 1] = sum[i] + v[i];
     }
 
-    let mut ans = 1e18 as usize;
-    for count in 1..(n + 1) {
-        let mut sub = 0;
-        let mut multiply = 3;
-        let mut head = n;
-        while head > 0 {
-            let tmp = if multiply == 3 { 5 } else { multiply };
-            if head >= count {
-                sub += (sum[head] - sum[head - count]) * tmp;
-                head -= count;
-            } else {
-                sub += (sum[head] - sum[0]) * tmp;
-                head = 0;
+    let mut min = 1e18 as u64;
+    for k in 1..(n + 1) {
+        let mut ans = x * ((n + k) as u64);
+        for a in 0.. {
+            if n < a * k {
+                break;
             }
-            multiply += 2;
+            let sum = if n >= (a + 1) * k {
+                sum[n - a * k] - sum[n - (a + 1) * k]
+            } else {
+                sum[n - a * k]
+            };
+            let m = if a == 0 { 5 } else { 2 * (a + 2) - 1 };
+            ans += sum * (m as u64);
         }
-        sub += count * fixed_cost + n * fixed_cost;
-        ans = cmp::min(ans, sub);
+        min = cmp::min(min, ans);
     }
-
-    println!("{}", ans);
+    println!("{}", min);
 }
 
 pub struct Scanner<R> {
-    reader: R,
+    stdin: R,
 }
 
 impl<R: std::io::Read> Scanner<R> {
     pub fn read<T: std::str::FromStr>(&mut self) -> T {
         use std::io::Read;
         let buf = self
-            .reader
+            .stdin
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
@@ -54,7 +52,7 @@ impl<R: std::io::Read> Scanner<R> {
             .ok()
             .expect("Parse error.")
     }
-    pub fn read_vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
+    pub fn vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
         (0..n).map(|_| self.read()).collect()
     }
     pub fn chars(&mut self) -> Vec<char> {

@@ -1,79 +1,31 @@
-/// Thank you tanakh!!!
-/// https://qiita.com/tanakh/items/0ba42c7ca36cd29d0ac8
-macro_rules! input {
-    (source = $s:expr, $($r:tt)*) => {
-        let mut iter = $s.split_whitespace();
-        input_inner!{iter, $($r)*}
-    };
-    ($($r:tt)*) => {
-        let mut s = {
-            use std::io::Read;
-            let mut s = String::new();
-            std::io::stdin().read_to_string(&mut s).unwrap();
-            s
-        };
-        let mut iter = s.split_whitespace();
-        input_inner!{iter, $($r)*}
-    };
-}
-
-macro_rules! input_inner {
-    ($iter:expr) => {};
-    ($iter:expr, ) => {};
-
-    ($iter:expr, $var:ident : $t:tt $($r:tt)*) => {
-        let $var = read_value!($iter, $t);
-        input_inner!{$iter $($r)*}
-    };
-}
-
-macro_rules! read_value {
-    ($iter:expr, ( $($t:tt),* )) => {
-        ( $(read_value!($iter, $t)),* )
-    };
-
-    ($iter:expr, [ $t:tt ; $len:expr ]) => {
-        (0..$len).map(|_| read_value!($iter, $t)).collect::<Vec<_>>()
-    };
-
-    ($iter:expr, chars) => {
-        read_value!($iter, String).chars().collect::<Vec<char>>()
-    };
-
-    ($iter:expr, usize1) => {
-        read_value!($iter, usize) - 1
-    };
-
-    ($iter:expr, $t:ty) => {
-        $iter.next().unwrap().parse::<$t>().expect("Parse error")
-    };
-}
-
-use self::bitset::*;
-
+use bitset::BitSet;
 fn main() {
-    input!(n: usize, a: [usize; n]);
-    let sum: usize = a.iter().sum();
+    let s = std::io::stdin();
+    let mut sc = Scanner { stdin: s.lock() };
 
-    let mut set = BitSet::new(sum);
-    set.set(0, true);
-    for &a in a.iter() {
-        let next = set.shift_left(a);
-        set.or_assign(next);
+    let n = sc.read();
+    let a: Vec<usize> = sc.vec(n);
+    let mut ok = BitSet::new(2000 * 2000 + 1);
+    ok.set(0, true);
+    for i in 0..n {
+        let mut next = ok.clone();
+        next = next << a[i];
+        ok |= next;
     }
 
+    let sum = a.into_iter().sum::<usize>();
+
     for i in ((sum + 1) / 2).. {
-        if set.get(i) {
+        if ok.get(i) {
             println!("{}", i);
             return;
         }
     }
 }
-
 pub mod bitset {
     use std::ops::{BitOrAssign, Shl};
-    const ONE_VALUE_LENGTH: usize = 60;
-    const MAXIMUM: u64 = (1 << ONE_VALUE_LENGTH) - 1;
+    const ONE_VALUE_LENGTH: usize = 63;
+    const MAXIMUM: u64 = (1u64 << ONE_VALUE_LENGTH as u64) - 1;
 
     pub fn get_bit_position(index: usize) -> (usize, usize) {
         let data_index = index / ONE_VALUE_LENGTH;
@@ -88,7 +40,19 @@ pub mod bitset {
 
     impl BitOrAssign for BitSet {
         fn bitor_assign(&mut self, rhs: Self) {
-            self.or_assign(rhs);
+            if self.data.len() < rhs.data.len() {
+                self.data.resize(rhs.data.len(), 0);
+            }
+            let n = if self.data.len() > rhs.data.len() {
+                rhs.data.len()
+            } else {
+                self.data.len()
+            };
+            for i in 0..n {
+                assert!(self.data[i] <= MAXIMUM);
+                assert!(rhs.data[i] <= MAXIMUM);
+                self.data[i] |= rhs.data[i];
+            }
         }
     }
 
@@ -115,50 +79,29 @@ pub mod bitset {
             let (data_index, bit_index) = get_bit_position(index);
             assert!(self.data.len() > data_index);
             if value {
-                self.data[data_index] |= 1 << bit_index;
+                self.data[data_index] |= (1 << bit_index) as u64;
             } else {
-                let tmp = MAXIMUM ^ (1 << bit_index);
+                let tmp = MAXIMUM ^ (1 << bit_index) as u64;
                 self.data[data_index] &= tmp;
             }
         }
 
         pub fn get(&mut self, index: usize) -> bool {
             let (data_index, bit_index) = get_bit_position(index);
-            assert!(
-                self.data.len() > data_index,
-                "{} {}",
-                self.data.len(),
-                data_index
-            );
-            self.data[data_index] & (1 << bit_index) != 0
-        }
-
-        pub fn or_assign(&mut self, rhs: Self) {
-            if self.data.len() < rhs.data.len() {
-                self.data.resize(rhs.data.len(), 0);
-            }
-            let n = if self.data.len() > rhs.data.len() {
-                rhs.data.len()
-            } else {
-                self.data.len()
-            };
-            for i in 0..n {
-                assert!(self.data[i] <= MAXIMUM);
-                assert!(rhs.data[i] <= MAXIMUM);
-                self.data[i] |= rhs.data[i];
-            }
+            assert!(self.data.len() > data_index);
+            self.data[data_index] & (1u64 << bit_index as u64) != 0
         }
 
         pub fn shift_left(&self, shift: usize) -> Self {
             let mut next_data = Vec::new();
             let prefix_empty_count = shift / ONE_VALUE_LENGTH;
-            let shift_count = shift % ONE_VALUE_LENGTH;
+            let shift_count = (shift % ONE_VALUE_LENGTH) as u64;
             for _ in 0..prefix_empty_count {
                 next_data.push(0);
             }
 
             let mut from_previous = 0;
-            let room = ONE_VALUE_LENGTH - shift_count;
+            let room = ONE_VALUE_LENGTH as u64 - shift_count;
             for &data in self.data.iter() {
                 let overflow = (data >> room) << room;
                 let rest = data - overflow;
@@ -172,5 +115,32 @@ pub mod bitset {
             }
             BitSet { data: next_data }
         }
+    }
+}
+pub struct Scanner<R> {
+    stdin: R,
+}
+
+impl<R: std::io::Read> Scanner<R> {
+    pub fn read<T: std::str::FromStr>(&mut self) -> T {
+        use std::io::Read;
+        let buf = self
+            .stdin
+            .by_ref()
+            .bytes()
+            .map(|b| b.unwrap())
+            .skip_while(|&b| b == b' ' || b == b'\n')
+            .take_while(|&b| b != b' ' && b != b'\n')
+            .collect::<Vec<_>>();
+        unsafe { std::str::from_utf8_unchecked(&buf) }
+            .parse()
+            .ok()
+            .expect("Parse error.")
+    }
+    pub fn vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
+        (0..n).map(|_| self.read()).collect()
+    }
+    pub fn chars(&mut self) -> Vec<char> {
+        self.read::<String>().chars().collect()
     }
 }

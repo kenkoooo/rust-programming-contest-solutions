@@ -1,120 +1,58 @@
-// extern crate rand;
-// use rand::prelude::*;
-use std::cmp;
 fn main() {
-    // test();
-    let mut sc = Scanner::new();
-    let n: usize = sc.read();
-    let a: Vec<i64> = (0..n).map(|_| sc.read()).collect();
-    println!("{}", solve(&a));
-}
+    let s = std::io::stdin();
+    let mut sc = Scanner { stdin: s.lock() };
 
-fn test() {
-    // let mut rng = thread_rng();
-    // let n = 10;
-    // let t = 4;
-    // let mut x = vec![0; n];
-    // for _ in 0..t {
-    //     let i = rng.gen_range(0, n - 1);
-    //     x[i + 1] = x[i] + 1;
-    // }
-    // if solve(&x) > t {
-    //     println!("{:?}", x);
-    //     println!("{}", solve(&x));
-    // }
-}
-
-fn solve(a: &Vec<i64>) -> i64 {
-    let n = a.len();
-
+    let n = sc.read();
+    let a: Vec<u64> = sc.vec(n);
     if a[0] != 0 {
-        return -1;
+        println!("-1");
+        return;
     }
-
     for i in 1..n {
         if a[i] > a[i - 1] + 1 {
-            return -1;
+            println!("-1");
+            return;
         }
     }
 
-    let mut ans = 0;
     let mut cur = 0;
-    for i in (0..n).rev() {
-        if cur < a[i] {
+    let mut ans = 0;
+    for i in (1..n).rev() {
+        if a[i] > cur {
             ans += a[i];
+            cur = a[i];
         }
-        cur = cmp::max(a[i] - 1, 0);
-    }
-
-    return ans;
-}
-
-struct Scanner {
-    ptr: usize,
-    length: usize,
-    buf: Vec<u8>,
-    small_cache: Vec<u8>,
-}
-
-impl Scanner {
-    fn new() -> Scanner {
-        Scanner {
-            ptr: 0,
-            length: 0,
-            buf: vec![0; 1024],
-            small_cache: vec![0; 1024],
+        if cur > 0 {
+            cur -= 1;
         }
     }
+    println!("{}", ans);
+}
 
-    fn load(&mut self) {
+pub struct Scanner<R> {
+    stdin: R,
+}
+
+impl<R: std::io::Read> Scanner<R> {
+    pub fn read<T: std::str::FromStr>(&mut self) -> T {
         use std::io::Read;
-        let mut s = std::io::stdin();
-        self.length = s.read(&mut self.buf).unwrap();
+        let buf = self
+            .stdin
+            .by_ref()
+            .bytes()
+            .map(|b| b.unwrap())
+            .skip_while(|&b| b == b' ' || b == b'\n')
+            .take_while(|&b| b != b' ' && b != b'\n')
+            .collect::<Vec<_>>();
+        unsafe { std::str::from_utf8_unchecked(&buf) }
+            .parse()
+            .ok()
+            .expect("Parse error.")
     }
-
-    fn byte(&mut self) -> u8 {
-        if self.ptr >= self.length {
-            self.ptr = 0;
-            self.load();
-            if self.length == 0 {
-                self.buf[0] = b'\n';
-                self.length = 1;
-            }
-        }
-
-        self.ptr += 1;
-        return self.buf[self.ptr - 1];
+    pub fn vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
+        (0..n).map(|_| self.read()).collect()
     }
-
-    fn is_space(b: u8) -> bool {
-        b == b'\n' || b == b'\r' || b == b'\t' || b == b' '
-    }
-
-    fn read<T>(&mut self) -> T
-    where
-        T: std::str::FromStr,
-        T::Err: std::fmt::Debug,
-    {
-        let mut b = self.byte();
-        while Scanner::is_space(b) {
-            b = self.byte();
-        }
-
-        for pos in 0..self.small_cache.len() {
-            self.small_cache[pos] = b;
-            b = self.byte();
-            if Scanner::is_space(b) {
-                return String::from_utf8_lossy(&self.small_cache[0..(pos + 1)])
-                    .parse()
-                    .unwrap();
-            }
-        }
-
-        let mut v = self.small_cache.clone();
-        while !Scanner::is_space(b) {
-            v.push(b);
-            b = self.byte();
-        }
-        return String::from_utf8_lossy(&v).parse().unwrap();
+    pub fn chars(&mut self) -> Vec<char> {
+        self.read::<String>().chars().collect()
     }
 }

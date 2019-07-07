@@ -1,35 +1,14 @@
-use std::cmp;
-
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-
     let n: usize = sc.read();
-    let m: usize = sc.read();
-    let a: Vec<Vec<usize>> = (0..n)
-        .map(|_| (0..m).map(|_| sc.read::<usize>() - 1).collect())
-        .collect();
-
-    let mut ans = n;
-    let mut pos: Vec<usize> = vec![0; n];
-    let mut dead = vec![false; m];
-    for _ in 0..m {
-        let mut count = vec![0; m];
-        for i in 0..n {
-            count[a[i][pos[i]]] += 1;
-        }
-        let (max, max_i) = count
-            .iter()
-            .enumerate()
-            .map(|(i, &c)| (c, i))
-            .max()
-            .unwrap();
-        ans = cmp::min(ans, max);
-        dead[max_i] = true;
-        for i in 0..n {
-            while pos[i] < m && dead[a[i][pos[i]]] {
-                pos[i] += 1;
-            }
+    let p: Vec<usize> = sc.vec(n);
+    let mut ans = 0;
+    for i in 1..(n - 1) {
+        let mut v = vec![p[i - 1], p[i], p[i + 1]];
+        v.sort();
+        if v[1] == p[i] {
+            ans += 1;
         }
     }
     println!("{}", ans);

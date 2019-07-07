@@ -1,38 +1,25 @@
-use std::cmp;
-
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-
     let n: usize = sc.read();
-    let m: usize = sc.read();
-    let a: Vec<Vec<usize>> = (0..n)
-        .map(|_| (0..m).map(|_| sc.read::<usize>() - 1).collect())
-        .collect();
-
-    let mut ans = n;
-    let mut pos: Vec<usize> = vec![0; n];
-    let mut dead = vec![false; m];
-    for _ in 0..m {
-        let mut count = vec![0; m];
-        for i in 0..n {
-            count[a[i][pos[i]]] += 1;
-        }
-        let (max, max_i) = count
-            .iter()
-            .enumerate()
-            .map(|(i, &c)| (c, i))
-            .max()
-            .unwrap();
-        ans = cmp::min(ans, max);
-        dead[max_i] = true;
-        for i in 0..n {
-            while pos[i] < m && dead[a[i][pos[i]]] {
-                pos[i] += 1;
-            }
+    let a: Vec<u64> = sc.vec(n);
+    let sum: u64 = a.iter().sum();
+    let mut sum = sum / 2;
+    for i in 0..(n - 1) {
+        if i % 2 == 0 {
+            sum -= a[i];
         }
     }
-    println!("{}", ans);
+    let mut ans = vec![0; n];
+    ans[0] = a[n - 1] - sum;
+    for i in 1..n {
+        ans[i] = a[(i + n - 1) % n] - ans[i - 1];
+    }
+
+    for ans in ans.into_iter() {
+        print!("{} ", ans * 2);
+    }
+    println!();
 }
 
 pub struct Scanner<R> {
