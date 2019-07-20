@@ -1,15 +1,41 @@
 use std::collections::BTreeMap;
 
-fn solve(a: &Vec<usize>, color: usize) -> bool {
-    let n = a.len();
-    let mut big = Big {
+fn main() {
+    let s = std::io::stdin();
+    let mut sc = Scanner { stdin: s.lock() };
+    let n = sc.read();
+    let a: Vec<usize> = sc.vec(n);
+
+    if (1..n).all(|i| a[i] > a[i - 1]) {
+        println!("1");
+        return;
+    }
+
+    let mut ok = n;
+    let mut ng = 0;
+    while ok - ng > 1 {
+        let x = (ok + ng) / 2;
+        if solve(&a, x) {
+            ok = x;
+        } else {
+            ng = x;
+        }
+    }
+
+    println!("{}", ok + 1);
+}
+
+fn solve(a: &Vec<usize>, limit: usize) -> bool {
+    let mut state = State {
         map: BTreeMap::new(),
-        color: color,
+        limit: limit,
     };
+
+    let n = a.len();
     let mut start = 0;
     for i in 1..n {
         if a[i] <= a[i - 1] {
-            big.increment(a[i]);
+            state.increment(a[i]);
             start = i + 1;
             break;
         }
@@ -17,8 +43,8 @@ fn solve(a: &Vec<usize>, color: usize) -> bool {
 
     for i in start..n {
         if a[i] <= a[i - 1] {
-            big.resize(a[i]);
-            if !big.increment(a[i]) {
+            state.resize(a[i]);
+            if !state.increment(a[i]) {
                 return false;
             }
         }
@@ -26,58 +52,33 @@ fn solve(a: &Vec<usize>, color: usize) -> bool {
     true
 }
 
-fn main() {
-    let s = std::io::stdin();
-    let mut sc = Scanner { reader: s.lock() };
-    let n: usize = sc.read();
-    let a: Vec<usize> = sc.read_vec(n);
-
-    if (1..n).all(|i| a[i] > a[i - 1]) {
-        println!("1");
-        return;
-    }
-
-    let mut ng = 0;
-    let mut ok = n;
-    while ok - ng > 1 {
-        let mid = (ok + ng) / 2;
-        if solve(&a, mid) {
-            ok = mid;
-        } else {
-            ng = mid;
-        }
-    }
-    println!("{}", ok + 1);
-}
-
-struct Big {
+struct State {
     map: BTreeMap<usize, usize>,
-    color: usize,
+    limit: usize,
 }
 
-impl Big {
-    fn increment(&mut self, index: usize) -> bool {
-        if let Some(&v) = self.map.get(&index) {
-            if v == self.color {
-                self.map.remove(&index);
-                if index == 1 {
+impl State {
+    fn increment(&mut self, i: usize) -> bool {
+        if let Some(&cur) = self.map.get(&i) {
+            if cur == self.limit {
+                self.map.remove(&i);
+                if i == 1 {
                     false
                 } else {
-                    self.increment(index - 1)
+                    self.increment(i - 1)
                 }
             } else {
-                *self.map.get_mut(&index).unwrap() += 1;
+                *self.map.get_mut(&i).unwrap() += 1;
                 true
             }
         } else {
-            self.map.insert(index, 1);
+            self.map.insert(i, 1);
             true
         }
     }
-
-    fn resize(&mut self, s: usize) {
+    fn resize(&mut self, size: usize) {
         while let Some(&key) = self.map.keys().next_back() {
-            if key > s {
+            if key > size {
                 self.map.remove(&key);
             } else {
                 break;
@@ -87,14 +88,14 @@ impl Big {
 }
 
 pub struct Scanner<R> {
-    reader: R,
+    stdin: R,
 }
 
 impl<R: std::io::Read> Scanner<R> {
     pub fn read<T: std::str::FromStr>(&mut self) -> T {
         use std::io::Read;
         let buf = self
-            .reader
+            .stdin
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
@@ -106,7 +107,7 @@ impl<R: std::io::Read> Scanner<R> {
             .ok()
             .expect("Parse error.")
     }
-    pub fn read_vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
+    pub fn vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
         (0..n).map(|_| self.read()).collect()
     }
     pub fn chars(&mut self) -> Vec<char> {

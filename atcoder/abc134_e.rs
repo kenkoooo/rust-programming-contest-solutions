@@ -1,34 +1,22 @@
-use std::cmp;
+const INF: u64 = 1e10 as u64;
 
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-
-    let s = sc
-        .chars()
-        .into_iter()
-        .map(|c| c as usize - 'a' as usize)
-        .collect::<Vec<_>>();
-    let inf = s.len();
-    let mut prefix_dp = vec![inf as u32; 1 << 26];
-
-    let mut cur: usize = 0;
-    for s in s.into_iter() {
-        cur ^= 1 << s;
-        if cur.count_ones() <= 1 {
-            prefix_dp[cur] = 1;
-        } else {
-            let mut min = prefix_dp[cur];
-            for i in 0..26 {
-                let suffix = 1 << i;
-                let prefix = cur ^ suffix;
-                min = cmp::min(min, prefix_dp[prefix] + 1);
-            }
-            prefix_dp[cur] = min;
-        }
+    let n: usize = sc.read();
+    let a: Vec<u64> = sc.vec(n);
+    let mut dp = vec![INF; n];
+    dp[0] = a[n - 1];
+    for a in a.into_iter().rev().skip(1) {
+        let i = dp
+            .binary_search_by_key(&(a * 2 + 1), |&b| b * 2)
+            .err()
+            .unwrap();
+        dp[i] = a;
     }
 
-    println!("{}", prefix_dp[cur]);
+    let ans = dp.into_iter().take_while(|&i| i != INF).count();
+    println!("{}", ans);
 }
 
 pub struct Scanner<R> {

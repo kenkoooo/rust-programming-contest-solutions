@@ -5,44 +5,41 @@ const MOD: usize = 1e9 as usize + 7;
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
+
     let n: usize = sc.read();
     let x: usize = sc.read();
     let mut s: Vec<usize> = sc.vec(n);
     s.sort();
     s.reverse();
-    let mut dp = vec![ModInt::new(0); x + 1];
-    dp[x] = ModInt::new(1);
+
+    let mut dp = vec![ModInt(0); x + 1];
+    dp[x] = ModInt(1);
     for i in 0..n {
         let a = s[i];
-        let p = ModInt::new(n - i).inv();
-        let mut next = vec![ModInt::new(0); x + 1];
+        let p = ModInt(n - i).pow(MOD - 2);
 
+        let mut next = vec![ModInt(0); x + 1];
         for x in 0..(x + 1) {
             next[x % a] += dp[x] * p;
-            next[x] += dp[x] * (ModInt::new(1) - p);
+            next[x] += dp[x] * (ModInt(1) - p);
         }
         dp = next;
     }
-    let mut fact = ModInt::new(1);
-    for i in 1..(n + 1) {
-        fact *= i;
-    }
+    let fact = (1..(n + 1)).fold(ModInt(1), |p, i| p * i);
+    let ans = (0..(x + 1))
+        .map(|x| dp[x] * x * fact)
+        .fold(ModInt(0), |acc, x| acc + x);
 
-    let sum = dp
-        .into_iter()
-        .enumerate()
-        .map(|(i, x)| x * i)
-        .fold(ModInt::new(0), |sum, a| sum + a);
-    println!("{}", (sum * fact).0);
+    println!("{}", ans.0);
 }
 
 pub mod mod_int {
     use super::MOD;
-    use std::ops::{Add, AddAssign, Mul, MulAssign, Sub, SubAssign};
+    use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
     type Num = usize;
 
-    #[derive(Clone, Copy)]
+    #[derive(Clone, Copy, Debug)]
     pub struct ModInt<T: Copy + Clone>(pub T);
 
     impl Add<ModInt<Num>> for ModInt<Num> {
@@ -84,7 +81,6 @@ pub mod mod_int {
             *self = *self + other;
         }
     }
-
     impl AddAssign<ModInt<Num>> for ModInt<Num> {
         fn add_assign(&mut self, other: ModInt<Num>) {
             *self = *self + other;
@@ -103,6 +99,31 @@ pub mod mod_int {
         }
     }
 
+    impl Div<Num> for ModInt<Num> {
+        type Output = ModInt<Num>;
+        fn div(self, rhs: Num) -> ModInt<Num> {
+            self * ModInt(rhs).pow(MOD - 2)
+        }
+    }
+
+    impl Div<ModInt<Num>> for ModInt<Num> {
+        type Output = ModInt<Num>;
+        fn div(self, rhs: ModInt<Num>) -> ModInt<Num> {
+            self / rhs.0
+        }
+    }
+
+    impl DivAssign<Num> for ModInt<Num> {
+        fn div_assign(&mut self, rhs: Num) {
+            *self = *self / rhs
+        }
+    }
+    impl DivAssign<ModInt<Num>> for ModInt<Num> {
+        fn div_assign(&mut self, rhs: ModInt<Num>) {
+            *self = *self / rhs
+        }
+    }
+
     impl Mul<ModInt<Num>> for ModInt<Num> {
         type Output = ModInt<Num>;
 
@@ -110,7 +131,6 @@ pub mod mod_int {
             self * rhs.0
         }
     }
-
     impl Mul<Num> for ModInt<Num> {
         type Output = ModInt<Num>;
 
@@ -133,12 +153,8 @@ pub mod mod_int {
     }
 
     impl ModInt<Num> {
-        pub fn new(value: Num) -> Self {
-            ModInt(value)
-        }
-
         pub fn pow(self, e: usize) -> ModInt<Num> {
-            let mut result = ModInt::new(1);
+            let mut result = ModInt(1);
             let mut cur = self;
             let mut e = e;
             while e > 0 {
@@ -149,10 +165,6 @@ pub mod mod_int {
                 cur *= cur;
             }
             result
-        }
-
-        pub fn inv(self) -> ModInt<usize> {
-            self.pow(MOD - 2)
         }
     }
 }

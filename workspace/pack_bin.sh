@@ -1,7 +1,7 @@
 #!/bin/sh
 
-BIN_FILE_NAME=target/release/${1}
-SH_FILE_NAME=target/release/${1}.sh
+BIN_FILE_NAME=../target/release/${1}
+SH_FILE_NAME=../target/release/${1}.sh
 
 cargo rustc --bin ${1} --release -- -C opt-level=s -C lto -C link-args=-Wl,-x,-S -C panic=abort
 strip ${BIN_FILE_NAME}

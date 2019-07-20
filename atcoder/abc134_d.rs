@@ -1,34 +1,42 @@
-use std::cmp;
-
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-
-    let s = sc
-        .chars()
-        .into_iter()
-        .map(|c| c as usize - 'a' as usize)
-        .collect::<Vec<_>>();
-    let inf = s.len();
-    let mut prefix_dp = vec![inf as u32; 1 << 26];
-
-    let mut cur: usize = 0;
-    for s in s.into_iter() {
-        cur ^= 1 << s;
-        if cur.count_ones() <= 1 {
-            prefix_dp[cur] = 1;
+    let n: usize = sc.read();
+    let a: Vec<usize> = sc.vec(n);
+    let mut b = vec![0; n + 1];
+    for i in (0..n).rev() {
+        let a = a[i];
+        let p = i + 1;
+        let mut cur = p * 2;
+        let mut sum = 0;
+        while cur <= n {
+            sum += b[cur];
+            cur += p;
+        }
+        if sum % 2 == a {
+            b[p] = 0;
+        } else if (sum + 1) % 2 == a {
+            b[p] = 1;
         } else {
-            let mut min = prefix_dp[cur];
-            for i in 0..26 {
-                let suffix = 1 << i;
-                let prefix = cur ^ suffix;
-                min = cmp::min(min, prefix_dp[prefix] + 1);
-            }
-            prefix_dp[cur] = min;
+            println!("-1");
+            return;
         }
     }
 
-    println!("{}", prefix_dp[cur]);
+    let mut ans = vec![];
+    for i in 1..(n + 1) {
+        if b[i] == 1 {
+            ans.push(i);
+        }
+    }
+    println!("{}", ans.len());
+    for (i, ans) in ans.into_iter().enumerate() {
+        if i > 0 {
+            print!(" ");
+        }
+        print!("{}", ans);
+    }
+    println!();
 }
 
 pub struct Scanner<R> {

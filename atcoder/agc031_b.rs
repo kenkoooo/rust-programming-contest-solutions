@@ -1,34 +1,33 @@
-use std::cmp;
+use std::collections::BTreeMap;
+
+const MOD: u64 = 1e9 as u64 + 7;
 
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
 
-    let s = sc
-        .chars()
-        .into_iter()
-        .map(|c| c as usize - 'a' as usize)
-        .collect::<Vec<_>>();
-    let inf = s.len();
-    let mut prefix_dp = vec![inf as u32; 1 << 26];
-
-    let mut cur: usize = 0;
-    for s in s.into_iter() {
-        cur ^= 1 << s;
-        if cur.count_ones() <= 1 {
-            prefix_dp[cur] = 1;
-        } else {
-            let mut min = prefix_dp[cur];
-            for i in 0..26 {
-                let suffix = 1 << i;
-                let prefix = cur ^ suffix;
-                min = cmp::min(min, prefix_dp[prefix] + 1);
-            }
-            prefix_dp[cur] = min;
+    let n = sc.read();
+    let mut a = vec![];
+    for _ in 0..n {
+        let x: usize = sc.read();
+        if a.is_empty() || *a.iter().next_back().unwrap() != x {
+            a.push(x);
         }
     }
 
-    println!("{}", prefix_dp[cur]);
+    let n = a.len();
+    let mut dp = vec![0; n + 1];
+    let mut last = BTreeMap::new();
+    dp[0] = 1;
+    for (i, a) in a.into_iter().enumerate() {
+        dp[i + 1] += dp[i];
+        if let Some(&last) = last.get(&a) {
+            dp[i + 1] += dp[last];
+        }
+        last.insert(a, i + 1);
+        dp[i + 1] %= MOD;
+    }
+    println!("{}", dp[n]);
 }
 
 pub struct Scanner<R> {

@@ -1,34 +1,30 @@
-use std::cmp;
+use std::collections::BTreeMap;
 
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-
-    let s = sc
-        .chars()
-        .into_iter()
-        .map(|c| c as usize - 'a' as usize)
-        .collect::<Vec<_>>();
-    let inf = s.len();
-    let mut prefix_dp = vec![inf as u32; 1 << 26];
-
-    let mut cur: usize = 0;
-    for s in s.into_iter() {
-        cur ^= 1 << s;
-        if cur.count_ones() <= 1 {
-            prefix_dp[cur] = 1;
-        } else {
-            let mut min = prefix_dp[cur];
-            for i in 0..26 {
-                let suffix = 1 << i;
-                let prefix = cur ^ suffix;
-                min = cmp::min(min, prefix_dp[prefix] + 1);
-            }
-            prefix_dp[cur] = min;
-        }
+    let n: usize = sc.read();
+    let a: Vec<usize> = sc.vec(n);
+    let mut map = BTreeMap::new();
+    for &a in a.iter() {
+        *map.entry(a).or_insert(0) += 1;
     }
 
-    println!("{}", prefix_dp[cur]);
+    let mut keys = map.keys().map(|key| *key).collect::<Vec<_>>();
+    keys.sort();
+    let n = keys.len();
+    let max = keys[n - 1];
+    let max_count = *map.get(&max).unwrap();
+
+    for a in a.into_iter() {
+        if max_count > 1 {
+            println!("{}", max);
+        } else if a == max {
+            println!("{}", keys[n - 2]);
+        } else {
+            println!("{}", max);
+        }
+    }
 }
 
 pub struct Scanner<R> {

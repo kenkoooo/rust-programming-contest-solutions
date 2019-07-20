@@ -1,48 +1,41 @@
-use mod_int::ModInt;
+use self::mod_int::ModInt;
 
-const MOD: usize = 1_000_003;
+const MOD: usize = 1e9 as usize + 7;
 
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-    let q: usize = sc.read();
+    let n: usize = sc.read();
+    let k: usize = sc.read();
 
-    let mut fact = vec![ModInt(1); MOD];
-    let mut inv_fact = vec![ModInt(1); MOD];
-    for i in 2..fact.len() {
-        fact[i] = fact[i - 1] * i;
-        inv_fact[i] = inv_fact[i - 1] * ModInt(i).pow(MOD - 2);
+    let mut dp = vec![vec![ModInt(0); k + 1]; n + 1];
+    dp[0][0] = ModInt(1);
+    for i in 0..n {
+        let mut next = vec![vec![ModInt(0); k + 1]; n + 1];
+        for no_pair in 0..(i + 1) {
+            for confirmed in 0..(k + 1) {
+                if confirmed + 2 * no_pair <= k {
+                    next[no_pair][confirmed + 2 * no_pair] +=
+                        dp[no_pair][confirmed] * (2 * no_pair + 1);
+                }
+                if no_pair > 0 && confirmed + 2 * (no_pair - 1) <= k {
+                    next[no_pair - 1][confirmed + 2 * (no_pair - 1)] +=
+                        dp[no_pair][confirmed] * no_pair * no_pair;
+                }
+                if confirmed + 2 * (no_pair + 1) <= k {
+                    next[no_pair + 1][confirmed + 2 * (no_pair + 1)] += dp[no_pair][confirmed];
+                }
+            }
+        }
+        dp = next;
     }
 
-    for _ in 0..q {
-        let x: usize = sc.read();
-        let d: usize = sc.read();
-        let n: usize = sc.read();
-        if d == 0 {
-            println!("{}", ModInt(x).pow(n).0);
-            continue;
-        }
-
-        let x = (ModInt(x) * ModInt(d).inv()).0;
-        if x == 0 {
-            println!("0");
-            continue;
-        }
-
-        let y = x + n - 1;
-        if y / MOD > (x - 1) / MOD {
-            println!("0");
-            continue;
-        }
-
-        let ans = inv_fact[(x - 1) % MOD] * fact[y % MOD] * ModInt(d).pow(n);
-        println!("{}", ans.0);
-    }
+    println!("{}", dp[0][k].0);
 }
 
 pub mod mod_int {
     use super::MOD;
-    use std::ops::{Add, AddAssign, Mul, MulAssign, Sub, SubAssign};
+    use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
     type Num = usize;
 
@@ -106,6 +99,31 @@ pub mod mod_int {
         }
     }
 
+    impl Div<Num> for ModInt<Num> {
+        type Output = ModInt<Num>;
+        fn div(self, rhs: Num) -> ModInt<Num> {
+            self * ModInt(rhs).pow(MOD - 2)
+        }
+    }
+
+    impl Div<ModInt<Num>> for ModInt<Num> {
+        type Output = ModInt<Num>;
+        fn div(self, rhs: ModInt<Num>) -> ModInt<Num> {
+            self / rhs.0
+        }
+    }
+
+    impl DivAssign<Num> for ModInt<Num> {
+        fn div_assign(&mut self, rhs: Num) {
+            *self = *self / rhs
+        }
+    }
+    impl DivAssign<ModInt<Num>> for ModInt<Num> {
+        fn div_assign(&mut self, rhs: ModInt<Num>) {
+            *self = *self / rhs
+        }
+    }
+
     impl Mul<ModInt<Num>> for ModInt<Num> {
         type Output = ModInt<Num>;
 
@@ -135,12 +153,8 @@ pub mod mod_int {
     }
 
     impl ModInt<Num> {
-        pub fn new(value: Num) -> Self {
-            ModInt(value)
-        }
-
         pub fn pow(self, e: usize) -> ModInt<Num> {
-            let mut result = ModInt::new(1);
+            let mut result = ModInt(1);
             let mut cur = self;
             let mut e = e;
             while e > 0 {
@@ -152,13 +166,8 @@ pub mod mod_int {
             }
             result
         }
-
-        pub fn inv(self) -> ModInt<Num> {
-            self.pow(MOD - 2)
-        }
     }
 }
-
 pub struct Scanner<R> {
     stdin: R,
 }

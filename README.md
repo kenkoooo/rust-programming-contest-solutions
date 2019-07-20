@@ -238,6 +238,7 @@
 | [F. Namori Grundy](https://atcoder.jp/contests/arc079/tasks/arc079_d) | [./atcoder/arc079_d.rs](./atcoder/arc079_d.rs) |
 | [B. Hamiltonish Path](https://atcoder.jp/contests/agc013/tasks/agc013_b) | [./atcoder/agc013_b.rs](./atcoder/agc013_b.rs) |
 | [D. Propagating Edges](https://atcoder.jp/contests/soundhound2018-summer-final/tasks/soundhound2018_summer_final_d) | [./atcoder/soundhound2018_summer_final_d.rs](./atcoder/soundhound2018_summer_final_d.rs) |
+| [B. Reversi](https://atcoder.jp/contests/agc031/tasks/agc031_b) | [./atcoder/agc031_b.rs](./atcoder/agc031_b.rs) |
 | [B. Removing Blocks](https://atcoder.jp/contests/agc028/tasks/agc028_b) | [./atcoder/agc028_b.rs](./atcoder/agc028_b.rs) |
 | [D. Patisserie ABC](https://atcoder.jp/contests/abc100/tasks/abc100_d) | [./atcoder/abc100_d.rs](./atcoder/abc100_d.rs) |
 | [C. Palindromic Matrix](https://atcoder.jp/contests/code-festival-2017-quala/tasks/code_festival_2017_quala_c) | [./atcoder/code_festival_2017_quala_c.rs](./atcoder/code_festival_2017_quala_c.rs) |
