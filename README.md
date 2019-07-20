@@ -2,6 +2,7 @@
 | Problem | Solution |
 |:---|:---|
 | [D. Stamp Rally](https://atcoder.jp/contests/agc002/tasks/agc002_d) | [./atcoder/agc002_d.rs](./atcoder/agc002_d.rs) |
+| [C. Skolem XOR Tree](https://atcoder.jp/contests/agc035/tasks/agc035_c) | [./atcoder/agc035_c.rs](./atcoder/agc035_c.rs) |
 | [C. Closed Rooms](https://atcoder.jp/contests/agc014/tasks/agc014_c) | [./atcoder/agc014_c.rs](./atcoder/agc014_c.rs) |
 | [A. Happy Birthday!](https://atcoder.jp/contests/abc100/tasks/abc100_a) | [./atcoder/abc100_a.rs](./atcoder/abc100_a.rs) |
 | [C. Squared Graph](https://atcoder.jp/contests/agc011/tasks/agc011_c) | [./atcoder/agc011_c.rs](./atcoder/agc011_c.rs) |
@@ -10,6 +11,7 @@
 | [D. 11](https://atcoder.jp/contests/abc066/tasks/arc077_b) | [./atcoder/arc077_b.rs](./atcoder/arc077_b.rs) |
 | [C. Skip](https://atcoder.jp/contests/abc109/tasks/abc109_c) | [./atcoder/abc109_c.rs](./atcoder/abc109_c.rs) |
 | [D. 井井井 / ###](https://atcoder.jp/contests/abc058/tasks/arc071_b) | [./atcoder/arc071_b.rs](./atcoder/arc071_b.rs) |
+| [E. Hopscotch Addict](https://atcoder.jp/contests/abc132/tasks/abc132_e) | [./atcoder/abc132_e.rs](./atcoder/abc132_e.rs) |
 | [C. String Coloring](https://atcoder.jp/contests/agc026/tasks/agc026_c) | [./atcoder/agc026_c.rs](./atcoder/agc026_c.rs) |
 | [C. Tree Restoring](https://atcoder.jp/contests/agc005/tasks/agc005_c) | [./atcoder/agc005_c.rs](./atcoder/agc005_c.rs) |
 | [E. Cell Distance](https://atcoder.jp/contests/abc127/tasks/abc127_e) | [./atcoder/abc127_e.rs](./atcoder/abc127_e.rs) |
@@ -25,6 +27,7 @@
 | [D. Xor Sum](https://atcoder.jp/contests/arc066/tasks/arc066_b) | [./atcoder/arc066_b.rs](./atcoder/arc066_b.rs) |
 | [D. Transit Tree Path](https://atcoder.jp/contests/abc070/tasks/abc070_d) | [./atcoder/abc070_d.rs](./atcoder/abc070_d.rs) |
 | [A. Changing a Character](https://atcoder.jp/contests/abc126/tasks/abc126_a) | [./atcoder/abc126_a.rs](./atcoder/abc126_a.rs) |
+| [A. Rounding](https://atcoder.jp/contests/abc130/tasks/abc130_a) | [./atcoder/abc130_a.rs](./atcoder/abc130_a.rs) |
 | [D. Equal Cut](https://atcoder.jp/contests/arc100/tasks/arc100_b) | [./atcoder/arc100_b.rs](./atcoder/arc100_b.rs) |
 | [C. Sequence Growing Easy](https://atcoder.jp/contests/agc024/tasks/agc024_c) | [./atcoder/agc024_c.rs](./atcoder/agc024_c.rs) |
 | [D. Yet Another Palindrome Partitioning](https://atcoder.jp/contests/code-festival-2017-qualc/tasks/code_festival_2017_qualc_d) | [./atcoder/code_festival_2017_qualc_d.rs](./atcoder/code_festival_2017_qualc_d.rs) |
@@ -48,6 +51,7 @@
 | [C. すぬけそだて――ごはん――](https://atcoder.jp/contests/colopl2018-qual/tasks/colopl2018_qual_c) | [./atcoder/colopl2018_qual_c.rs](./atcoder/colopl2018_qual_c.rs) |
 | [E. Connected?](https://atcoder.jp/contests/arc076/tasks/arc076_c) | [./atcoder/arc076_c.rs](./atcoder/arc076_c.rs) |
 | [C. *3 or /2](https://atcoder.jp/contests/abc100/tasks/abc100_c) | [./atcoder/abc100_c.rs](./atcoder/abc100_c.rs) |
+| [B. Ordinary Number](https://atcoder.jp/contests/abc132/tasks/abc132_b) | [./atcoder/abc132_b.rs](./atcoder/abc132_b.rs) |
 | [C. Interval Game](https://atcoder.jp/contests/agc025/tasks/agc025_c) | [./atcoder/agc025_c.rs](./atcoder/agc025_c.rs) |
 | [R. Walk](https://atcoder.jp/contests/dp/tasks/dp_r) | [./atcoder/dp_r.rs](./atcoder/dp_r.rs) |
 | [C. Synthetic Kadomatsu](https://atcoder.jp/contests/abc119/tasks/abc119_c) | [./atcoder/abc119_c.rs](./atcoder/abc119_c.rs) |
@@ -102,6 +106,7 @@
 | [B. Sumo](https://atcoder.jp/contests/m-solutions2019/tasks/m_solutions2019_b) | [./atcoder/m_solutions2019_b.rs](./atcoder/m_solutions2019_b.rs) |
 | [B. Backfront](https://atcoder.jp/contests/agc024/tasks/agc024_b) | [./atcoder/agc024_b.rs](./atcoder/agc024_b.rs) |
 | [D. Remainder Reminder](https://atcoder.jp/contests/arc091/tasks/arc091_b) | [./atcoder/arc091_b.rs](./atcoder/arc091_b.rs) |
+| [C. Rectangle Cutting](https://atcoder.jp/contests/abc130/tasks/abc130_c) | [./atcoder/abc130_c.rs](./atcoder/abc130_c.rs) |
 | [E. Prefix-free Game](https://atcoder.jp/contests/arc087/tasks/arc087_c) | [./atcoder/arc087_c.rs](./atcoder/arc087_c.rs) |
 | [B. GCD Sequence](https://atcoder.jp/contests/agc022/tasks/agc022_b) | [./atcoder/agc022_b.rs](./atcoder/agc022_b.rs) |
 | [B. Inscribed Bicycle](https://atcoder.jp/contests/cf16-exhibition-final-open/tasks/cf16_exhibition_final_b) | [./atcoder/cf16_exhibition_final_b.rs](./atcoder/cf16_exhibition_final_b.rs) |
@@ -116,9 +121,11 @@
 | [B. みかん](https://atcoder.jp/contests/code-festival-2018-quala/tasks/code_festival_2018_quala_b) | [./atcoder/code_festival_2018_quala_b.rs](./atcoder/code_festival_2018_quala_b.rs) |
 | [C. AND Grid](https://atcoder.jp/contests/agc004/tasks/agc004_c) | [./atcoder/agc004_c.rs](./atcoder/agc004_c.rs) |
 | [D. IntegerotS](https://atcoder.jp/contests/tenka1-2017/tasks/tenka1_2017_d) | [./atcoder/tenka1_2017_d.rs](./atcoder/tenka1_2017_d.rs) |
+| [D. Blue and Red Balls](https://atcoder.jp/contests/abc132/tasks/abc132_d) | [./atcoder/abc132_d.rs](./atcoder/abc132_d.rs) |
 | [D. 3N Numbers](https://atcoder.jp/contests/arc074/tasks/arc074_b) | [./atcoder/arc074_b.rs](./atcoder/arc074_b.rs) |
 | [A. Darker and Darker](https://atcoder.jp/contests/agc033/tasks/agc033_a) | [./atcoder/agc033_a.rs](./atcoder/agc033_a.rs) |
 | [E. GraphXY](https://atcoder.jp/contests/arc089/tasks/arc089_c) | [./atcoder/arc089_c.rs](./atcoder/arc089_c.rs) |
+| [F. Small Products](https://atcoder.jp/contests/abc132/tasks/abc132_f) | [./atcoder/abc132_f.rs](./atcoder/abc132_f.rs) |
 | [A. Fairness](https://atcoder.jp/contests/agc024/tasks/agc024_a) | [./atcoder/agc024_a.rs](./atcoder/agc024_a.rs) |
 | [C. Dice and Coin](https://atcoder.jp/contests/abc126/tasks/abc126_c) | [./atcoder/abc126_c.rs](./atcoder/abc126_c.rs) |
 | [C. Knot Puzzle](https://atcoder.jp/contests/agc002/tasks/agc002_c) | [./atcoder/agc002_c.rs](./atcoder/agc002_c.rs) |
@@ -131,6 +138,7 @@
 | [C. Snuke the Wizard](https://atcoder.jp/contests/exawizards2019/tasks/exawizards2019_c) | [./atcoder/exawizards2019_c.rs](./atcoder/exawizards2019_c.rs) |
 | [F. Limited Xor Subset](https://atcoder.jp/contests/code-thanks-festival-2017-open/tasks/code_thanks_festival_2017_f) | [./atcoder/code_thanks_festival_2017_f.rs](./atcoder/code_thanks_festival_2017_f.rs) |
 | [D. Axis-Parallel Rectangle](https://atcoder.jp/contests/abc075/tasks/abc075_d) | [./atcoder/abc075_d.rs](./atcoder/abc075_d.rs) |
+| [C. Remainder Minimization 2019](https://atcoder.jp/contests/abc133/tasks/abc133_c) | [./atcoder/abc133_c.rs](./atcoder/abc133_c.rs) |
 | [E. Both Sides Merger](https://atcoder.jp/contests/arc092/tasks/arc092_c) | [./atcoder/arc092_c.rs](./atcoder/arc092_c.rs) |
 | [E. 高橋君とホテル / Tak and Hotels](https://atcoder.jp/contests/arc060/tasks/arc060_c) | [./atcoder/arc060_c.rs](./atcoder/arc060_c.rs) |
 | [D. Non-decreasing](https://atcoder.jp/contests/arc086/tasks/arc086_b) | [./atcoder/arc086_b.rs](./atcoder/arc086_b.rs) |
@@ -139,6 +147,7 @@
 | [F. Flip and Rectangles](https://atcoder.jp/contests/arc081/tasks/arc081_d) | [./atcoder/arc081_d.rs](./atcoder/arc081_d.rs) |
 | [C. Cheating Nim](https://atcoder.jp/contests/cf16-exhibition-final-open/tasks/cf16_exhibition_final_c) | [./atcoder/cf16_exhibition_final_c.rs](./atcoder/cf16_exhibition_final_c.rs) |
 | [C. Nuske vs Phantom Thnook](https://atcoder.jp/contests/agc015/tasks/agc015_c) | [./atcoder/agc015_c.rs](./atcoder/agc015_c.rs) |
+| [D. Rain Flows into Dams](https://atcoder.jp/contests/abc133/tasks/abc133_d) | [./atcoder/abc133_d.rs](./atcoder/abc133_d.rs) |
 | [E. LISDL](https://atcoder.jp/contests/arc091/tasks/arc091_c) | [./atcoder/arc091_c.rs](./atcoder/arc091_c.rs) |
 | [D. Choosing Points](https://atcoder.jp/contests/agc025/tasks/agc025_d) | [./atcoder/agc025_d.rs](./atcoder/agc025_d.rs) |
 | [C. 徒歩圏内](https://atcoder.jp/contests/bitflyer2018-qual/tasks/bitflyer2018_qual_c) | [./atcoder/bitflyer2018_qual_c.rs](./atcoder/bitflyer2018_qual_c.rs) |
@@ -146,6 +155,7 @@
 | [E. 木と整数 / Integers on a Tree](https://atcoder.jp/contests/arc063/tasks/arc063_c) | [./atcoder/arc063_c.rs](./atcoder/arc063_c.rs) |
 | [D. Alice&Brown](https://atcoder.jp/contests/abc059/tasks/arc072_b) | [./atcoder/arc072_b.rs](./atcoder/arc072_b.rs) |
 | [D. Simple Knapsack](https://atcoder.jp/contests/arc073/tasks/arc073_b) | [./atcoder/arc073_b.rs](./atcoder/arc073_b.rs) |
+| [E. Virus Tree 2](https://atcoder.jp/contests/abc133/tasks/abc133_e) | [./atcoder/abc133_e.rs](./atcoder/abc133_e.rs) |
 | [D. Candy Distribution](https://atcoder.jp/contests/abc105/tasks/abc105_d) | [./atcoder/abc105_d.rs](./atcoder/abc105_d.rs) |
 | [D. Zabuton](https://atcoder.jp/contests/cf17-final/tasks/cf17_final_d) | [./atcoder/cf17_final_d.rs](./atcoder/cf17_final_d.rs) |
 | [D. Walk and Teleport](https://atcoder.jp/contests/arc067/tasks/arc067_b) | [./atcoder/arc067_b.rs](./atcoder/arc067_b.rs) |
@@ -154,6 +164,7 @@
 | [D. Arrays and Palindrome](https://atcoder.jp/contests/agc001/tasks/agc001_d) | [./atcoder/agc001_d.rs](./atcoder/agc001_d.rs) |
 | [D. Maximum Average Sets](https://atcoder.jp/contests/abc057/tasks/abc057_d) | [./atcoder/abc057_d.rs](./atcoder/abc057_d.rs) |
 | [C. 3 Steps](https://atcoder.jp/contests/code-festival-2017-qualb/tasks/code_festival_2017_qualb_c) | [./atcoder/code_festival_2017_qualb_c.rs](./atcoder/code_festival_2017_qualb_c.rs) |
+| [A. T or T](https://atcoder.jp/contests/abc133/tasks/abc133_a) | [./atcoder/abc133_a.rs](./atcoder/abc133_a.rs) |
 | [E. Sorted and Sorted](https://atcoder.jp/contests/arc097/tasks/arc097_c) | [./atcoder/arc097_c.rs](./atcoder/arc097_c.rs) |
 | [C. 駆引取引](https://atcoder.jp/contests/yahoo-procon2018-qual/tasks/yahoo_procon2018_qual_c) | [./atcoder/yahoo_procon2018_qual_c.rs](./atcoder/yahoo_procon2018_qual_c.rs) |
 | [E. 狼と狐](https://atcoder.jp/contests/cf18-relay-open/tasks/relay2018_e) | [./atcoder/relay2018_e.rs](./atcoder/relay2018_e.rs) |
@@ -166,7 +177,9 @@
 | [D. Pair Cards](https://atcoder.jp/contests/cf16-final/tasks/codefestival_2016_final_d) | [./atcoder/codefestival_2016_final_d.rs](./atcoder/codefestival_2016_final_d.rs) |
 | [C. Ordinary Beauty](https://atcoder.jp/contests/soundhound2018-summer-qual/tasks/soundhound2018_summer_qual_c) | [./atcoder/soundhound2018_summer_qual_c.rs](./atcoder/soundhound2018_summer_qual_c.rs) |
 | [C. Traveling](https://atcoder.jp/contests/abc086/tasks/arc089_a) | [./atcoder/arc089_a.rs](./atcoder/arc089_a.rs) |
+| [B. Good Distance](https://atcoder.jp/contests/abc133/tasks/abc133_b) | [./atcoder/abc133_b.rs](./atcoder/abc133_b.rs) |
 | [B. GCDロボット](https://atcoder.jp/contests/ddcc2017-final/tasks/ddcc2017_final_b) | [./atcoder/ddcc2017_final_b.rs](./atcoder/ddcc2017_final_b.rs) |
+| [E. Common Subsequence](https://atcoder.jp/contests/abc130/tasks/abc130_e) | [./atcoder/abc130_e.rs](./atcoder/abc130_e.rs) |
 | [B. Garbage Collector](https://atcoder.jp/contests/agc027/tasks/agc027_b) | [./atcoder/agc027_b.rs](./atcoder/agc027_b.rs) |
 | [B. Algae](https://atcoder.jp/contests/abc127/tasks/abc127_b) | [./atcoder/abc127_b.rs](./atcoder/abc127_b.rs) |
 | [D. 101 to 010](https://atcoder.jp/contests/code-festival-2017-qualb/tasks/code_festival_2017_qualb_d) | [./atcoder/code_festival_2017_qualb_d.rs](./atcoder/code_festival_2017_qualb_d.rs) |
@@ -187,6 +200,7 @@
 | [C. Shorten Diameter](https://atcoder.jp/contests/agc001/tasks/agc001_c) | [./atcoder/agc001_c.rs](./atcoder/agc001_c.rs) |
 | [B. LRUD Game](https://atcoder.jp/contests/agc033/tasks/agc033_b) | [./atcoder/agc033_b.rs](./atcoder/agc033_b.rs) |
 | [D. Wall](https://atcoder.jp/contests/abc079/tasks/abc079_d) | [./atcoder/abc079_d.rs](./atcoder/abc079_d.rs) |
+| [F. Minimum Bounding Box](https://atcoder.jp/contests/abc130/tasks/abc130_f) | [./atcoder/abc130_f.rs](./atcoder/abc130_f.rs) |
 | [D. Factorization](https://atcoder.jp/contests/abc110/tasks/abc110_d) | [./atcoder/abc110_d.rs](./atcoder/abc110_d.rs) |
 | [B. Mysterious Light](https://atcoder.jp/contests/agc001/tasks/agc001_b) | [./atcoder/agc001_b.rs](./atcoder/agc001_b.rs) |
 | [D. Xor Sum 2](https://atcoder.jp/contests/arc098/tasks/arc098_b) | [./atcoder/arc098_b.rs](./atcoder/arc098_b.rs) |
@@ -213,6 +227,7 @@
 | [B. Ice Rink Game](https://atcoder.jp/contests/agc020/tasks/agc020_b) | [./atcoder/agc020_b.rs](./atcoder/agc020_b.rs) |
 | [C. Lexicographic constraints](https://atcoder.jp/contests/agc029/tasks/agc029_c) | [./atcoder/agc029_c.rs](./atcoder/agc029_c.rs) |
 | [C. Differ by 1 Bit](https://atcoder.jp/contests/agc031/tasks/agc031_c) | [./atcoder/agc031_c.rs](./atcoder/agc031_c.rs) |
+| [D. Enough Array](https://atcoder.jp/contests/abc130/tasks/abc130_d) | [./atcoder/abc130_d.rs](./atcoder/abc130_d.rs) |
 | [B. Guidebook](https://atcoder.jp/contests/abc128/tasks/abc128_b) | [./atcoder/abc128_b.rs](./atcoder/abc128_b.rs) |
 | [E. Frequency](https://atcoder.jp/contests/arc069/tasks/arc069_c) | [./atcoder/arc069_c.rs](./atcoder/arc069_c.rs) |
 | [B. 1 Dimensional World's Tale](https://atcoder.jp/contests/abc110/tasks/abc110_b) | [./atcoder/abc110_b.rs](./atcoder/abc110_b.rs) |
@@ -227,6 +242,7 @@
 | [F. Lotus Leaves](https://atcoder.jp/contests/arc074/tasks/arc074_d) | [./atcoder/arc074_d.rs](./atcoder/arc074_d.rs) |
 | [D. FT Robot](https://atcoder.jp/contests/abc082/tasks/arc087_b) | [./atcoder/arc087_b.rs](./atcoder/arc087_b.rs) |
 | [B. Ringo's Favorite Numbers](https://atcoder.jp/contests/abc100/tasks/abc100_b) | [./atcoder/abc100_b.rs](./atcoder/abc100_b.rs) |
+| [F. Colorful Tree](https://atcoder.jp/contests/abc133/tasks/abc133_f) | [./atcoder/abc133_f.rs](./atcoder/abc133_f.rs) |
 | [D. AtCoder Express 2](https://atcoder.jp/contests/abc106/tasks/abc106_d) | [./atcoder/abc106_d.rs](./atcoder/abc106_d.rs) |
 | [F. Pass](https://atcoder.jp/contests/yahoo-procon2019-qual/tasks/yahoo_procon2019_qual_f) | [./atcoder/yahoo_procon2019_qual_f.rs](./atcoder/yahoo_procon2019_qual_f.rs) |
 | [C. Coins](https://atcoder.jp/contests/agc018/tasks/agc018_c) | [./atcoder/agc018_c.rs](./atcoder/agc018_c.rs) |
@@ -239,6 +255,7 @@
 | [B. Hamiltonish Path](https://atcoder.jp/contests/agc013/tasks/agc013_b) | [./atcoder/agc013_b.rs](./atcoder/agc013_b.rs) |
 | [D. Propagating Edges](https://atcoder.jp/contests/soundhound2018-summer-final/tasks/soundhound2018_summer_final_d) | [./atcoder/soundhound2018_summer_final_d.rs](./atcoder/soundhound2018_summer_final_d.rs) |
 | [B. Reversi](https://atcoder.jp/contests/agc031/tasks/agc031_b) | [./atcoder/agc031_b.rs](./atcoder/agc031_b.rs) |
+| [B. Bounding](https://atcoder.jp/contests/abc130/tasks/abc130_b) | [./atcoder/abc130_b.rs](./atcoder/abc130_b.rs) |
 | [B. Removing Blocks](https://atcoder.jp/contests/agc028/tasks/agc028_b) | [./atcoder/agc028_b.rs](./atcoder/agc028_b.rs) |
 | [D. Patisserie ABC](https://atcoder.jp/contests/abc100/tasks/abc100_d) | [./atcoder/abc100_d.rs](./atcoder/abc100_d.rs) |
 | [C. Palindromic Matrix](https://atcoder.jp/contests/code-festival-2017-quala/tasks/code_festival_2017_quala_c) | [./atcoder/code_festival_2017_quala_c.rs](./atcoder/code_festival_2017_quala_c.rs) |
@@ -280,9 +297,12 @@
 | [A. Already 2018](https://atcoder.jp/contests/abc085/tasks/abc085_a) | [./atcoder/abc085_a.rs](./atcoder/abc085_a.rs) |
 | [D. 建物](https://atcoder.jp/contests/soundhound2018/tasks/soundhound2018_d) | [./atcoder/soundhound2018_d.rs](./atcoder/soundhound2018_d.rs) |
 | [D. Crossing](https://atcoder.jp/contests/tenka1-2018-beginner/tasks/tenka1_2018_d) | [./atcoder/tenka1_2018_d.rs](./atcoder/tenka1_2018_d.rs) |
+| [A. Fifty-Fifty](https://atcoder.jp/contests/abc132/tasks/abc132_a) | [./atcoder/abc132_a.rs](./atcoder/abc132_a.rs) |
 | [D. Fennec VS. Snuke](https://atcoder.jp/contests/abc067/tasks/arc078_b) | [./atcoder/arc078_b.rs](./atcoder/arc078_b.rs) |
+| [C. Divide the Problems](https://atcoder.jp/contests/abc132/tasks/abc132_c) | [./atcoder/abc132_c.rs](./atcoder/abc132_c.rs) |
 | [A. 1D Matching](https://atcoder.jp/contests/cf16-exhibition-final-open/tasks/cf16_exhibition_final_a) | [./atcoder/cf16_exhibition_final_a.rs](./atcoder/cf16_exhibition_final_a.rs) |
 | [D. Grid Repainting](https://atcoder.jp/contests/abc088/tasks/abc088_d) | [./atcoder/abc088_d.rs](./atcoder/abc088_d.rs) |
+| [A. XOR Circle](https://atcoder.jp/contests/agc035/tasks/agc035_a) | [./atcoder/agc035_a.rs](./atcoder/agc035_a.rs) |
 | [B. せんべい](https://atcoder.jp/contests/arc055/tasks/arc055_b) | [./atcoder/arc055_b.rs](./atcoder/arc055_b.rs) |
 | [C. Inserting 'x'](https://atcoder.jp/contests/code-festival-2017-qualc/tasks/code_festival_2017_qualc_c) | [./atcoder/code_festival_2017_qualc_c.rs](./atcoder/code_festival_2017_qualc_c.rs) |
 | [D. Wide Flip](https://atcoder.jp/contests/arc088/tasks/arc088_b) | [./atcoder/arc088_b.rs](./atcoder/arc088_b.rs) |
