@@ -1,11 +1,21 @@
-const MOD: usize = 998244353;
-
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
 
-    let k: usize = sc.read();
     let n: usize = sc.read();
+    let k: u32 = sc.read();
+    let a: Vec<u32> = sc.vec(n);
+    let mut ans: Option<usize> = None;
+    for i in 0..n {
+        if a[i] < k {
+            ans = ans.or(Some(i)).map(|j| if a[i] > a[j] { i } else { j });
+        }
+    }
+
+    match ans {
+        Some(i) => println!("{}", i + 1),
+        None => println!("-1"),
+    }
 }
 
 pub struct Scanner<R> {

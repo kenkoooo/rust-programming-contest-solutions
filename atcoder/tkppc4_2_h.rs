@@ -1,11 +1,22 @@
-const MOD: usize = 998244353;
-
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-
+    let n = sc.read();
     let k: usize = sc.read();
-    let n: usize = sc.read();
+    let mut a: Vec<u64> = sc.vec(n);
+    a.sort();
+    // p/(1-p)^2
+
+    let mut ans = 0.0;
+    for i in 0..k {
+        let from = a[i] as f64;
+        let to = a[n - k + i] as f64;
+        let p = from / (from + to);
+        let q = to / (from + to);
+        let sum = q / (1.0 - p) / (1.0 - p);
+        ans += sum;
+    }
+    println!("{}", ans);
 }
 
 pub struct Scanner<R> {

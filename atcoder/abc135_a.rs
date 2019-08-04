@@ -1,11 +1,14 @@
-const MOD: usize = 998244353;
-
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-
-    let k: usize = sc.read();
-    let n: usize = sc.read();
+    let a: i64 = sc.read();
+    let b: i64 = sc.read();
+    let x = (a + b) / 2;
+    if (a - x).abs() == (b - x).abs() {
+        println!("{}", x);
+    } else {
+        println!("IMPOSSIBLE");
+    }
 }
 
 pub struct Scanner<R> {

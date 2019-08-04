@@ -1,43 +1,45 @@
-const WIDTH: usize = 32;
+const MOD: usize = 1e9 as usize + 7;
 
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
 
     let n = sc.read();
-    let x: Vec<u64> = sc.vec(n);
-    let l = sc.read();
-    let mut go = vec![vec![0; n]; WIDTH];
+    let m = sc.read();
+    let mut a: Vec<u64> = sc.vec(n);
+    let mut b: Vec<u64> = sc.vec(m);
+    a.sort();
+    b.sort();
 
-    let mut tail = 0;
-    for head in 0..n {
-        while tail < n && (head > tail || x[tail] - x[head] <= l) {
-            tail += 1;
+    let mut r_candidates = vec![0; n];
+    let mut b_pos = 0;
+    for i in 0..n {
+        while b_pos < m && b[b_pos] < a[i] {
+            b_pos += 1;
         }
-        go[0][head] = tail - 1;
+        assert!(b_pos == m || b[b_pos] >= a[i]);
+        r_candidates[i] = b_pos;
     }
 
-    for t in 1..WIDTH {
-        for i in 0..n {
-            go[t][i] = go[t - 1][go[t - 1][i]];
+    let mut s_candidates = vec![0; n];
+    let mut b_pos = 0;
+    for i in (0..n).rev() {
+        while b_pos < m && a[i] < b[m - 1 - b_pos] {
+            b_pos += 1;
         }
+        assert!(b_pos == m || b[m - 1 - b_pos] <= a[i]);
+        s_candidates[i] = b_pos;
     }
 
-    let q: usize = sc.read();
-    for _ in 0..q {
-        let a = sc.read::<usize>() - 1;
-        let b = sc.read::<usize>() - 1;
-        let (mut a, b) = if a > b { (b, a) } else { (a, b) };
-        let mut ng = 0;
-        for i in (0..WIDTH).rev() {
-            let cost = 1 << i;
-            if go[i][a] < b {
-                ng += cost;
-                a = go[i][a];
-            }
-        }
-        println!("{}", ng + 1);
+    let mut r_sum = r_candidates[0];
+    let mut ans = 0;
+    for q in 1..n {
+        ans += r_sum * s_candidates[q];
+        ans %= MOD;
+        r_sum += r_candidates[q];
+        r_sum %= MOD;
     }
+    println!("{}", ans);
 }
 
 pub struct Scanner<R> {

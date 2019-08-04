@@ -1,11 +1,14 @@
-const MOD: usize = 998244353;
-
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-
-    let k: usize = sc.read();
-    let n: usize = sc.read();
+    let n: u64 = sc.read();
+    let mut ans = 0;
+    for i in 1..(n + 1) {
+        if 1 <= i && i <= 9 || 100 <= i && i <= 999 || 10000 <= i && i <= 99999 {
+            ans += 1;
+        }
+    }
+    println!("{}", ans);
 }
 
 pub struct Scanner<R> {

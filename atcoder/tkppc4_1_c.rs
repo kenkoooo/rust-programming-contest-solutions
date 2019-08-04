@@ -1,11 +1,20 @@
-const MOD: usize = 998244353;
-
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-
-    let k: usize = sc.read();
-    let n: usize = sc.read();
+    let n: u64 = sc.read();
+    let x: Vec<u64> = sc
+        .read::<String>()
+        .chars()
+        .map(|c| c as u64 - '0' as u64)
+        .collect();
+    let max = *x.iter().max().unwrap();
+    for m in (max + 1)..11 {
+        let sum = x.iter().fold(0, |sum, &x| sum * m + x);
+        if sum == n {
+            println!("{}", m);
+            return;
+        }
+    }
 }
 
 pub struct Scanner<R> {

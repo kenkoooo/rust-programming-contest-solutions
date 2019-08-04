@@ -1,11 +1,38 @@
-const MOD: usize = 998244353;
-
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
 
-    let k: usize = sc.read();
     let n: usize = sc.read();
+    let mut pairs = vec![];
+    if n % 2 == 0 {
+        for i in 0..(n / 2) {
+            pairs.push(vec![i + 1, n - i]);
+        }
+    } else {
+        for i in 0..(n / 2 + 1) {
+            pairs.push(vec![i, n - i]);
+        }
+    }
+
+    let m = pairs.len();
+    let mut edges = vec![];
+    for i in 0..m {
+        for j in 0..i {
+            for &from in pairs[i].iter() {
+                for &to in pairs[j].iter() {
+                    if from == 0 || to == 0 {
+                        continue;
+                    }
+                    edges.push((from, to));
+                }
+            }
+        }
+    }
+
+    println!("{}", edges.len());
+    for (a, b) in edges.into_iter() {
+        println!("{} {}", a, b);
+    }
 }
 
 pub struct Scanner<R> {

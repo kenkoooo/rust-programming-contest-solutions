@@ -1,104 +1,80 @@
-use self::mod_int::ModInt;
+use mod_int::ModInt;
+use std::collections::{BTreeMap, BTreeSet};
 
-const MOD: usize = 1_000_000_007;
+const MOD: usize = 998244353;
 
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-
     let n: usize = sc.read();
-    let x: u64 = sc.read();
-    let y: u64 = sc.read();
-    let z: u64 = sc.read();
-    let sum = (x + y + z) as usize;
-    let mut dp = vec![ModInt(0); 1 << sum];
-    dp[0] = ModInt(1);
+    let mut x = vec![];
+    let mut y = vec![];
     for _ in 0..n {
-        let mut next = vec![ModInt(0); 1 << sum];
-        for mask in 0..(1 << sum) {
-            if dp[mask].0 == 0 {
-                continue;
-            }
-
-            let sum = sum_of(mask as u64);
-            for add in 1..11 {
-                let mut next_mask = mask as u64;
-                push_back(&mut next_mask, add);
-                if contains_xyz(next_mask, x, y, z) {
-                    continue;
-                }
-
-                let mut sum = sum + add;
-                while sum > x + y + z {
-                    let removed = pop_front(&mut next_mask);
-                    sum -= removed;
-                }
-                next[next_mask as usize] += dp[mask];
-            }
-        }
-        dp = next;
+        x.push(sc.read::<i64>());
+        y.push(sc.read::<i64>());
     }
 
-    let mut ans = ModInt(0);
-    for x in dp.iter() {
-        ans += x.0;
-    }
-    let ans = ModInt(10).pow(n) - ans;
+    let ans = solve(&x, &y);
     println!("{}", ans.0);
 }
 
-fn contains_xyz(mut mask: u64, x: u64, y: u64, z: u64) -> bool {
-    let xyz = vec![x, y, z];
-    let mut i = 2;
-    let mut cur = 0;
-    while mask > 0 {
-        let a = pop_back(&mut mask);
-        if cur + a == xyz[i] {
-            if i == 0 {
-                return true;
-            }
-            i -= 1;
-            cur = 0;
-        } else if cur + a > xyz[i] {
-            return false;
-        } else {
-            cur += a;
+fn solve(x: &Vec<i64>, y: &Vec<i64>) -> ModInt<usize> {
+    let n = x.len();
+    let x = shrink(x);
+    let y = shrink(y);
+    let mut xy = vec![];
+    for i in 0..n {
+        xy.push((x[i], y[i]));
+    }
+    xy.sort();
+
+    let mut upper_left = vec![0; n];
+    let mut upper_right = vec![0; n];
+    let mut lower_left = vec![0; n];
+    let mut lower_right = vec![0; n];
+
+    let mut left_bit = fenwick_tree::FenwickTree::new(n, 0);
+    for x in 0..n {
+        let (_, y) = xy[x];
+        let upper = left_bit.sum(y, n);
+        let lower = left_bit.sum(0, y);
+        upper_left[x] = upper;
+        lower_left[x] = lower;
+        left_bit.add(y, 1);
+    }
+    let mut right_bit = fenwick_tree::FenwickTree::new(n, 0);
+    for x in (0..n).rev() {
+        let (_, y) = xy[x];
+        let upper = right_bit.sum(y, n);
+        let lower = right_bit.sum(0, y);
+        upper_right[x] = upper;
+        lower_right[x] = lower;
+        right_bit.add(y, 1);
+    }
+
+    let mut pow2 = vec![ModInt(0); n + 1];
+    pow2[0] = ModInt(1);
+    for i in 0..n {
+        pow2[i + 1] = pow2[i] * 2;
+    }
+
+    let mut ans = ModInt(0);
+    for i in 0..n {
+        let cycle = [
+            upper_left[i],
+            upper_right[i],
+            lower_right[i],
+            lower_left[i],
+            upper_left[i],
+        ];
+        for i in 0..4 {
+            let a = cycle[i];
+            let b = cycle[i + 1];
+            ans += (pow2[a] - 1) * (pow2[b] - 1);
+            ans += pow2[a] - 1;
         }
     }
-    false
-}
-
-fn sum_of(mut mask: u64) -> u64 {
-    let mut sum = 0;
-    while mask > 0 {
-        sum += pop_back(&mut mask);
-    }
-    sum
-}
-
-fn push_back(mask: &mut u64, x: u64) {
-    *mask = (*mask << x) | (1 << (x - 1));
-}
-
-fn pop_front(mask: &mut u64) -> u64 {
-    assert!(*mask > 0);
-    if mask.count_ones() == 1 {
-        let res = *mask;
-        *mask = 0;
-        res.trailing_zeros() as u64 + 1
-    } else {
-        let x = (*mask + 1).next_power_of_two() >> 1;
-        *mask -= x;
-        let y = (*mask + 1).next_power_of_two() >> 1;
-        (x.trailing_zeros() - y.trailing_zeros()) as u64
-    }
-}
-
-fn pop_back(mask: &mut u64) -> u64 {
-    assert!(*mask > 0);
-    let n = mask.trailing_zeros() as u64;
-    *mask >>= n + 1;
-    n + 1
+    (pow2[n] - 1) * n - ans
 }
 
 pub mod mod_int {
@@ -236,6 +212,68 @@ pub mod mod_int {
         }
     }
 }
+
+pub mod fenwick_tree {
+    use std::ops::{AddAssign, Sub};
+    /// `FenwickTree` is a data structure that can efficiently update elements
+    /// and calculate prefix sums in a table of numbers.
+    /// [https://en.wikipedia.org/wiki/Fenwick_tree](https://en.wikipedia.org/wiki/Fenwick_tree)
+    pub struct FenwickTree<T> {
+        n: usize,
+        data: Vec<T>,
+        init: T,
+    }
+
+    impl<T: Copy + AddAssign + Sub<Output = T>> FenwickTree<T> {
+        /// Constructs a new `FenwickTree`. The size of `FenwickTree` should be specified by `size`.
+        pub fn new(size: usize, init: T) -> FenwickTree<T> {
+            FenwickTree {
+                n: size + 1,
+                data: vec![init; size + 1],
+                init: init,
+            }
+        }
+
+        pub fn add(&mut self, k: usize, value: T) {
+            let mut x = k;
+            while x < self.n {
+                self.data[x] += value;
+                x |= x + 1;
+            }
+        }
+
+        /// Returns a sum of range `[l, r)`
+        pub fn sum(&self, l: usize, r: usize) -> T {
+            self.sum_one(r) - self.sum_one(l)
+        }
+
+        /// Returns a sum of range `[0, k)`
+        pub fn sum_one(&self, k: usize) -> T {
+            assert!(k < self.n, "k={} n={}", k, self.n);
+
+            let mut result = self.init;
+            let mut x = k as i32 - 1;
+            while x >= 0 {
+                result += self.data[x as usize];
+                x = (x & (x + 1)) - 1;
+            }
+
+            result
+        }
+    }
+}
+fn shrink(x: &Vec<i64>) -> Vec<usize> {
+    let map = x
+        .iter()
+        .cloned()
+        .collect::<BTreeSet<_>>()
+        .into_iter()
+        .enumerate()
+        .map(|(i, e)| (e, i))
+        .collect::<BTreeMap<_, _>>();
+    x.iter().cloned().map(|x| *map.get(&x).unwrap()).collect()
+}
+
 pub struct Scanner<R> {
     stdin: R,
 }

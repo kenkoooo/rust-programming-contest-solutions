@@ -1,11 +1,30 @@
-const MOD: usize = 998244353;
+use std::cmp;
+
+const INF: u32 = std::u32::MAX;
 
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-
-    let k: usize = sc.read();
     let n: usize = sc.read();
+    let m: usize = sc.read();
+    let a: Vec<Vec<u32>> = (0..n)
+        .map(|_| (0..m).map(|_| sc.read::<u32>()).collect())
+        .collect();
+    let weight: Vec<Vec<u32>> = (0..n)
+        .map(|_| (0..m).map(|_| sc.read::<u32>()).collect())
+        .collect();
+
+    let mut dist = vec![INF; n + 1];
+    dist[0] = 0;
+    for i in 0..n {
+        let cur = dist[i];
+        for j in 0..m {
+            let a = a[i][j];
+            let next = (cur + a - 1) / a * a + weight[i][j];
+            dist[i + 1] = cmp::min(dist[i + 1], next);
+        }
+    }
+    println!("{}", dist[n]);
 }
 
 pub struct Scanner<R> {

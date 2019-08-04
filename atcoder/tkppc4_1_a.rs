@@ -1,11 +1,9 @@
-const MOD: usize = 998244353;
-
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-
-    let k: usize = sc.read();
     let n: usize = sc.read();
+    let _: usize = sc.read();
+    println!("{}", n - 1);
 }
 
 pub struct Scanner<R> {

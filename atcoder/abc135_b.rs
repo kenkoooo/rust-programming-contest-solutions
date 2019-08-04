@@ -1,11 +1,19 @@
-const MOD: usize = 998244353;
-
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-
-    let k: usize = sc.read();
     let n: usize = sc.read();
+    let p: Vec<usize> = sc.vec(n);
+    let mut count = 0;
+    for i in 0..n {
+        if p[i] != i + 1 {
+            count += 1;
+        }
+    }
+    if count <= 2 {
+        println!("YES");
+    } else {
+        println!("NO");
+    }
 }
 
 pub struct Scanner<R> {

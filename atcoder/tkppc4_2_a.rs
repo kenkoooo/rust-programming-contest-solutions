@@ -1,11 +1,18 @@
-const MOD: usize = 998244353;
-
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-
-    let k: usize = sc.read();
-    let n: usize = sc.read();
+    let x: i64 = sc.read();
+    let y: i64 = sc.read();
+    if y < 0 || y % 2 != 0 {
+        println!("-1");
+    } else {
+        let y_step = y / 2;
+        if x.abs() % 2 != y_step % 2 || x.abs() > y_step {
+            println!("-1");
+        } else {
+            println!("{}", y_step);
+        }
+    }
 }
 
 pub struct Scanner<R> {
