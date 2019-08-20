@@ -1,55 +1,53 @@
+use fenwick_tree::FenwickTree;
 use std::collections::{BTreeMap, BTreeSet};
+
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-
     let n = sc.read();
-    let a: Vec<i64> = sc.vec(n);
+    let a: Vec<u64> = sc.vec(n);
 
+    let mut ng = 2e9 as u64;
     let mut ok = 0;
-    let mut ng = 1e10 as i64;
     while ng - ok > 1 {
         let x = (ng + ok) / 2;
-        if solve(&a, x) {
+        let b = a
+            .iter()
+            .map(|&a| if a >= x { 1 } else { -1 })
+            .collect::<Vec<i64>>();
+        let mut sum = vec![0; n + 1];
+        for i in 0..n {
+            sum[i + 1] = sum[i] + b[i];
+        }
+
+        let map = sum
+            .iter()
+            .cloned()
+            .collect::<BTreeSet<i64>>()
+            .into_iter()
+            .enumerate()
+            .map(|(i, x)| (x, i))
+            .collect::<BTreeMap<i64, usize>>();
+        let sum = sum
+            .into_iter()
+            .map(|x| *map.get(&x).unwrap())
+            .collect::<Vec<usize>>();
+
+        let m = map.len();
+        let mut bit = FenwickTree::new(m, 0);
+        let mut ans = 0;
+        for &s in sum.iter() {
+            ans += bit.sum(s + 1, m);
+            bit.add(s, 1);
+        }
+
+        if ans * 2 <= (1 + n) * n / 2 {
             ok = x;
         } else {
             ng = x;
         }
     }
     println!("{}", ok);
-}
-
-fn solve(a: &Vec<i64>, x: i64) -> bool {
-    let n = a.len();
-    let a = a
-        .iter()
-        .map(|&a| if a >= x { 1 } else { -1 })
-        .collect::<Vec<_>>();
-
-    let mut sum = vec![0; n + 1];
-    for i in 0..n {
-        sum[i + 1] = sum[i] + a[i];
-    }
-
-    let map = sum
-        .iter()
-        .cloned()
-        .collect::<BTreeSet<i64>>()
-        .into_iter()
-        .enumerate()
-        .map(|(i, s)| (s, i))
-        .collect::<BTreeMap<_, _>>();
-    let sum = sum.into_iter().map(|x| map[&x]).collect::<Vec<_>>();
-
-    let mut bit = fenwick_tree::FenwickTree::new(n + 1, 0);
-    let mut count = 0;
-    for s in sum.into_iter() {
-        count += bit.sum_one(s + 1);
-        bit.add(s, 1);
-    }
-
-    let total = (n + 1) * n / 2;
-    count * 2 >= total
 }
 
 pub mod fenwick_tree {
@@ -101,7 +99,6 @@ pub mod fenwick_tree {
         }
     }
 }
-
 pub struct Scanner<R> {
     stdin: R,
 }
@@ -114,8 +111,8 @@ impl<R: std::io::Read> Scanner<R> {
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
-            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r')
-            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r')
+            .skip_while(|&b| b == b' ' || b == b'\n')
+            .take_while(|&b| b != b' ' && b != b'\n')
             .collect::<Vec<_>>();
         unsafe { std::str::from_utf8_unchecked(&buf) }
             .parse()

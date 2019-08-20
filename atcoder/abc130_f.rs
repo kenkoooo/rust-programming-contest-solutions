@@ -1,139 +1,111 @@
-const INF: f64 = 1e18;
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-
-    let mut const_x = Range::new();
-    let mut const_y = Range::new();
-
-    let mut up_x = Range::new();
-    let mut down_x = Range::new();
-
-    let mut up_y = Range::new();
-    let mut down_y = Range::new();
-
     let n: usize = sc.read();
+
+    let mut left = State::new();
+    let mut right = State::new();
+    let mut top = State::new();
+    let mut bottom = State::new();
+
     for _ in 0..n {
         let x: f64 = sc.read();
         let y: f64 = sc.read();
-        let d = sc.chars()[0];
-        match d {
+        let c = sc.chars()[0];
+        match c {
             'R' => {
-                up_x.set(x);
+                right.put_increasing(x);
+                left.put_decreasing(-x);
+                top.put_static(y);
+                bottom.put_static(-y);
             }
             'L' => {
-                down_x.set(x);
-            }
-            'U' => {
-                const_x.set(x);
-            }
-            'D' => {
-                const_x.set(x);
-            }
-            _ => unreachable!(),
-        }
-        match d {
-            'R' => {
-                const_y.set(y);
-            }
-            'L' => {
-                const_y.set(y);
-            }
-            'U' => {
-                up_y.set(y);
+                right.put_decreasing(x);
+                left.put_increasing(-x);
+                top.put_static(y);
+                bottom.put_static(-y);
             }
             'D' => {
-                down_y.set(y);
+                top.put_decreasing(y);
+                bottom.put_increasing(-y);
+                right.put_static(x);
+                left.put_static(-x);
+            }
+            'U' => {
+                top.put_increasing(y);
+                bottom.put_decreasing(-y);
+                right.put_static(x);
+                left.put_static(-x);
             }
             _ => unreachable!(),
         }
     }
 
-    let mut times = vec![0.0];
-    add_time3(&const_x, &up_x, &down_x, &mut times);
-    add_time3(&const_y, &up_y, &down_y, &mut times);
+    let mut events = top.get_events();
+    events.extend(bottom.get_events());
+    events.extend(left.get_events());
+    events.extend(right.get_events());
+    events.push(0.0);
 
-    let candidates = times
-        .into_iter()
-        .map(|time| {
-            let dx = length(&const_x, &up_x, &down_x, time);
-            let dy = length(&const_y, &up_y, &down_y, time);
-            assert!(dx >= 0.0);
-            assert!(dy >= 0.0);
-            dx * dy
-        })
-        .collect::<Vec<_>>();
-
-    let mut ans = INF;
-    for c in candidates.into_iter() {
-        if ans > c {
-            ans = c;
+    let mut ans = std::f64::MAX;
+    for t in events.into_iter() {
+        if t < 0.0 {
+            continue;
         }
+        let right = right.get_value(t);
+        let left = left.get_value(t);
+        let top = top.get_value(t);
+        let bottom = bottom.get_value(t);
+        let s = (left + right).abs() * (top + bottom).abs();
+        ans = ans.min(s);
     }
-    assert!(ans >= 0.0);
-
     println!("{}", ans);
 }
 
-fn add_time3(const_y: &Range, up_y: &Range, down_y: &Range, times: &mut Vec<f64>) {
-    add_time2(up_y, const_y, 1.0, times);
-    add_time2(up_y, down_y, 2.0, times);
-    add_time2(const_y, down_y, 1.0, times);
+struct State {
+    decreasing: f64,
+    increasing: f64,
+    static_point: f64,
 }
 
-fn add_time2(up: &Range, down: &Range, step: f64, times: &mut Vec<f64>) {
-    add_time(up.max, down.max, step, times);
-    add_time(up.max, down.min, step, times);
-    add_time(up.min, down.max, step, times);
-    add_time(up.min, down.min, step, times);
-}
-
-fn add_time(up: f64, down: f64, step: f64, times: &mut Vec<f64>) {
-    if up.is_finite() && down.is_finite() && up < down {
-        times.push((down - up) / step);
-    }
-}
-
-fn length(const_y: &Range, up_y: &Range, down_y: &Range, time: f64) -> f64 {
-    const_y.add(up_y.at(time)).add(down_y.at(-time)).dist()
-}
-
-struct Range {
-    max: f64,
-    min: f64,
-}
-
-impl Range {
-    fn new() -> Self {
-        Range {
-            min: std::f64::INFINITY,
-            max: std::f64::NEG_INFINITY,
+impl State {
+    fn new() -> State {
+        State {
+            decreasing: std::f64::MIN,
+            increasing: std::f64::MIN,
+            static_point: std::f64::MIN,
         }
     }
 
-    fn set(&mut self, v: f64) {
-        self.min = self.min.min(v);
-        self.max = self.max.max(v);
+    fn put_static(&mut self, p: f64) {
+        self.static_point = self.static_point.max(p);
+    }
+    fn put_increasing(&mut self, p: f64) {
+        self.increasing = self.increasing.max(p);
+    }
+    fn put_decreasing(&mut self, p: f64) {
+        self.decreasing = self.decreasing.max(p);
     }
 
-    fn at(&self, time: f64) -> Self {
-        Range {
-            min: self.min + time,
-            max: self.max + time,
+    fn get_events(&self) -> Vec<f64> {
+        let mut result = vec![];
+        if self.decreasing != std::f64::MIN && self.static_point != std::f64::MIN {
+            result.push(self.decreasing - self.static_point);
         }
-    }
-
-    fn add(&self, other: Range) -> Self {
-        Range {
-            max: self.max.max(other.max),
-            min: self.min.min(other.min),
+        if self.static_point != std::f64::MIN && self.increasing != std::f64::MIN {
+            result.push(self.static_point - self.increasing);
         }
+        if self.decreasing != std::f64::MIN && self.increasing != std::f64::MIN {
+            result.push((self.decreasing - self.increasing) / 2.0);
+        }
+        result
     }
 
-    fn dist(&self) -> f64 {
-        assert!(self.max.is_finite());
-        assert!(self.min.is_finite());
-        self.max - self.min
+    fn get_value(&self, t: f64) -> f64 {
+        let v1 = self.decreasing - t;
+        let v2 = self.increasing + t;
+        let v3 = self.static_point;
+        v1.max(v2).max(v3)
     }
 }
 
