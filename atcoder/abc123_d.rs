@@ -1,37 +1,35 @@
+use std::cmp;
+
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-    let n = sc.read();
-    let mut a = sc
-        .vec::<i64>(n)
-        .into_iter()
-        .enumerate()
-        .map(|(i, a)| (-a, i))
-        .collect::<Vec<_>>();
-    a.sort();
-    let mut ans = vec![0; n];
 
-    let mut garbage_count = 0;
-    let mut garbage_num = -a[0].0;
-    let mut stack = vec![];
-    let mut cur = a[0].1;
-    for &(a, i) in a.iter() {
-        let a = -a;
-        if cur > i {
-            ans[cur] += garbage_count * (garbage_num - a);
-            garbage_num = a;
-            while let Some(b) = stack.pop() {
-                ans[cur] += b - a;
-                garbage_count += 1;
-            }
-            cur = i;
+    let x: usize = sc.read();
+    let y: usize = sc.read();
+    let z: usize = sc.read();
+    let k: usize = sc.read();
+    let a: Vec<i64> = sc.vec(x);
+    let b: Vec<i64> = sc.vec(y);
+    let c: Vec<i64> = sc.vec(z);
+    let mut ab = vec![];
+    for i in 0..x {
+        for j in 0..y {
+            ab.push(a[i] + b[j]);
         }
-        stack.push(a);
     }
-    ans[cur] += stack.into_iter().sum::<i64>();
-    ans[cur] += garbage_count * garbage_num;
-    for c in ans.into_iter() {
-        println!("{}", c);
+    ab.sort();
+    ab.reverse();
+
+    let mut ans = vec![];
+    for &ab in (&ab[..cmp::min(k, x * y)]).iter() {
+        for i in 0..z {
+            ans.push(ab + c[i]);
+        }
+    }
+    ans.sort();
+    ans.reverse();
+    for i in 0..k {
+        println!("{}", ans[i]);
     }
 }
 

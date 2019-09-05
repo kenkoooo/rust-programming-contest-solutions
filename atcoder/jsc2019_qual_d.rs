@@ -1,37 +1,35 @@
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-    let n = sc.read();
-    let mut a = sc
-        .vec::<i64>(n)
-        .into_iter()
-        .enumerate()
-        .map(|(i, a)| (-a, i))
-        .collect::<Vec<_>>();
-    a.sort();
-    let mut ans = vec![0; n];
-
-    let mut garbage_count = 0;
-    let mut garbage_num = -a[0].0;
-    let mut stack = vec![];
-    let mut cur = a[0].1;
-    for &(a, i) in a.iter() {
-        let a = -a;
-        if cur > i {
-            ans[cur] += garbage_count * (garbage_num - a);
-            garbage_num = a;
-            while let Some(b) = stack.pop() {
-                ans[cur] += b - a;
-                garbage_count += 1;
-            }
-            cur = i;
+    let n: usize = sc.read();
+    let mut ans = vec![vec![0; n]; n];
+    let mut cur = 1;
+    construct(&mut ans, 1, 0, n);
+    for i in 0..n {
+        for j in (i + 1)..n {
+            print!("{} ", ans[i][j]);
         }
-        stack.push(a);
+        println!();
     }
-    ans[cur] += stack.into_iter().sum::<i64>();
-    ans[cur] += garbage_count * garbage_num;
-    for c in ans.into_iter() {
-        println!("{}", c);
+}
+
+fn construct(ans: &mut Vec<Vec<u64>>, depth: u64, from: usize, to: usize) {
+    let length = to - from;
+    let prefix = length / 2;
+    let suffix = length - prefix;
+    for i in 0..prefix {
+        for j in 0..suffix {
+            let left = from + i;
+            let right = from + prefix + j;
+            ans[left][right] = depth;
+            ans[right][left] = depth;
+        }
+    }
+    if prefix >= 2 {
+        construct(ans, depth + 1, from, from + prefix);
+    }
+    if suffix >= 2 {
+        construct(ans, depth + 1, from + prefix, to);
     }
 }
 

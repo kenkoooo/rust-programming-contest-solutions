@@ -1,92 +1,61 @@
-/// Thank you tanakh!!!
-/// https://qiita.com/tanakh/items/0ba42c7ca36cd29d0ac8
-macro_rules! input {
-    (source = $s:expr, $($r:tt)*) => {
-        let mut iter = $s.split_whitespace();
-        input_inner!{iter, $($r)*}
-    };
-    ($($r:tt)*) => {
-        let mut s = {
-            use std::io::Read;
-            let mut s = String::new();
-            std::io::stdin().read_to_string(&mut s).unwrap();
-            s
-        };
-        let mut iter = s.split_whitespace();
-        input_inner!{iter, $($r)*}
-    };
-}
-
-macro_rules! input_inner {
-    ($iter:expr) => {};
-    ($iter:expr, ) => {};
-
-    ($iter:expr, $var:ident : $t:tt $($r:tt)*) => {
-        let $var = read_value!($iter, $t);
-        input_inner!{$iter $($r)*}
-    };
-}
-
-macro_rules! read_value {
-    ($iter:expr, ( $($t:tt),* )) => {
-        ( $(read_value!($iter, $t)),* )
-    };
-
-    ($iter:expr, [ $t:tt ; $len:expr ]) => {
-        (0..$len).map(|_| read_value!($iter, $t)).collect::<Vec<_>>()
-    };
-
-    ($iter:expr, chars) => {
-        read_value!($iter, String).chars().collect::<Vec<char>>()
-    };
-
-    ($iter:expr, usize1) => {
-        read_value!($iter, usize) - 1
-    };
-
-    ($iter:expr, $t:ty) => {
-        $iter.next().unwrap().parse::<$t>().expect("Parse error")
-    };
-}
-
 use std::cmp;
 
-const INF: usize = 1e15 as usize;
+fn main() {
+    let s = std::io::stdin();
+    let mut sc = Scanner { stdin: s.lock() };
 
-fn solve1(xy: &Vec<(usize, usize)>) -> usize {
+    let n: usize = sc.read();
+    let mut xy: Vec<(u64, u64)> = (0..n).map(|_| (sc.read(), sc.read())).collect();
     let max = xy.iter().map(|&(x, y)| cmp::max(x, y)).max().unwrap();
     let min = xy.iter().map(|&(x, y)| cmp::min(x, y)).min().unwrap();
-    let max_minimum = xy.iter().map(|&(x, y)| cmp::min(x, y)).max().unwrap();
-    let min_maximum = xy.iter().map(|&(x, y)| cmp::max(x, y)).min().unwrap();
-    (max - min_maximum) * (max_minimum - min)
-}
+    let max_min = xy.iter().map(|&(x, y)| cmp::max(x, y)).min().unwrap();
+    let min_max = xy.iter().map(|&(x, y)| cmp::min(x, y)).max().unwrap();
+    let ans1 = (max - max_min) * (min_max - min);
 
-fn solve2(xy: &Vec<(usize, usize)>) -> usize {
-    let n = xy.len();
-    let mut pairs = vec![];
-    for &(x, y) in xy.iter() {
-        pairs.push((cmp::min(x, y), cmp::max(x, y)));
-    }
-    pairs.sort();
-
-    let (whole_minimum, _) = pairs[0];
-    let whole_maximum = pairs.iter().map(|&(_, b)| b).max().unwrap();
-    let (mut cur_max, _) = pairs[n - 1];
-    let mut right_min = INF;
-
-    let mut ans = (cur_max - pairs[0].0) * (whole_maximum - whole_minimum);
+    xy = xy
+        .into_iter()
+        .map(|(x, y)| (cmp::min(x, y), cmp::max(x, y)))
+        .collect();
+    xy.sort();
+    let mut ans2 = max - min;
+    let mut right_min = max;
+    let mut max2 = xy[n - 1].0;
     for i in 0..(n - 1) {
-        let (_, cur_right) = pairs[i];
-        let (next_left, _) = pairs[i + 1];
-        right_min = cmp::min(right_min, cur_right);
-        let cur_min = cmp::min(right_min, next_left);
-        cur_max = cmp::max(cur_max, cur_right);
-        ans = cmp::min(ans, (whole_maximum - whole_minimum) * (cur_max - cur_min));
+        let (_, right) = xy[i];
+        right_min = cmp::min(right_min, right);
+        max2 = cmp::max(max2, right);
+        let min = cmp::min(xy[i + 1].0, right_min);
+        ans2 = cmp::min(ans2, max2 - min);
     }
-    ans
+
+    let ans2 = ans2 * (max - min);
+    println!("{}", cmp::min(ans1, ans2));
 }
 
-fn main() {
-    input!(n: usize, xy: [(usize, usize); n]);
-    println!("{}", cmp::min(solve1(&xy), solve2(&xy)));
+pub struct Scanner<R> {
+    stdin: R,
+}
+
+impl<R: std::io::Read> Scanner<R> {
+    pub fn read<T: std::str::FromStr>(&mut self) -> T {
+        use std::io::Read;
+        let buf = self
+            .stdin
+            .by_ref()
+            .bytes()
+            .map(|b| b.unwrap())
+            .skip_while(|&b| b == b' ' || b == b'\n')
+            .take_while(|&b| b != b' ' && b != b'\n')
+            .collect::<Vec<_>>();
+        unsafe { std::str::from_utf8_unchecked(&buf) }
+            .parse()
+            .ok()
+            .expect("Parse error.")
+    }
+    pub fn vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
+        (0..n).map(|_| self.read()).collect()
+    }
+    pub fn chars(&mut self) -> Vec<char> {
+        self.read::<String>().chars().collect()
+    }
 }

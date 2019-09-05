@@ -1,38 +1,43 @@
+use std::cmp::max;
+
+const COSTS: [usize; 10] = [1000, 2, 5, 5, 4, 5, 6, 3, 7, 6];
+
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-    let n = sc.read();
-    let mut a = sc
-        .vec::<i64>(n)
-        .into_iter()
-        .enumerate()
-        .map(|(i, a)| (-a, i))
-        .collect::<Vec<_>>();
+    let n: usize = sc.read();
+    let m: usize = sc.read();
+    let mut a: Vec<usize> = sc.vec(m);
     a.sort();
-    let mut ans = vec![0; n];
+    a.reverse();
 
-    let mut garbage_count = 0;
-    let mut garbage_num = -a[0].0;
-    let mut stack = vec![];
-    let mut cur = a[0].1;
-    for &(a, i) in a.iter() {
-        let a = -a;
-        if cur > i {
-            ans[cur] += garbage_count * (garbage_num - a);
-            garbage_num = a;
-            while let Some(b) = stack.pop() {
-                ans[cur] += b - a;
-                garbage_count += 1;
-            }
-            cur = i;
+    let mut dp = vec![-1; n + 1];
+    dp[0] = 0;
+    for i in 0..n {
+        if dp[i] < 0 {
+            continue;
         }
-        stack.push(a);
+        for &a in a.iter() {
+            let cost = COSTS[a];
+            if i + cost > n {
+                continue;
+            }
+            dp[i + cost] = max(dp[i + cost], dp[i] + 1);
+        }
     }
-    ans[cur] += stack.into_iter().sum::<i64>();
-    ans[cur] += garbage_count * garbage_num;
-    for c in ans.into_iter() {
-        println!("{}", c);
+
+    let mut cur = n;
+    while cur > 0 {
+        for &a in a.iter() {
+            let cost = COSTS[a];
+            if cur >= cost && dp[cur] > 0 && dp[cur - cost] == dp[cur] - 1 {
+                print!("{}", a);
+                cur -= cost;
+                break;
+            }
+        }
     }
+    println!();
 }
 
 pub struct Scanner<R> {

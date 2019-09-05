@@ -1,38 +1,12 @@
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-    let n = sc.read();
-    let mut a = sc
-        .vec::<i64>(n)
-        .into_iter()
-        .enumerate()
-        .map(|(i, a)| (-a, i))
-        .collect::<Vec<_>>();
-    a.sort();
-    let mut ans = vec![0; n];
-
-    let mut garbage_count = 0;
-    let mut garbage_num = -a[0].0;
-    let mut stack = vec![];
-    let mut cur = a[0].1;
-    for &(a, i) in a.iter() {
-        let a = -a;
-        if cur > i {
-            ans[cur] += garbage_count * (garbage_num - a);
-            garbage_num = a;
-            while let Some(b) = stack.pop() {
-                ans[cur] += b - a;
-                garbage_count += 1;
-            }
-            cur = i;
-        }
-        stack.push(a);
-    }
-    ans[cur] += stack.into_iter().sum::<i64>();
-    ans[cur] += garbage_count * garbage_num;
-    for c in ans.into_iter() {
-        println!("{}", c);
-    }
+    let a: usize = sc.read();
+    let b: usize = sc.read();
+    let c = a - 1;
+    let d = b - 1;
+    let ans = (d + c - 1) / c;
+    println!("{}", ans);
 }
 
 pub struct Scanner<R> {

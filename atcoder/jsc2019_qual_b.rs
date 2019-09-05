@@ -1,38 +1,34 @@
+const MOD: u64 = 1e9 as u64 + 7;
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
     let n = sc.read();
-    let mut a = sc
-        .vec::<i64>(n)
-        .into_iter()
-        .enumerate()
-        .map(|(i, a)| (-a, i))
-        .collect::<Vec<_>>();
-    a.sort();
-    let mut ans = vec![0; n];
-
-    let mut garbage_count = 0;
-    let mut garbage_num = -a[0].0;
-    let mut stack = vec![];
-    let mut cur = a[0].1;
-    for &(a, i) in a.iter() {
-        let a = -a;
-        if cur > i {
-            ans[cur] += garbage_count * (garbage_num - a);
-            garbage_num = a;
-            while let Some(b) = stack.pop() {
-                ans[cur] += b - a;
-                garbage_count += 1;
+    let k: u64 = sc.read();
+    let a: Vec<u64> = sc.vec(n);
+    let mut before = vec![0; n];
+    let mut after = vec![0; n];
+    for i in 0..n {
+        for j in 0..n {
+            if a[j] > a[i] && j < i {
+                before[i] += 1;
             }
-            cur = i;
+            if a[j] > a[i] && i < j {
+                after[i] += 1;
+            }
         }
-        stack.push(a);
     }
-    ans[cur] += stack.into_iter().sum::<i64>();
-    ans[cur] += garbage_count * garbage_num;
-    for c in ans.into_iter() {
-        println!("{}", c);
+
+    let mut ans = 0;
+    for i in 0..n {
+        let b = (k * (k + 1) / 2) % MOD;
+        let b = (before[i] * b) % MOD;
+
+        let a = (k * (k - 1) / 2) % MOD;
+        let a = (a * after[i]) % MOD;
+        ans += a + b;
+        ans %= MOD;
     }
+    println!("{}", ans);
 }
 
 pub struct Scanner<R> {
