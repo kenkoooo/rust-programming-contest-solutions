@@ -3,32 +3,35 @@ use std::cmp;
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-
     let n: usize = sc.read();
-    let mut xy: Vec<(u64, u64)> = (0..n).map(|_| (sc.read(), sc.read())).collect();
-    let max = xy.iter().map(|&(x, y)| cmp::max(x, y)).max().unwrap();
-    let min = xy.iter().map(|&(x, y)| cmp::min(x, y)).min().unwrap();
-    let max_min = xy.iter().map(|&(x, y)| cmp::max(x, y)).min().unwrap();
-    let min_max = xy.iter().map(|&(x, y)| cmp::min(x, y)).max().unwrap();
-    let ans1 = (max - max_min) * (min_max - min);
-
-    xy = xy
-        .into_iter()
-        .map(|(x, y)| (cmp::min(x, y), cmp::max(x, y)))
-        .collect();
-    xy.sort();
-    let mut ans2 = max - min;
-    let mut right_min = max;
-    let mut max2 = xy[n - 1].0;
-    for i in 0..(n - 1) {
-        let (_, right) = xy[i];
-        right_min = cmp::min(right_min, right);
-        max2 = cmp::max(max2, right);
-        let min = cmp::min(xy[i + 1].0, right_min);
-        ans2 = cmp::min(ans2, max2 - min);
+    let mut pairs = vec![];
+    for _ in 0..n {
+        let x: u64 = sc.read();
+        let y: u64 = sc.read();
+        let (min, max) = if x < y { (x, y) } else { (y, x) };
+        pairs.push((min, max));
     }
+    pairs.sort();
 
-    let ans2 = ans2 * (max - min);
+    let total_min = pairs[0].0;
+    let total_max = pairs.iter().map(|p| p.1).max().unwrap();
+
+    let left_max = pairs.iter().map(|p| p.0).max().unwrap();
+    let right_min = pairs.iter().map(|p| p.1).min().unwrap();
+
+    let ans1 = (left_max - total_min) * (total_max - right_min);
+
+    let mut store_min = std::u64::MAX;
+    let mut cur_max = left_max;
+    let mut cur = cur_max - total_min;
+    for i in 0..(n - 1) {
+        let (_, max) = pairs[i];
+        cur_max = cmp::max(max, cur_max);
+        store_min = cmp::min(max, store_min);
+        let next = pairs[i + 1].0;
+        cur = cmp::min(cur, cur_max - cmp::min(store_min, next));
+    }
+    let ans2 = (total_max - total_min) * cur;
     println!("{}", cmp::min(ans1, ans2));
 }
 
