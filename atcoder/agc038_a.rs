@@ -1,25 +1,28 @@
-const MOD: usize = 1e9 as usize + 7;
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-    let n: usize = sc.read();
-    let x: Vec<usize> = sc.vec(n);
-
-    let mut stack = 0;
-    let mut cur = 1;
-    for x in x.into_iter() {
-        if x < 2 * stack + 1 {
-            cur *= stack + 1;
-            cur %= MOD;
-        } else {
-            stack += 1;
+    let h: usize = sc.read();
+    let w: usize = sc.read();
+    let a: usize = sc.read();
+    let b: usize = sc.read();
+    let mut ans = vec![vec![0; w]; h];
+    for i in 0..h {
+        for j in 0..w {
+            if i < b && j < a {
+                ans[i][j] = 1;
+            }
+            if i >= b && j >= a {
+                ans[i][j] = 1;
+            }
         }
     }
-    for i in 0..stack {
-        cur *= i + 1;
-        cur %= MOD;
+
+    for i in 0..h {
+        for j in 0..w {
+            print!("{}", ans[i][j]);
+        }
+        println!();
     }
-    println!("{}", cur);
 }
 
 pub struct Scanner<R> {
