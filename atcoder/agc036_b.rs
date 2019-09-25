@@ -1,74 +1,76 @@
-use std::usize::MAX;
+use std::collections::BTreeSet;
 
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-
     let n: usize = sc.read();
     let k: usize = sc.read();
     let a: Vec<usize> = sc.vec(n);
-    let max_a = *a.iter().max().unwrap();
-    let mut add = vec![0; n];
-    let mut last: Vec<usize> = vec![MAX; max_a + 1];
-    for i in 0..(2 * n) {
-        let a = a[i % n];
-        if last[a] != MAX {
-            if last[a] < n {
-                add[last[a]] = i - last[a];
-            }
-        }
-        last[a] = i;
+    let max_a = a.iter().cloned().max().unwrap();
+    let mut next = vec![vec![]; max_a + 1];
+    let mut pos = vec![0; n];
+    for (i, &a) in a.iter().enumerate() {
+        pos[i] = next[a].len();
+        next[a].push(i);
     }
-    assert!(add.iter().all(|&add| add > 0));
 
-    let (first, second) = find_cycle(&add);
-    let length = (n * k - first) % (second - first) + first;
-    let mut start = 0;
+    let mut jumped = false;
+    let mut cur_t = 0;
+    let mut cur_pos = 0;
+    let mut prev = vec![std::usize::MAX; n];
+    prev[0] = cur_t;
     loop {
-        let next = add[start % n] + 1 + start;
-        if next >= length {
-            break;
-        }
-        start = next;
-    }
-
-    let mut set: Vec<bool> = vec![false; max_a + 1];
-    let mut ans: Vec<usize> = vec![];
-    for i in start..length {
-        let a = a[i % n];
-        if set[a] {
-            while let Some(tail) = ans.pop() {
-                assert!(set[tail]);
-                set[tail] = false;
-                if tail == a {
-                    break;
+        let pos = pos[cur_pos];
+        if next[a[cur_pos]].len() == pos + 1 {
+            if cur_t == k - 1 {
+                let mut ans = vec![];
+                let mut set = BTreeSet::new();
+                for i in cur_pos..n {
+                    if set.contains(&a[i]) {
+                        while let Some(tail) = ans.pop() {
+                            set.remove(&tail);
+                            if tail == a[i] {
+                                break;
+                            }
+                        }
+                    } else {
+                        ans.push(a[i]);
+                        set.insert(a[i]);
+                    }
                 }
+
+                for (i, a) in ans.into_iter().enumerate() {
+                    if i > 0 {
+                        print!(" ");
+                    }
+                    print!("{}", a);
+                }
+                println!();
+                return;
             }
+            cur_t += 1;
+            cur_pos = next[a[cur_pos]][0];
         } else {
-            set[a] = true;
-            ans.push(a);
+            cur_pos = next[a[cur_pos]][pos + 1]
         }
-    }
-    for (i, ans) in ans.into_iter().enumerate() {
-        if i > 0 {
-            print!(" ");
+        cur_pos += 1;
+        if cur_pos == n {
+            if cur_t == k - 1 {
+                println!();
+                return;
+            }
+            cur_t += 1;
+            cur_pos = 0;
         }
-        print!("{}", ans);
-    }
-    println!();
-}
-
-fn find_cycle(add: &Vec<usize>) -> (usize, usize) {
-    let n = add.len();
-    let mut last: Vec<usize> = vec![MAX; n];
-    let mut cur = 0;
-    loop {
-        if last[cur % n] != MAX {
-            return (last[cur % n], cur);
+        if !jumped && prev[cur_pos] < cur_t {
+            let dt = cur_t - prev[cur_pos];
+            let z = (k - prev[cur_pos] - 1) / dt;
+            cur_t = prev[cur_pos] + dt * z;
+            assert!(cur_t < k);
+            jumped = true;
+        } else {
+            prev[cur_pos] = cur_t;
         }
-
-        last[cur % n] = cur;
-        cur += add[cur % n] + 1;
     }
 }
 
