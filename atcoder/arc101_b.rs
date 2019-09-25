@@ -1,55 +1,58 @@
-use fenwick_tree::FenwickTree;
 use std::collections::{BTreeMap, BTreeSet};
 
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
     let n = sc.read();
-    let a: Vec<u64> = sc.vec(n);
+    let a: Vec<i64> = sc.vec(n);
 
-    let mut ng = 2e9 as u64;
     let mut ok = 0;
+    let mut ng = 1e10 as i64;
     while ng - ok > 1 {
         let x = (ng + ok) / 2;
-        let b = a
+        let a = a
             .iter()
             .map(|&a| if a >= x { 1 } else { -1 })
             .collect::<Vec<i64>>();
-        let mut sum = vec![0; n + 1];
+        let mut acc = vec![0; n + 1];
         for i in 0..n {
-            sum[i + 1] = sum[i] + b[i];
+            acc[i + 1] = acc[i] + a[i];
         }
 
-        let map = sum
+        let map = acc
             .iter()
             .cloned()
-            .collect::<BTreeSet<i64>>()
+            .collect::<BTreeSet<_>>()
             .into_iter()
             .enumerate()
-            .map(|(i, x)| (x, i))
-            .collect::<BTreeMap<i64, usize>>();
-        let sum = sum
+            .map(|(i, v)| (v, i))
+            .collect::<BTreeMap<_, _>>();
+        let acc = acc
             .into_iter()
-            .map(|x| *map.get(&x).unwrap())
-            .collect::<Vec<usize>>();
-
+            .map(|v| *map.get(&v).unwrap())
+            .collect::<Vec<_>>();
         let m = map.len();
-        let mut bit = FenwickTree::new(m, 0);
-        let mut ans = 0;
-        for &s in sum.iter() {
-            ans += bit.sum(s + 1, m);
-            bit.add(s, 1);
+        let mut bit = fenwick_tree::FenwickTree::new(m, 0);
+        let mut negative_segments = 0;
+        for i in 0..(n + 1) {
+            negative_segments += i - bit.sum_one(acc[i] + 1);
+            bit.add(acc[i], 1);
         }
 
-        if ans * 2 <= (1 + n) * n / 2 {
-            ok = x;
-        } else {
+        //        eprintln!(
+        //            "x={} a={:?} acc={:?} negative_segments={}",
+        //            x, a, acc, negative_segments
+        //        );
+
+        if negative_segments * 2 > (n + 1) * n / 2 {
             ng = x;
+        } else {
+            ok = x;
         }
     }
+
     println!("{}", ok);
 }
-
 pub mod fenwick_tree {
     use std::ops::{AddAssign, Sub};
     /// `FenwickTree` is a data structure that can efficiently update elements
@@ -99,6 +102,7 @@ pub mod fenwick_tree {
         }
     }
 }
+
 pub struct Scanner<R> {
     stdin: R,
 }

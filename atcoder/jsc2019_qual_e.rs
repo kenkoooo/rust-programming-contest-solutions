@@ -4,35 +4,30 @@ fn main() {
     let n: usize = sc.read();
     let h: usize = sc.read();
     let w: usize = sc.read();
+
+    let mut uf = UnionFind::new(h + w);
     let mut edges = vec![];
     for _ in 0..n {
-        let r = sc.read::<usize>() - 1;
-        let c = sc.read::<usize>() - 1;
-        let a: usize = sc.read();
-        edges.push((a, r, c + h));
+        let row = sc.read::<usize>() - 1;
+        let col = sc.read::<usize>() - 1;
+        let value: u64 = sc.read();
+        edges.push((value, row, col + h));
     }
-
     edges.sort();
-    edges.reverse();
+
     let mut ans = 0;
-    let mut uf = UnionFind::new(h + w);
-    for (v, r, c) in edges.into_iter() {
-        let r = uf.find(r);
-        let c = uf.find(c);
-        if r == c {
-            let edges = uf.edge_count[r];
-            let size = uf.sizes[r];
-            if edges + 1 <= size {
-                uf.edge_count[r] += 1;
-                ans += v;
+    for (value, row, col) in edges.into_iter().rev() {
+        let x = uf.find(row);
+        let y = uf.find(col);
+
+        if x != y {
+            if uf.sizes[x] + uf.sizes[y] >= uf.edge_count[x] + uf.edge_count[y] + 1 {
+                uf.unite(x, y);
+                ans += value;
             }
-        } else {
-            let edges = uf.edge_count[r] + uf.edge_count[c];
-            let size = uf.sizes[r] + uf.sizes[c];
-            if edges + 1 <= size {
-                uf.unite(r, c);
-                ans += v;
-            }
+        } else if uf.sizes[x] > uf.edge_count[x] {
+            uf.edge_count[x] += 1;
+            ans += value;
         }
     }
 
@@ -42,8 +37,8 @@ fn main() {
 pub struct UnionFind {
     parent: Vec<usize>,
     sizes: Vec<usize>,
-    edge_count: Vec<usize>,
     size: usize,
+    edge_count: Vec<usize>,
 }
 
 impl UnionFind {
@@ -51,8 +46,8 @@ impl UnionFind {
         UnionFind {
             parent: (0..n).map(|i| i).collect::<Vec<usize>>(),
             sizes: vec![1; n],
-            edge_count: vec![0; n],
             size: n,
+            edge_count: vec![0; n],
         }
     }
 
@@ -80,6 +75,7 @@ impl UnionFind {
         };
 
         self.parent[small] = large;
+
         self.sizes[large] += self.sizes[small];
         self.sizes[small] = 0;
 
