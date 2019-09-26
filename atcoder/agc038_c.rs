@@ -1,64 +1,45 @@
 use mod_int::ModInt;
-use std::collections::BTreeMap;
 
 const MOD: usize = 998244353;
 
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-
-    let n = sc.read();
+    let n: usize = sc.read();
     let a: Vec<usize> = sc.vec(n);
-    let max_a = a.iter().cloned().max().unwrap();
-
-    let mut divisors = vec![vec![]; max_a + 1];
-    for d in 1..(max_a + 1) {
-        let mut i = d * 2;
-        while i <= max_a {
-            divisors[i].push(d);
-            i += d;
-        }
-    }
-
-    let mut w = vec![ModInt(0)];
+    let max_a = *a.iter().max().unwrap();
+    let mut f = vec![ModInt(0); max_a + 1];
     for i in 1..(max_a + 1) {
-        w.push(ModInt(1) / i);
-        for &d in divisors[i].iter() {
-            debug_assert_eq!(i % d, 0);
-            let wd = w[d];
-            w[i] -= wd;
+        f[i] = ModInt(1) / i;
+    }
+    for x in 1..(max_a + 1) {
+        let mut d = x * 2;
+        while d <= max_a {
+            let fx = f[x];
+            f[d] -= fx;
+            d += x;
         }
     }
 
-    for i in 1..(max_a + 1) {
-        divisors[i].push(i);
-    }
-
-    let a_count = a.iter().fold(BTreeMap::new(), |mut map, &a| {
-        *map.entry(a).or_insert(0) += 1;
-        map
-    });
-
-    let mut sum = vec![ModInt(0); max_a + 1];
-    let mut sum2 = vec![ModInt(0); max_a + 1];
-    for (a, count) in a_count.into_iter() {
-        let a_count = ModInt(a) * count;
-        let s = ModInt(a) * count;
-        let s2 = s * a;
-        for &d in divisors[a].iter() {
-            debug_assert_eq!(a % d, 0);
-            sum[d] += s;
-            sum2[d] += s2;
-        }
+    let mut count = vec![0; max_a + 1];
+    for &a in a.iter() {
+        count[a] += 1;
     }
 
     let mut ans = ModInt(0);
     for d in 1..(max_a + 1) {
-        let sum = sum[d];
-        let sum2 = sum2[d];
-        ans += (sum * sum - sum2) / 2 * w[d];
+        let mut x = d;
+        let mut sum = ModInt(0);
+        let mut sum2 = ModInt(0);
+        while x <= max_a {
+            // x%d == 0
+            // d|x
+            sum += ModInt(x) * count[x];
+            sum2 += ModInt(x) * x * count[x];
+            x += d;
+        }
+        ans += (sum * sum - sum2) / 2 * f[d];
     }
-
     println!("{}", ans.0);
 }
 

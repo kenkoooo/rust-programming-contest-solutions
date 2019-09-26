@@ -3,109 +3,102 @@ fn main() {
     let mut sc = Scanner { stdin: s.lock() };
     let n: usize = sc.read();
 
-    let mut left = State::new();
-    let mut right = State::new();
-    let mut top = State::new();
-    let mut bottom = State::new();
+    let mut right_side = Side::new();
+    let mut left_side = Side::new();
+    let mut head_side = Side::new();
+    let mut bottom_side = Side::new();
 
     for _ in 0..n {
-        let x: f64 = sc.read();
-        let y: f64 = sc.read();
-        let c = sc.chars()[0];
-        match c {
+        let x = sc.read::<f64>();
+        let y = sc.read::<f64>();
+        let d = sc.chars()[0];
+        match d {
             'R' => {
-                right.put_increasing(x);
-                left.put_decreasing(-x);
-                top.put_static(y);
-                bottom.put_static(-y);
+                right_side.increasing = right_side.increasing.max(x);
+                left_side.decreasing = left_side.decreasing.max(-x);
+                head_side.solid = head_side.solid.max(y);
+                bottom_side.solid = bottom_side.solid.max(-y);
             }
             'L' => {
-                right.put_decreasing(x);
-                left.put_increasing(-x);
-                top.put_static(y);
-                bottom.put_static(-y);
-            }
-            'D' => {
-                top.put_decreasing(y);
-                bottom.put_increasing(-y);
-                right.put_static(x);
-                left.put_static(-x);
+                right_side.decreasing = right_side.decreasing.max(x);
+                left_side.increasing = left_side.increasing.max(-x);
+                head_side.solid = head_side.solid.max(y);
+                bottom_side.solid = bottom_side.solid.max(-y);
             }
             'U' => {
-                top.put_increasing(y);
-                bottom.put_decreasing(-y);
-                right.put_static(x);
-                left.put_static(-x);
+                head_side.increasing = head_side.increasing.max(y);
+                bottom_side.decreasing = bottom_side.decreasing.max(-y);
+                right_side.solid = right_side.solid.max(x);
+                left_side.solid = left_side.solid.max(-x);
+            }
+            'D' => {
+                head_side.decreasing = head_side.decreasing.max(y);
+                bottom_side.increasing = bottom_side.increasing.max(-y);
+                right_side.solid = right_side.solid.max(x);
+                left_side.solid = left_side.solid.max(-x);
             }
             _ => unreachable!(),
         }
     }
 
-    let mut events = top.get_events();
-    events.extend(bottom.get_events());
-    events.extend(left.get_events());
-    events.extend(right.get_events());
-    events.push(0.0);
+    let mut events = vec![0.0];
+    head_side.add(&mut events);
+    left_side.add(&mut events);
+    right_side.add(&mut events);
+    bottom_side.add(&mut events);
 
     let mut ans = std::f64::MAX;
     for t in events.into_iter() {
-        if t < 0.0 {
-            continue;
-        }
-        let right = right.get_value(t);
-        let left = left.get_value(t);
-        let top = top.get_value(t);
-        let bottom = bottom.get_value(t);
-        let s = (left + right).abs() * (top + bottom).abs();
+        let x_max = right_side.get(t);
+        let x_min = -left_side.get(t);
+        let y_max = head_side.get(t);
+        let y_min = -bottom_side.get(t);
+        let s = (x_max - x_min) * (y_max - y_min);
         ans = ans.min(s);
     }
     println!("{}", ans);
 }
 
-struct State {
-    decreasing: f64,
+struct Side {
     increasing: f64,
-    static_point: f64,
+    decreasing: f64,
+    solid: f64,
 }
 
-impl State {
-    fn new() -> State {
-        State {
-            decreasing: std::f64::MIN,
+impl Side {
+    fn new() -> Side {
+        Side {
             increasing: std::f64::MIN,
-            static_point: std::f64::MIN,
+            decreasing: std::f64::MIN,
+            solid: std::f64::MIN,
         }
     }
 
-    fn put_static(&mut self, p: f64) {
-        self.static_point = self.static_point.max(p);
-    }
-    fn put_increasing(&mut self, p: f64) {
-        self.increasing = self.increasing.max(p);
-    }
-    fn put_decreasing(&mut self, p: f64) {
-        self.decreasing = self.decreasing.max(p);
+    fn add(&self, events: &mut Vec<f64>) {
+        if self.increasing != std::f64::MIN && self.solid != std::f64::MIN {
+            let d = self.solid - self.increasing;
+            if d > 0.0 {
+                events.push(d);
+            }
+        }
+        if self.decreasing != std::f64::MIN && self.solid != std::f64::MIN {
+            let d = self.decreasing - self.solid;
+            if d > 0.0 {
+                events.push(d);
+            }
+        }
+        if self.increasing != std::f64::MIN && self.decreasing != std::f64::MIN {
+            let d = (self.decreasing - self.increasing) / 2.0;
+            if d > 0.0 {
+                events.push(d);
+            }
+        }
     }
 
-    fn get_events(&self) -> Vec<f64> {
-        let mut result = vec![];
-        if self.decreasing != std::f64::MIN && self.static_point != std::f64::MIN {
-            result.push(self.decreasing - self.static_point);
-        }
-        if self.static_point != std::f64::MIN && self.increasing != std::f64::MIN {
-            result.push(self.static_point - self.increasing);
-        }
-        if self.decreasing != std::f64::MIN && self.increasing != std::f64::MIN {
-            result.push((self.decreasing - self.increasing) / 2.0);
-        }
-        result
-    }
-
-    fn get_value(&self, t: f64) -> f64 {
-        let v1 = self.decreasing - t;
-        let v2 = self.increasing + t;
-        let v3 = self.static_point;
-        v1.max(v2).max(v3)
+    fn get(&self, t: f64) -> f64 {
+        let x1 = self.increasing + t;
+        let x2 = self.decreasing - t;
+        self.solid.max(x1).max(x2)
     }
 }
 

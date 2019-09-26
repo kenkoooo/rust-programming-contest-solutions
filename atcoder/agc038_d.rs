@@ -4,57 +4,47 @@ fn main() {
     let n: usize = sc.read();
     let m: usize = sc.read();
     let q: usize = sc.read();
-    let mut single = vec![];
+    let mut uf = UnionFind::new(n);
     let mut multi = vec![];
     for _ in 0..q {
         let a: usize = sc.read();
         let b: usize = sc.read();
         let c: usize = sc.read();
         if c == 0 {
-            single.push((a, b));
+            uf.unite(a, b);
         } else {
             multi.push((a, b));
         }
     }
 
-    let mut uf = UnionFind::new(n);
-    let mut edges = 0;
-    for (a, b) in single.into_iter() {
-        if uf.find(a) != uf.find(b) {
-            uf.unite(a, b);
-            edges += 1;
-        }
-    }
-
-    for (a, b) in multi.iter().cloned() {
+    for &(a, b) in multi.iter() {
         if uf.find(a) == uf.find(b) {
             println!("No");
             return;
         }
     }
 
-    if multi.is_empty() {
-        let max_edges = edges + uf.size * (uf.size - 1) / 2;
-        let min_edges = edges + uf.size - 1;
-        if min_edges <= m && m <= max_edges {
+    let s = uf.size;
+    if s <= 2 {
+        if m == n - 1 && multi.is_empty() {
             println!("Yes");
         } else {
             println!("No");
         }
-        return;
-    }
-
-    if uf.size <= 2 {
-        println!("No");
-        return;
-    }
-
-    let max_edges = edges + uf.size * (uf.size - 1) / 2;
-    let min_edges = edges + uf.size;
-    if min_edges <= m && m <= max_edges {
-        println!("Yes");
     } else {
-        println!("No");
+        let used_edges = uf
+            .sizes
+            .into_iter()
+            .filter(|&s| s > 0)
+            .map(|s| s - 1)
+            .sum::<usize>();
+        let max = s * (s - 1) / 2 + used_edges;
+        let min = if multi.is_empty() { s - 1 } else { s } + used_edges;
+        if min <= m && m <= max {
+            println!("Yes");
+        } else {
+            println!("No");
+        }
     }
 }
 
