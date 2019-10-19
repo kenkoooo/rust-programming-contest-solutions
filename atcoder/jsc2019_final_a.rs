@@ -2,28 +2,28 @@ fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
     let n: usize = sc.read();
-    let a: Vec<u64> = sc.vec(n);
-    let xor_sum = a.iter().fold(0, |xor, &a| xor ^ a);
-    let mut a = a.into_iter().map(|a| a & !xor_sum).collect::<Vec<_>>();
+    let m: usize = sc.read();
+    let a: Vec<usize> = sc.vec(n);
+    let b: Vec<usize> = sc.vec(m);
+    let max_a = *a.iter().max().unwrap();
+    let max_b = *b.iter().max().unwrap();
 
-    let mut rank = 0;
-    for pos in (0..62).rev() {
-        if let Some(i) = (rank..n).find(|&i| a[i] & (1 << pos) != 0) {
-            for j in 0..n {
-                if i == j {
-                    continue;
+    let mut pairs: Vec<Option<(usize, usize)>> = vec![None; max_a + max_b + 1];
+    for i in 0..n {
+        for j in 0..m {
+            let sum = a[i] + b[j];
+            match pairs[sum] {
+                Some((x, y)) => {
+                    println!("{} {} {} {}", x, y, i, j);
+                    return;
                 }
-                if a[j] & (1 << pos) != 0 {
-                    a[j] ^= a[i];
+                None => {
+                    pairs[sum] = Some((i, j));
                 }
             }
-            a.swap(i, rank);
-            rank += 1;
         }
     }
-
-    let max = a.into_iter().fold(0, |xor, a| xor ^ a);
-    println!("{}", max * 2 + xor_sum);
+    println!("-1");
 }
 
 pub struct Scanner<R> {

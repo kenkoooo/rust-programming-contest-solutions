@@ -1,74 +1,54 @@
-const MOD: usize = 998244353;
+const MOD: u64 = 998244353;
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
     let n: usize = sc.read();
     let a: Vec<usize> = sc.vec(n);
-    let sum = a.iter().sum::<usize>();
-
-    let mut dp = vec![0; sum + 1];
+    let a_sum = a.iter().sum::<usize>();
+    let mut dp = vec![0; a_sum + 1];
     dp[0] = 1;
-    for &a in a.iter() {
-        let mut next = vec![0; sum + 1];
-        for r in 0..(sum + 1) {
-            if dp[r] > 0 {
-                next[a + r] += dp[r];
-                next[a + r] %= MOD;
-                next[r] += dp[r] * 2;
-                next[r] %= MOD;
-            }
+    for i in 0..n {
+        let a = a[i];
+        for i in (0..(a_sum - a + 1)).rev() {
+            dp[i + a] += dp[i];
+            dp[i + a] %= MOD;
+            dp[i] *= 2;
+            dp[i] %= MOD;
         }
-        dp = next;
+    }
+    let mut dp2 = vec![0; a_sum + 1];
+    dp2[0] = 1;
+    for i in 0..n {
+        let a = a[i];
+        for i in (0..(a_sum - a + 1)).rev() {
+            dp2[i + a] += dp2[i];
+            dp2[i + a] %= MOD;
+        }
+    }
+
+    let mut half = 0;
+    for i in ((a_sum + 1) / 2)..(a_sum + 1) {
+        half += dp[i];
+        half %= MOD;
     }
 
     let all = mod_pow(3, n);
-
-    let mut ans = 0;
-    for (r, count) in dp.into_iter().enumerate() {
-        if r * 2 >= sum {
-            ans += count;
-            ans %= MOD;
-        }
-    }
-    if sum % 2 == 0 {
-        let mut dp = vec![0; sum + 1];
-        dp[0] = 1;
-        for &a in a.iter() {
-            let mut next = vec![0; sum + 1];
-            for r in 0..(sum + 1) {
-                if dp[r] > 0 {
-                    next[a + r] += dp[r];
-                    next[a + r] %= MOD;
-                    next[r] += dp[r];
-                    next[r] %= MOD;
-                }
-            }
-            dp = next;
-        }
-        let half = dp[sum / 2];
-
-        println!("{}", (all + 3 * half + MOD - (3 * ans) % MOD) % MOD);
+    if a_sum % 2 == 0 {
+        let ans = (all + MOD - (half * 3) % MOD) % MOD;
+        println!("{}", (ans + dp2[a_sum / 2] * 3) % MOD);
     } else {
-        println!("{} ", (all + MOD - (3 * ans) % MOD) % MOD);
+        println!("{}", (all + MOD - (half * 3) % MOD) % MOD);
     }
 }
-// 1 1 1 2
-// r r g b
-// r r b g
-// r g r b
-// r b r g
-// r g g b
-// r b b g
 
-fn mod_pow(x: usize, mut e: usize) -> usize {
+fn mod_pow(mut x: u64, mut e: usize) -> u64 {
     let mut result = 1;
-    let mut cur = x;
     while e > 0 {
         if e & 1 == 1 {
-            result = (result * cur) % MOD;
+            result = (result * x) % MOD;
         }
-        cur = (cur * cur) % MOD;
         e >>= 1;
+        x = (x * x) % MOD;
     }
     result
 }

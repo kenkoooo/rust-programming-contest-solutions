@@ -2,28 +2,20 @@ fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
     let n: usize = sc.read();
-    let a: Vec<u64> = sc.vec(n);
-    let xor_sum = a.iter().fold(0, |xor, &a| xor ^ a);
-    let mut a = a.into_iter().map(|a| a & !xor_sum).collect::<Vec<_>>();
-
-    let mut rank = 0;
-    for pos in (0..62).rev() {
-        if let Some(i) = (rank..n).find(|&i| a[i] & (1 << pos) != 0) {
-            for j in 0..n {
-                if i == j {
-                    continue;
-                }
-                if a[j] & (1 << pos) != 0 {
-                    a[j] ^= a[i];
-                }
-            }
-            a.swap(i, rank);
-            rank += 1;
+    let a: Vec<usize> = sc.vec(n);
+    let mut b = a
+        .into_iter()
+        .enumerate()
+        .map(|(i, a)| (a, i + 1))
+        .collect::<Vec<_>>();
+    b.sort();
+    for (i, (_, x)) in b.into_iter().enumerate() {
+        if i > 0 {
+            print!(" ");
         }
+        print!("{}", x);
     }
-
-    let max = a.into_iter().fold(0, |xor, a| xor ^ a);
-    println!("{}", max * 2 + xor_sum);
+    println!();
 }
 
 pub struct Scanner<R> {

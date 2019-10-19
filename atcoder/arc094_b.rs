@@ -7,44 +7,54 @@ fn main() {
     for _ in 0..q {
         let a: i64 = sc.read();
         let b: i64 = sc.read();
-        let (a, b) = if a > b { (b, a) } else { (a, b) };
-        if a * b <= a + 1 {
-            println!("0");
-            continue;
-        }
-
-        let mut ok = 1;
-        let mut ng = b;
-        while ng - ok > 1 {
-            let m = (ok + ng) / 2;
-            let mut max = cmp::max(a + m, m * (a + 1));
-            let x1 = (m + 1 - a) / 2;
-            if 1 <= x1 && x1 <= m {
-                max = cmp::max((m + 1 - x1) * (a + x1), max);
-            }
-            let x2 = (m + 1 - a + 1) / 2;
-            if 1 <= x2 && x2 <= m {
-                max = cmp::max((m + 1 - x2) * (a + x2), max);
-            }
-
-            if a * b > max {
-                ok = m;
-            } else {
-                ng = m;
-            }
-        }
-        println!("{}", ok + a - 1);
+        let ans = solve(a, b);
+        println!("{}", ans);
     }
 }
 
-/// A<B
-/// (A-i)*(B+i) = AB-iB+iA-i^2<AB
-/// 1...m, A+1,...,A+m
-/// (A+i)(m+1-i) 1<=i<=m
-/// -i2 + (m+1-A)i + A(m+1)
-/// -(i - (m+1-A)/2)^2 + (m+1-A)^2/4+A(m+1)<AB
-/// (A^2)/4 - (m+1)/2 + (m+1)^2/4 + A(m+1) < AB
-/// m+1-A
+fn solve(a: i64, b: i64) -> i64 {
+    if a == b {
+        return (a - 1) + (b - 1);
+    }
+    let (a, b) = if a > b { (b, a) } else { (a, b) };
+
+    let mut ok = 0;
+    let mut ng = b + 1;
+    while ng - ok > 1 {
+        let m = (ok + ng) / 2;
+        if get_max(a, b, m) >= a * b {
+            ng = m;
+        } else {
+            ok = m;
+        }
+    }
+    ok + (a - 1)
+}
+
+fn get_max(a: i64, b: i64, m: i64) -> i64 {
+    let left = (a + 1) * m;
+    let right = a + m;
+
+    let t1 = (m - a - 1) / 2;
+    let t2 = t1 + 1;
+    let mut max = cmp::max(left, right);
+    if 0 <= t1 && t1 < m {
+        max = cmp::max(max, (m - t1) * (a + 1 + t1));
+    }
+    if 0 <= t2 && t2 < m {
+        max = cmp::max(max, (m - t2) * (a + 1 + t2));
+    }
+    max
+}
+
+// 1 ... (a-1) [a] (a+1) ...
+// 1 ... (b-1) [b] (b+1) ...
+
+// (a-x)(a+x) < ab
+// m     (m-1) ...  1
+// (a+1) (a+2) ... (a+m)
+// (m-x)(a+1+x) = -(x+a+1)(x-m) = -x^2 - (a+1-m)x +m(a+1)
+// x = (m-a-1)/2
 
 pub struct Scanner<R> {
     stdin: R,

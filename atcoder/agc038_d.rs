@@ -1,11 +1,13 @@
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
+
     let n: usize = sc.read();
     let m: usize = sc.read();
     let q: usize = sc.read();
+
+    let mut e = vec![];
     let mut uf = UnionFind::new(n);
-    let mut multi = vec![];
     for _ in 0..q {
         let a: usize = sc.read();
         let b: usize = sc.read();
@@ -13,33 +15,33 @@ fn main() {
         if c == 0 {
             uf.unite(a, b);
         } else {
-            multi.push((a, b));
+            e.push((a, b));
         }
     }
 
-    for &(a, b) in multi.iter() {
+    for &(a, b) in e.iter() {
         if uf.find(a) == uf.find(b) {
             println!("No");
             return;
         }
     }
 
-    let s = uf.size;
-    if s <= 2 {
-        if m == n - 1 && multi.is_empty() {
+    let used = uf
+        .sizes
+        .into_iter()
+        .filter(|&s| s > 0)
+        .map(|s| s - 1)
+        .sum::<usize>();
+
+    if m == n - 1 {
+        if e.is_empty() {
             println!("Yes");
         } else {
             println!("No");
         }
     } else {
-        let used_edges = uf
-            .sizes
-            .into_iter()
-            .filter(|&s| s > 0)
-            .map(|s| s - 1)
-            .sum::<usize>();
-        let max = s * (s - 1) / 2 + used_edges;
-        let min = if multi.is_empty() { s - 1 } else { s } + used_edges;
+        let min = used + uf.size;
+        let max = used + uf.size * (uf.size - 1) / 2;
         if min <= m && m <= max {
             println!("Yes");
         } else {
@@ -93,7 +95,6 @@ impl UnionFind {
         return true;
     }
 }
-
 pub struct Scanner<R> {
     stdin: R,
 }

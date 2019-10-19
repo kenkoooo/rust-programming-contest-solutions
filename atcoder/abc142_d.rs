@@ -1,29 +1,36 @@
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-    let n: usize = sc.read();
-    let a: Vec<u64> = sc.vec(n);
-    let xor_sum = a.iter().fold(0, |xor, &a| xor ^ a);
-    let mut a = a.into_iter().map(|a| a & !xor_sum).collect::<Vec<_>>();
+    let a: u64 = sc.read();
+    let b: u64 = sc.read();
+    let g = gcd(a, b);
 
-    let mut rank = 0;
-    for pos in (0..62).rev() {
-        if let Some(i) = (rank..n).find(|&i| a[i] & (1 << pos) != 0) {
-            for j in 0..n {
-                if i == j {
-                    continue;
-                }
-                if a[j] & (1 << pos) != 0 {
-                    a[j] ^= a[i];
-                }
+    let mut primes = vec![];
+    let mut cur = g;
+    for p in 2.. {
+        if p * p > cur {
+            break;
+        }
+        if cur % p == 0 {
+            primes.push(p);
+            while cur % p == 0 {
+                cur /= p;
             }
-            a.swap(i, rank);
-            rank += 1;
         }
     }
+    if cur > 1 {
+        primes.push(cur);
+    }
 
-    let max = a.into_iter().fold(0, |xor, a| xor ^ a);
-    println!("{}", max * 2 + xor_sum);
+    println!("{}", primes.len() + 1);
+}
+
+fn gcd(a: u64, b: u64) -> u64 {
+    if b == 0 {
+        a
+    } else {
+        gcd(b, a % b)
+    }
 }
 
 pub struct Scanner<R> {

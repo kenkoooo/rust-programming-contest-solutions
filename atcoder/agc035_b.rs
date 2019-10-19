@@ -1,6 +1,7 @@
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
+
     let n: usize = sc.read();
     let m: usize = sc.read();
     if m % 2 == 1 {
@@ -8,69 +9,71 @@ fn main() {
         return;
     }
     let mut graph = vec![vec![]; n];
-    let mut edges = vec![];
     for i in 0..m {
-        let x = sc.read::<usize>() - 1;
-        let y = sc.read::<usize>() - 1;
-        graph[x].push((y, i));
-        graph[y].push((x, i));
-        edges.push((x, y));
+        let a = sc.read::<usize>() - 1;
+        let b = sc.read::<usize>() - 1;
+        graph[a].push((b, i));
+        graph[b].push((a, i));
     }
-
     let mut used = vec![false; m];
-    let mut tree = vec![vec![]; n];
-    let mut vis = vec![false; n];
-    vis[0] = true;
-    dfs(0, &graph, &mut used, &mut vis, &mut tree);
-    let mut ans = vec![vec![]; n];
-    for (v, e) in graph.into_iter().enumerate() {
-        for (u, edge_id) in e.into_iter() {
-            if used[edge_id] {
-                continue;
+    dfs(0, &mut vec![false; n], &graph, &mut used);
+
+    let mut direction = vec![None; m];
+    for v in 0..n {
+        for &(next, edge_id) in graph[v].iter() {
+            if !used[edge_id] && direction[edge_id].is_none() {
+                direction[edge_id] = Some((v, next));
             }
-            used[edge_id] = true;
-            ans[v].push(u);
         }
     }
-
-    ans_dfs(0, &tree, &mut ans);
-
-    for from in 0..n {
-        for &to in ans[from].iter() {
-            println!("{} {}", from + 1, to + 1);
-        }
+    dfs2(0, 0, &graph, &used, &mut direction);
+    for i in 0..m {
+        let (from, to) = direction[i].unwrap();
+        println!("{} {}", from + 1, to + 1);
     }
 }
 
-fn ans_dfs(v: usize, tree: &Vec<Vec<usize>>, graph: &mut Vec<Vec<usize>>) {
-    for &next in tree[v].iter() {
-        ans_dfs(next, tree, graph);
-        if graph[next].len() % 2 == 0 {
-            graph[v].push(next);
-        } else {
-            graph[next].push(v);
-        }
-    }
-}
-
-fn dfs(
+fn dfs2(
     v: usize,
+    p: usize,
     graph: &Vec<Vec<(usize, usize)>>,
-    used: &mut Vec<bool>,
-    vis: &mut Vec<bool>,
-    tree: &mut Vec<Vec<usize>>,
+    used: &[bool],
+    direction: &mut [Option<(usize, usize)>],
 ) {
     for &(next, edge_id) in graph[v].iter() {
+        if p == next {
+            continue;
+        }
         if used[edge_id] {
+            dfs2(next, v, graph, used, direction);
+        }
+    }
+
+    let forward = graph[v]
+        .iter()
+        .flat_map(|&(_, edge_id)| direction[edge_id])
+        .filter(|&(from, _)| from == v)
+        .count();
+
+    for &(next, edge_id) in graph[v].iter() {
+        if used[edge_id] && direction[edge_id].is_none() {
+            if forward % 2 == 0 {
+                direction[edge_id] = Some((next, v));
+            } else {
+                direction[edge_id] = Some((v, next));
+            }
+        }
+    }
+}
+
+fn dfs(v: usize, visited: &mut [bool], graph: &Vec<Vec<(usize, usize)>>, used: &mut [bool]) {
+    visited[v] = true;
+    for &(next, edge_id) in graph[v].iter() {
+        if visited[next] {
             continue;
         }
-        if vis[next] {
-            continue;
-        }
-        vis[next] = true;
         used[edge_id] = true;
-        tree[v].push(next);
-        dfs(next, graph, used, vis, tree);
+        dfs(next, visited, graph, used);
     }
 }
 

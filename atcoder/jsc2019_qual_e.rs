@@ -1,33 +1,34 @@
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
+
     let n: usize = sc.read();
     let h: usize = sc.read();
     let w: usize = sc.read();
-
-    let mut uf = UnionFind::new(h + w);
     let mut edges = vec![];
     for _ in 0..n {
-        let row = sc.read::<usize>() - 1;
-        let col = sc.read::<usize>() - 1;
-        let value: u64 = sc.read();
-        edges.push((value, row, col + h));
+        let r = sc.read::<usize>() - 1;
+        let c = sc.read::<usize>() - 1;
+        let a = sc.read::<u64>();
+        edges.push((a, r, c + h));
     }
     edges.sort();
 
     let mut ans = 0;
-    for (value, row, col) in edges.into_iter().rev() {
-        let x = uf.find(row);
-        let y = uf.find(col);
-
-        if x != y {
-            if uf.sizes[x] + uf.sizes[y] >= uf.edge_count[x] + uf.edge_count[y] + 1 {
-                uf.unite(x, y);
-                ans += value;
+    let mut uf = UnionFind::new(h + w);
+    for (a, r, c) in edges.into_iter().rev() {
+        let r = uf.find(r);
+        let c = uf.find(c);
+        if r == c {
+            if uf.sizes[r] > uf.edges[r] {
+                uf.edges[r] += 1;
+                ans += a;
             }
-        } else if uf.sizes[x] > uf.edge_count[x] {
-            uf.edge_count[x] += 1;
-            ans += value;
+        } else {
+            if uf.edges[r] + uf.edges[c] + 1 <= uf.sizes[r] + uf.sizes[c] {
+                uf.unite(r, c);
+                ans += a;
+            }
         }
     }
 
@@ -38,7 +39,7 @@ pub struct UnionFind {
     parent: Vec<usize>,
     sizes: Vec<usize>,
     size: usize,
-    edge_count: Vec<usize>,
+    edges: Vec<usize>,
 }
 
 impl UnionFind {
@@ -47,7 +48,7 @@ impl UnionFind {
             parent: (0..n).map(|i| i).collect::<Vec<usize>>(),
             sizes: vec![1; n],
             size: n,
-            edge_count: vec![0; n],
+            edges: vec![0; n],
         }
     }
 
@@ -75,18 +76,16 @@ impl UnionFind {
         };
 
         self.parent[small] = large;
-
         self.sizes[large] += self.sizes[small];
         self.sizes[small] = 0;
 
-        self.edge_count[large] += self.edge_count[small] + 1;
-        self.edge_count[small] = 0;
+        self.edges[large] += self.edges[small] + 1;
+        self.edges[small] = 0;
 
         self.size -= 1;
         return true;
     }
 }
-
 pub struct Scanner<R> {
     stdin: R,
 }

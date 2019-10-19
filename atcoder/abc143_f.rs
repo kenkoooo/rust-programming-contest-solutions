@@ -1,29 +1,40 @@
+use std::cmp;
+
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
     let n: usize = sc.read();
-    let a: Vec<u64> = sc.vec(n);
-    let xor_sum = a.iter().fold(0, |xor, &a| xor ^ a);
-    let mut a = a.into_iter().map(|a| a & !xor_sum).collect::<Vec<_>>();
-
-    let mut rank = 0;
-    for pos in (0..62).rev() {
-        if let Some(i) = (rank..n).find(|&i| a[i] & (1 << pos) != 0) {
-            for j in 0..n {
-                if i == j {
-                    continue;
-                }
-                if a[j] & (1 << pos) != 0 {
-                    a[j] ^= a[i];
-                }
-            }
-            a.swap(i, rank);
-            rank += 1;
-        }
+    let mut count: Vec<usize> = vec![0; n];
+    for _ in 0..n {
+        let a = sc.read::<usize>() - 1;
+        count[a] += 1;
     }
 
-    let max = a.into_iter().fold(0, |xor, a| xor ^ a);
-    println!("{}", max * 2 + xor_sum);
+    count.sort();
+    let mut ans = vec![0; n + 1];
+    let mut sum = count.iter().sum::<usize>();
+    let mut popped = 0;
+    for height in (1..(n + 1)).rev() {
+        while let Some(c) = count.pop() {
+            if c >= height {
+                sum -= c;
+                popped += 1;
+            } else {
+                count.push(c);
+                break;
+            }
+        }
+
+        let columns = sum / height + popped;
+        ans[columns] = cmp::max(ans[columns], height);
+    }
+    for k in (0..n).rev() {
+        ans[k] = cmp::max(ans[k], ans[k + 1]);
+    }
+
+    for k in 1..(n + 1) {
+        println!("{}", ans[k]);
+    }
 }
 
 pub struct Scanner<R> {

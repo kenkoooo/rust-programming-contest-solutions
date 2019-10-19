@@ -1,31 +1,48 @@
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
+
     let n: usize = sc.read();
-    let mut graph = vec![vec![]; n];
+    let mut tree = vec![vec![]; n];
     for _ in 1..n {
-        let x = sc.read::<usize>() - 1;
-        let y = sc.read::<usize>() - 1;
-        graph[x].push(y);
-        graph[y].push(x);
+        let a = sc.read::<usize>();
+        let b = sc.read::<usize>();
+        tree[a].push(b);
+        tree[b].push(a);
     }
 
-    if grundy_dfs(0, 0, &graph) == 0 {
-        println!("Bob");
-    } else {
-        println!("Alice");
+    match (0..n).find(|&i| tree[i].len() > 2) {
+        None => println!("1"),
+        Some(root) => {
+            let (_, ans) = dfs(root, root, &tree);
+            println!("{}", ans);
+        }
     }
 }
 
-fn grundy_dfs(v: usize, p: usize, graph: &Vec<Vec<usize>>) -> usize {
-    let mut xor = 0;
-    for &next in graph[v].iter() {
-        if p == next {
-            continue;
-        }
-        xor ^= grundy_dfs(next, v, graph) + 1;
+fn dfs(v: usize, p: usize, graph: &Vec<Vec<usize>>) -> (bool, usize) {
+    let mut children = 0;
+    let mut sum = 0;
+    let mut has_line = false;
+    for &next in graph[v].iter().filter(|&&next| next != p) {
+        children += 1;
+        let (only_line, count) = dfs(next, v, graph);
+        sum += count;
+        assert!(!only_line || count == 1);
+        has_line |= only_line;
     }
-    xor
+
+    if children == 0 {
+        (true, 1)
+    } else if children == 1 {
+        (has_line, sum)
+    } else {
+        if has_line {
+            (false, sum - 1)
+        } else {
+            (false, sum)
+        }
+    }
 }
 
 pub struct Scanner<R> {

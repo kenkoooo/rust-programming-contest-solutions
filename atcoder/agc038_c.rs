@@ -5,41 +5,45 @@ const MOD: usize = 998244353;
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
+
     let n: usize = sc.read();
     let a: Vec<usize> = sc.vec(n);
     let max_a = *a.iter().max().unwrap();
-    let mut f = vec![ModInt(0); max_a + 1];
+    let mut w = vec![ModInt(0); max_a + 1];
     for i in 1..(max_a + 1) {
-        f[i] = ModInt(1) / i;
+        w[i] = ModInt(1) / i;
     }
+
     for x in 1..(max_a + 1) {
         let mut d = x * 2;
         while d <= max_a {
-            let fx = f[x];
-            f[d] -= fx;
+            let wx = w[x];
+            w[d] -= wx;
             d += x;
         }
     }
-
-    let mut count = vec![0; max_a + 1];
+    /// sum(i,j)   (Ai Aj / gcd)
+    /// sum(d)1/d  sum(gcd==d)(Ai Aj)
+    /// sum(d) f(d) sum(d|x) sum(gcd==x)
+    let mut count = vec![ModInt(0); max_a + 1];
     for &a in a.iter() {
         count[a] += 1;
     }
 
     let mut ans = ModInt(0);
+    let mut sum = vec![ModInt(0); max_a + 1];
+    let mut sum2 = vec![ModInt(0); max_a + 1];
     for d in 1..(max_a + 1) {
         let mut x = d;
-        let mut sum = ModInt(0);
-        let mut sum2 = ModInt(0);
         while x <= max_a {
-            // x%d == 0
-            // d|x
-            sum += ModInt(x) * count[x];
-            sum2 += ModInt(x) * x * count[x];
+            sum[d] += count[x] * x;
+            sum2[d] += count[x] * x * x;
             x += d;
         }
-        ans += (sum * sum - sum2) / 2 * f[d];
+
+        ans += (sum[d] * sum[d] - sum2[d]) / 2 * w[d];
     }
+
     println!("{}", ans.0);
 }
 
@@ -49,7 +53,7 @@ pub mod mod_int {
 
     type Num = usize;
 
-    #[derive(Clone, Copy)]
+    #[derive(Clone, Copy, Debug)]
     pub struct ModInt<T: Copy + Clone>(pub T);
 
     impl Add<ModInt<Num>> for ModInt<Num> {

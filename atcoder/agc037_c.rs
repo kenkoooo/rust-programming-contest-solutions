@@ -3,45 +3,45 @@ use std::collections::BinaryHeap;
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-
-    let n = sc.read();
+    let n: usize = sc.read();
     let a: Vec<u64> = sc.vec(n);
     let mut b: Vec<u64> = sc.vec(n);
-    if (0..n).any(|i| a[i] > b[i]) {
+    if (0..n).any(|i| b[i] < a[i]) {
         println!("-1");
         return;
     }
 
-    let mut ans = 0;
     let mut heap = BinaryHeap::new();
     for i in 0..n {
-        push(&mut heap, &a, &b, i);
+        try_push(&mut heap, &a, &b, i);
     }
 
-    while let Some((count, neighbors, i)) = heap.pop() {
+    let mut ans = 0;
+    while let Some((_, i)) = heap.pop() {
+        let prev = b[(i + n - 1) % n];
+        let next = b[(i + 1) % n];
+        let diff = b[i] - a[i];
+        let count = diff / (prev + next);
         ans += count;
-        b[i] -= count * neighbors;
-        assert!(b[i] >= a[i]);
-        push(&mut heap, &a, &b, (i + 1) % n);
-        push(&mut heap, &a, &b, (n + i - 1) % n);
+        b[i] -= count * (prev + next);
+        try_push(&mut heap, &a, &b, (i + 1) % n);
+        try_push(&mut heap, &a, &b, (i + n - 1) % n);
     }
-
-    if a != b {
-        println!("-1");
-    } else {
+    if a == b {
         println!("{}", ans);
+    } else {
+        println!("-1");
     }
 }
 
-fn push(heap: &mut BinaryHeap<(u64, u64, usize)>, a: &Vec<u64>, b: &Vec<u64>, i: usize) {
-    let n = b.len();
-    let prev = b[(n + i - 1) % n];
+fn try_push(heap: &mut BinaryHeap<(u64, usize)>, a: &[u64], b: &[u64], i: usize) {
+    let n = a.len();
+    let prev = b[(i + n - 1) % n];
     let next = b[(i + 1) % n];
-    let neighbors = prev + next;
-    let db = b[i] - a[i];
-    let count = db / neighbors;
+    let diff = b[i] - a[i];
+    let count = diff / (prev + next);
     if count > 0 {
-        heap.push((count, neighbors, i));
+        heap.push((count, i));
     }
 }
 

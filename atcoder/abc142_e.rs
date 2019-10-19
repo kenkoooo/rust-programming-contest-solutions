@@ -1,29 +1,39 @@
+use std::cmp;
+
+const INF: u64 = std::u64::MAX / 2;
+
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
     let n: usize = sc.read();
-    let a: Vec<u64> = sc.vec(n);
-    let xor_sum = a.iter().fold(0, |xor, &a| xor ^ a);
-    let mut a = a.into_iter().map(|a| a & !xor_sum).collect::<Vec<_>>();
+    let m: usize = sc.read();
+    let mut keys = vec![];
+    for _ in 0..m {
+        let a: u64 = sc.read();
+        let b: usize = sc.read();
+        let mut mask = 0;
+        for _ in 0..b {
+            let c = sc.read::<usize>() - 1;
+            mask |= (1 << c);
+        }
+        keys.push((a, mask));
+    }
 
-    let mut rank = 0;
-    for pos in (0..62).rev() {
-        if let Some(i) = (rank..n).find(|&i| a[i] & (1 << pos) != 0) {
-            for j in 0..n {
-                if i == j {
-                    continue;
-                }
-                if a[j] & (1 << pos) != 0 {
-                    a[j] ^= a[i];
-                }
-            }
-            a.swap(i, rank);
-            rank += 1;
+    let mut dp = vec![INF; 1 << n];
+    dp[0] = 0;
+    for (price, key_mask) in keys.into_iter() {
+        for mask in 0..(1 << n) {
+            let next = mask | key_mask;
+            dp[next] = cmp::min(dp[next], dp[mask] + price);
         }
     }
 
-    let max = a.into_iter().fold(0, |xor, a| xor ^ a);
-    println!("{}", max * 2 + xor_sum);
+    let ans = dp[(1 << n) - 1];
+    if ans == INF {
+        println!("-1");
+    } else {
+        println!("{}", ans);
+    }
 }
 
 pub struct Scanner<R> {
