@@ -1,41 +1,45 @@
-use std::collections::{BTreeMap, BinaryHeap};
+use std::collections::BTreeMap;
 
 fn main() {
     let s = std::io::stdin();
     let mut sc = Scanner { stdin: s.lock() };
-
     let n: usize = sc.read();
-    let s: Vec<usize> = sc.vec(1 << n);
+    let s: Vec<u64> = sc.vec(1 << n);
 
-    let mut tree = vec![vec![]; (1 << (n + 1)) - 1];
-    for i in 0..((1 << n) - 1) {
-        tree[i].push(2 * i + 1);
-        tree[i].push(2 * i + 2);
+    let mut multiset = BTreeMap::new();
+    for s in s.into_iter() {
+        *multiset.entry(s).or_insert(0) += 1;
     }
 
-    let count = s.into_iter().fold(BTreeMap::new(), |mut map, s| {
-        *map.entry(s).or_insert(0) += 1;
-        map
-    });
-
-    let mut heap = BinaryHeap::new();
-    heap.push((1 << n, 0));
-    for (_, count) in count.into_iter().rev() {
-        if heap.len() < count {
-            println!("No");
-            return;
-        }
-        let vs = (0..count).map(|_| heap.pop().unwrap()).collect::<Vec<_>>();
-        for (mut size, mut cur) in vs.into_iter() {
-            while !tree[cur].is_empty() {
-                heap.push((size / 2, tree[cur][1]));
-                cur = tree[cur][0];
-                size /= 2;
+    let max = *multiset.keys().next_back().unwrap();
+    remove(&mut multiset, max);
+    let mut ans = vec![max];
+    while !multiset.is_empty() {
+        let s = ans.len();
+        for i in 0..s {
+            let x = ans[i];
+            match multiset.range(..x).next_back() {
+                Some((&v, _)) => {
+                    ans.push(v);
+                    remove(&mut multiset, v);
+                }
+                None => {
+                    println!("No");
+                    return;
+                }
             }
         }
     }
-
     println!("Yes");
+}
+
+fn remove(multiset: &mut BTreeMap<u64, usize>, v: u64) {
+    let c = multiset.get_mut(&v).unwrap();
+    if *c == 1 {
+        assert_eq!(multiset.remove(&v), Some(1));
+    } else {
+        *c -= 1;
+    }
 }
 
 pub struct Scanner<R> {
