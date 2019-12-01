@@ -1,48 +1,32 @@
-use std::cmp;
-
 fn main() {
     let (r, w) = (std::io::stdin(), std::io::stdout());
     let mut sc = IO::new(r.lock(), w.lock());
-    let n: usize = sc.read();
-    let a: Vec<u64> = sc.vec(1 << n);
-    let mut top2 = a
-        .into_iter()
-        .enumerate()
-        .map(|(i, a)| ((a, i), (0, 0)))
-        .collect::<Vec<_>>();
-    let mut masks = (0..(1usize << n))
-        .map(|mask| (mask.count_ones(), mask))
-        .collect::<Vec<_>>();
-    masks.sort();
-    for (_, mask) in masks.into_iter() {
-        for i in 0..n {
-            if mask & (1 << i) != 0 {
-                continue;
-            }
-            let next_mask = mask | (1 << i);
-            top2[next_mask] = add(top2[next_mask], top2[mask].0);
-            top2[next_mask] = add(top2[next_mask], top2[mask].1);
-        }
-    }
 
-    let mut max = 0;
-    for i in 1..(1 << n) {
-        let ((a, _), (b, _)) = top2[i];
-        max = cmp::max(max, a + b);
-        sc.write(format!("{}\n", max));
+    let x: usize = sc.read();
+    let y: usize = sc.read();
+    let mut ans = 0;
+    if x == 1 {
+        ans += 300000;
     }
-}
-
-fn add<T: PartialOrd>((a, b): (T, T), v: T) -> (T, T) {
-    if a == v || b == v {
-        (a, b)
-    } else if v > a {
-        (v, a)
-    } else if v > b {
-        (a, v)
-    } else {
-        (a, b)
+    if x == 2 {
+        ans += 200000;
     }
+    if x == 3 {
+        ans += 100000;
+    }
+    if y == 1 {
+        ans += 300000;
+    }
+    if y == 2 {
+        ans += 200000;
+    }
+    if y == 3 {
+        ans += 100000;
+    }
+    if x == 1 && y == 1 {
+        ans += 400000;
+    }
+    println!("{}", ans);
 }
 
 pub struct IO<R, W: std::io::Write>(R, std::io::BufWriter<W>);
@@ -51,7 +35,7 @@ impl<R: std::io::Read, W: std::io::Write> IO<R, W> {
     pub fn new(r: R, w: W) -> IO<R, W> {
         IO(r, std::io::BufWriter::new(w))
     }
-    pub fn write<S: std::ops::Deref<Target = str>>(&mut self, s: S) {
+    pub fn write(&mut self, s: String) {
         use std::io::Write;
         self.1.write(s.as_bytes()).unwrap();
     }

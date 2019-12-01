@@ -1,68 +1,80 @@
 fn main() {
-    let s = std::io::stdin();
-    let mut sc = Scanner { stdin: s.lock() };
-    let height: usize = sc.read();
-    let width: usize = sc.read();
+    let (r, w) = (std::io::stdin(), std::io::stdout());
+    let mut sc = IO::new(r.lock(), w.lock());
+
     let h: usize = sc.read();
     let w: usize = sc.read();
-    if height % h == 0 && width % w == 0 {
-        println!("No");
-        return;
-    }
-    println!("Yes");
-    if width % w != 0 {
-        let row = construct(w, width);
-        for _ in 0..height {
-            for j in 0..width {
-                print!("{} ", row[j]);
+    let r: usize = sc.read();
+    let c: usize = sc.read();
+    if h % r == 0 && w % c == 0 {
+        sc.write("No\n".to_string());
+    } else if h % r == 0 {
+        sc.write("Yes\n".to_string());
+        let ans = solve(w, c);
+        for _ in 0..h {
+            for i in 0..w {
+                if i > 0 {
+                    sc.write(" ".to_string());
+                }
+                sc.write(format!("{}", ans[i]));
             }
-            println!();
+            sc.write("\n".to_string());
         }
     } else {
-        let column = construct(h, height);
-        for i in 0..height {
-            for _ in 0..width {
-                print!("{} ", column[i]);
+        sc.write("Yes\n".to_string());
+        let ans = solve(h, r);
+        for i in 0..h {
+            for j in 0..w {
+                if j > 0 {
+                    sc.write(" ".to_string());
+                }
+                sc.write(format!("{}", ans[i]));
             }
-            println!();
+            sc.write("\n".to_string());
         }
     }
 }
 
-fn construct(w: usize, width: usize) -> Vec<i64> {
-    let mut sum = vec![0; width + 1];
-    for i in 0..width {
-        if i >= w {
-            sum[i] = sum[i - w] - 1;
+fn solve(h: usize, r: usize) -> Vec<i64> {
+    let mut s = vec![0; h + 1];
+    for i in 0..(h + 1 - r) {
+        s[i + r] = s[i] - 1;
+    }
+    let mut cur = h;
+    s[h] = 1;
+    loop {
+        if cur < r {
+            break;
         }
+        s[cur - r] = s[cur] + 1;
+        cur -= r;
     }
-    sum[width] = 1;
-    let mut cur = width;
-    while cur >= w {
-        cur -= w;
-        sum[cur] = sum[cur + w] + 1;
+    let mut ans = vec![0; h];
+    for i in 0..h {
+        ans[i] = s[i + 1] - s[i];
     }
-    let mut a = vec![0; width];
-    for i in 0..width {
-        a[i] = sum[i + 1] - sum[i];
-    }
-    a
+    ans
 }
 
-pub struct Scanner<R> {
-    stdin: R,
-}
+pub struct IO<R, W: std::io::Write>(R, std::io::BufWriter<W>);
 
-impl<R: std::io::Read> Scanner<R> {
+impl<R: std::io::Read, W: std::io::Write> IO<R, W> {
+    pub fn new(r: R, w: W) -> IO<R, W> {
+        IO(r, std::io::BufWriter::new(w))
+    }
+    pub fn write(&mut self, s: String) {
+        use std::io::Write;
+        self.1.write(s.as_bytes()).unwrap();
+    }
     pub fn read<T: std::str::FromStr>(&mut self) -> T {
         use std::io::Read;
         let buf = self
-            .stdin
+            .0
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
-            .skip_while(|&b| b == b' ' || b == b'\n')
-            .take_while(|&b| b != b' ' && b != b'\n')
+            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r' || b == b'\t')
+            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r' && b != b'\t')
             .collect::<Vec<_>>();
         unsafe { std::str::from_utf8_unchecked(&buf) }
             .parse()

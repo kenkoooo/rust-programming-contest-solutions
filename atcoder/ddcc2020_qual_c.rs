@@ -1,47 +1,57 @@
 fn main() {
     let (r, w) = (std::io::stdin(), std::io::stdout());
     let mut sc = IO::new(r.lock(), w.lock());
-    let n: usize = sc.read();
-    let k: usize = sc.read();
-    let mut a: Vec<usize> = sc.vec::<usize>(n).into_iter().filter(|&a| a < k).collect();
-    a.sort();
-    if a.is_empty() || is_needed(0, &a, k) {
-        sc.write("0\n".to_string());
-        return;
-    }
-    let n = a.len();
-    let mut no_need = 0;
-    let mut needed = n;
-    while needed - no_need > 1 {
-        let m = (needed + no_need) / 2;
-        if is_needed(m, &a, k) {
-            needed = m;
-        } else {
-            no_need = m;
-        }
-    }
-    sc.write(format!("{}\n", no_need + 1));
-}
 
-fn is_needed(i: usize, a: &Vec<usize>, k: usize) -> bool {
-    let mut dp = vec![false; k];
-    dp[0] = true;
-    for (j, &a) in a.iter().enumerate() {
-        if j == i {
-            continue;
-        }
-        for l in (0..k).rev() {
-            if l + a < k {
-                dp[l + a] |= dp[l];
+    let h: usize = sc.read();
+    let w: usize = sc.read();
+    let k: usize = sc.read();
+    let c: Vec<Vec<char>> = (0..h).map(|_| sc.chars()).collect::<Vec<_>>();
+    let mut ans = vec![vec![0; w]; h];
+    let mut count = 1;
+    for i in 0..h {
+        for j in 0..w {
+            if c[i][j] == '#' {
+                ans[i][j] = count;
+                count += 1;
             }
         }
     }
-    for t in 0..k {
-        if dp[t] && t + a[i] >= k {
-            return true;
+    assert_eq!(count - 1, k);
+
+    for i in 0..h {
+        for j in 1..w {
+            if ans[i][j] == 0 && ans[i][j - 1] != 0 {
+                ans[i][j] = ans[i][j - 1];
+            }
+        }
+        for j in (0..(w - 1)).rev() {
+            if ans[i][j] == 0 && ans[i][j + 1] != 0 {
+                ans[i][j] = ans[i][j + 1];
+            }
         }
     }
-    false
+    for j in 0..w {
+        for i in 1..h {
+            if ans[i][j] == 0 && ans[i - 1][j] != 0 {
+                ans[i][j] = ans[i - 1][j];
+            }
+        }
+        for i in (0..(h - 1)).rev() {
+            if ans[i][j] == 0 && ans[i + 1][j] != 0 {
+                ans[i][j] = ans[i + 1][j];
+            }
+        }
+    }
+
+    for i in 0..h {
+        for j in 0..w {
+            if j > 0 {
+                sc.write(" ".to_string());
+            }
+            sc.write(format!("{}", ans[i][j]));
+        }
+        sc.write("\n".to_string());
+    }
 }
 
 pub struct IO<R, W: std::io::Write>(R, std::io::BufWriter<W>);

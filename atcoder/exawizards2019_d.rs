@@ -3,33 +3,32 @@ use self::mod_int::ModInt;
 const MOD: usize = 1e9 as usize + 7;
 
 fn main() {
-    let s = std::io::stdin();
-    let mut sc = Scanner { stdin: s.lock() };
-
+    let (r, w) = (std::io::stdin(), std::io::stdout());
+    let mut sc = IO::new(r.lock(), w.lock());
     let n: usize = sc.read();
     let x: usize = sc.read();
     let mut s: Vec<usize> = sc.vec(n);
     s.sort();
     s.reverse();
+    let mut ans = vec![ModInt(0); x + 1];
+    ans[x] = ModInt(1);
 
-    let mut dp = vec![ModInt(0); x + 1];
-    dp[x] = ModInt(1);
-    for i in 0..n {
-        let a = s[i];
-        let p = ModInt(n - i).pow(MOD - 2);
-
-        let mut next = vec![ModInt(0); x + 1];
-        for x in 0..(x + 1) {
-            next[x % a] += dp[x] * p;
-            next[x] += dp[x] * (ModInt(1) - p);
+    for (i, s) in s.into_iter().enumerate() {
+        for v in (0..(x + 1)).rev() {
+            if ans[v].0 == 0 {
+                continue;
+            }
+            let add = ans[v] / (n - i);
+            ans[v] = ans[v] * (n - i - 1) / (n - i);
+            ans[v % s] += add;
         }
-        dp = next;
     }
-    let fact = (1..(n + 1)).fold(ModInt(1), |p, i| p * i);
-    let ans = (0..(x + 1))
-        .map(|x| dp[x] * x * fact)
-        .fold(ModInt(0), |acc, x| acc + x);
 
+    let ans = ans
+        .into_iter()
+        .enumerate()
+        .fold(ModInt(0), |sum, (i, p)| sum + p * i);
+    let ans = (1..(n + 1)).fold(ans, |ans, i| ans * i);
     println!("{}", ans.0);
 }
 
@@ -39,7 +38,7 @@ pub mod mod_int {
 
     type Num = usize;
 
-    #[derive(Clone, Copy, Debug)]
+    #[derive(Clone, Copy)]
     pub struct ModInt<T: Copy + Clone>(pub T);
 
     impl Add<ModInt<Num>> for ModInt<Num> {
@@ -169,20 +168,25 @@ pub mod mod_int {
     }
 }
 
-pub struct Scanner<R> {
-    stdin: R,
-}
+pub struct IO<R, W: std::io::Write>(R, std::io::BufWriter<W>);
 
-impl<R: std::io::Read> Scanner<R> {
+impl<R: std::io::Read, W: std::io::Write> IO<R, W> {
+    pub fn new(r: R, w: W) -> IO<R, W> {
+        IO(r, std::io::BufWriter::new(w))
+    }
+    pub fn write<S: std::ops::Deref<Target = str>>(&mut self, s: S) {
+        use std::io::Write;
+        self.1.write(s.as_bytes()).unwrap();
+    }
     pub fn read<T: std::str::FromStr>(&mut self) -> T {
         use std::io::Read;
         let buf = self
-            .stdin
+            .0
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
-            .skip_while(|&b| b == b' ' || b == b'\n')
-            .take_while(|&b| b != b' ' && b != b'\n')
+            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r' || b == b'\t')
+            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r' && b != b'\t')
             .collect::<Vec<_>>();
         unsafe { std::str::from_utf8_unchecked(&buf) }
             .parse()

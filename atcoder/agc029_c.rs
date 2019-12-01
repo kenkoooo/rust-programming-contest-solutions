@@ -1,106 +1,114 @@
-use std::collections::BTreeMap;
-
 fn main() {
-    let s = std::io::stdin();
-    let mut sc = Scanner { stdin: s.lock() };
-    let n = sc.read();
-    let a: Vec<usize> = sc.vec(n);
+    let (r, w) = (std::io::stdin(), std::io::stdout());
+    let mut sc = IO::new(r.lock(), w.lock());
+    let n: usize = sc.read();
+    let a: Vec<_> = sc.vec(n);
 
-    if (1..n).all(|i| a[i] > a[i - 1]) {
+    if solve(&a, 0) {
         println!("1");
         return;
     }
-
-    let mut ok = n;
+    let mut ok = 1e15 as u64;
     let mut ng = 0;
     while ok - ng > 1 {
-        let x = (ok + ng) / 2;
-        if solve(&a, x) {
-            ok = x;
+        let m = (ok + ng) / 2;
+        if solve(&a, m) {
+            ok = m;
         } else {
-            ng = x;
+            ng = m;
         }
     }
-
     println!("{}", ok + 1);
 }
 
-fn solve(a: &Vec<usize>, limit: usize) -> bool {
+fn solve(a: &Vec<usize>, max: u64) -> bool {
     let mut state = State {
-        map: BTreeMap::new(),
-        limit: limit,
+        v: vec![],
+        length: 0,
+        max: max,
     };
-
-    let n = a.len();
-    let mut start = 0;
-    for i in 1..n {
-        if a[i] <= a[i - 1] {
-            state.increment(a[i]);
-            start = i + 1;
-            break;
-        }
-    }
-
-    for i in start..n {
-        if a[i] <= a[i - 1] {
-            state.resize(a[i]);
-            if !state.increment(a[i]) {
+    let mut prev = 0;
+    for &a in a.iter() {
+        state.resize(a);
+        if prev >= a {
+            if !state.increment() {
                 return false;
             }
         }
+        prev = a;
     }
     true
 }
 
+#[derive(Debug)]
 struct State {
-    map: BTreeMap<usize, usize>,
-    limit: usize,
+    v: Vec<(u64, usize)>,
+    length: usize,
+    max: u64,
 }
 
 impl State {
-    fn increment(&mut self, i: usize) -> bool {
-        if let Some(&cur) = self.map.get(&i) {
-            if cur == self.limit {
-                self.map.remove(&i);
-                if i == 1 {
-                    false
-                } else {
-                    self.increment(i - 1)
-                }
-            } else {
-                *self.map.get_mut(&i).unwrap() += 1;
-                true
+    fn resize(&mut self, required_length: usize) {
+        if self.length <= required_length {
+            let add = required_length - self.length;
+            if add > 0 {
+                self.v.push((0, add));
+                self.length += add;
             }
         } else {
-            self.map.insert(i, 1);
-            true
-        }
-    }
-    fn resize(&mut self, size: usize) {
-        while let Some(&key) = self.map.keys().next_back() {
-            if key > size {
-                self.map.remove(&key);
-            } else {
-                break;
+            while let Some((c, seg_length)) = self.v.pop() {
+                self.length -= seg_length;
+                if self.length < required_length {
+                    let add = required_length - self.length;
+                    self.v.push((c, add));
+                    self.length += add;
+                    break;
+                }
             }
         }
+        //        eprintln!("{:?} l={}", self, required_length);
+        assert_eq!(self.length, required_length);
+    }
+
+    fn increment(&mut self) -> bool {
+        let mut tail = 0;
+        while let Some((c, seg_length)) = self.v.pop() {
+            if c == self.max {
+                tail += seg_length;
+            } else {
+                if seg_length > 1 {
+                    self.v.push((c, seg_length - 1));
+                }
+                self.v.push((c + 1, 1));
+                if tail > 0 {
+                    self.v.push((0, tail));
+                }
+                return true;
+            }
+        }
+        false
     }
 }
 
-pub struct Scanner<R> {
-    stdin: R,
-}
+pub struct IO<R, W: std::io::Write>(R, std::io::BufWriter<W>);
 
-impl<R: std::io::Read> Scanner<R> {
+impl<R: std::io::Read, W: std::io::Write> IO<R, W> {
+    pub fn new(r: R, w: W) -> IO<R, W> {
+        IO(r, std::io::BufWriter::new(w))
+    }
+    pub fn write<S: std::ops::Deref<Target = str>>(&mut self, s: S) {
+        use std::io::Write;
+        self.1.write(s.as_bytes()).unwrap();
+    }
     pub fn read<T: std::str::FromStr>(&mut self) -> T {
         use std::io::Read;
         let buf = self
-            .stdin
+            .0
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
-            .skip_while(|&b| b == b' ' || b == b'\n')
-            .take_while(|&b| b != b' ' && b != b'\n')
+            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r' || b == b'\t')
+            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r' && b != b'\t')
             .collect::<Vec<_>>();
         unsafe { std::str::from_utf8_unchecked(&buf) }
             .parse()

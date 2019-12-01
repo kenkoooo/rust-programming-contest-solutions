@@ -1,37 +1,37 @@
 use self::mod_int::ModInt;
-const MOD: usize = 1e9 as usize + 7;
 
+const MOD: usize = 1e9 as usize + 7;
 fn main() {
-    let s = std::io::stdin();
-    let mut sc = Scanner { stdin: s.lock() };
+    let (r, w) = (std::io::stdin(), std::io::stdout());
+    let mut sc = IO::new(r.lock(), w.lock());
     let n: usize = sc.read();
     let a: usize = sc.read();
     let b: usize = sc.read();
     let c: usize = sc.read();
+    let (a, b) = (ModInt(a) / (a + b), ModInt(b) / (a + b));
+    let c = ModInt(c) / 100;
 
-    let a = ModInt::new(a);
-    let b = ModInt::new(b);
-
-    let pa = a * (a + b).inv();
-    let pb = b * (a + b).inv();
-    // Y(M) = 1 + C/100 * Y(M) + (100-C)/100 * Y(M-1)
-    // Y(M) = 100/(100-C) + Y(M-1)
-    // Y(M) = 100M/(100-C)
-    let adjust = ModInt::new(100) * (ModInt::new(100) - ModInt::new(c)).inv();
-    let comb = Combination::new(n * 2 + 1, MOD);
-
-    let mut ans = ModInt::new(0);
-    for k in 0..n {
-        ans += pa.pow(n) * pb.pow(k) * comb.get(n - 1 + k, k) * (n + k) * adjust;
-        ans += pa.pow(k) * pb.pow(n) * comb.get(n - 1 + k, k) * (n + k) * adjust;
+    // X(M) = 1+(1-c)X(M-1) + cX(M)
+    // (1-c)X(M) = 1 + (1-c)X(M-1)
+    // X(M) = 1/(1-c) + X(M-1)
+    // X(M) = M/(1-c)
+    let mut ans = ModInt(0);
+    let comb = Combination::new(n * 2, MOD);
+    for m in n..(2 * n) {
+        ans += comb.get(m - 1, n - 1) * (a.pow(n) * b.pow(m - n) + a.pow(m - n) * b.pow(n)) * m
+            / (ModInt(1) - c);
     }
+    // c(4,3)*(1/2)^3*4 = 2
+    // c(5,3)*(1/2)^4*5 = 5*4/2/16*5 = 25/2
+    // c(6,3)*(1/2)^5*6 = 3*5/4 = 15/4
+    // c(7,3)*(1/2)^6*7 = 7*5/64*7 = 35*7/64
 
     println!("{}", ans.0);
 }
 
 pub mod mod_int {
     use super::MOD;
-    use std::ops::{Add, AddAssign, Mul, MulAssign, Sub, SubAssign};
+    use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
     type Num = usize;
 
@@ -95,6 +95,31 @@ pub mod mod_int {
         }
     }
 
+    impl Div<Num> for ModInt<Num> {
+        type Output = ModInt<Num>;
+        fn div(self, rhs: Num) -> ModInt<Num> {
+            self * ModInt(rhs).pow(MOD - 2)
+        }
+    }
+
+    impl Div<ModInt<Num>> for ModInt<Num> {
+        type Output = ModInt<Num>;
+        fn div(self, rhs: ModInt<Num>) -> ModInt<Num> {
+            self / rhs.0
+        }
+    }
+
+    impl DivAssign<Num> for ModInt<Num> {
+        fn div_assign(&mut self, rhs: Num) {
+            *self = *self / rhs
+        }
+    }
+    impl DivAssign<ModInt<Num>> for ModInt<Num> {
+        fn div_assign(&mut self, rhs: ModInt<Num>) {
+            *self = *self / rhs
+        }
+    }
+
     impl Mul<ModInt<Num>> for ModInt<Num> {
         type Output = ModInt<Num>;
 
@@ -124,12 +149,8 @@ pub mod mod_int {
     }
 
     impl ModInt<Num> {
-        pub fn new(value: Num) -> Self {
-            ModInt(value)
-        }
-
         pub fn pow(self, e: usize) -> ModInt<Num> {
-            let mut result = ModInt::new(1);
+            let mut result = ModInt(1);
             let mut cur = self;
             let mut e = e;
             while e > 0 {
@@ -140,10 +161,6 @@ pub mod mod_int {
                 cur *= cur;
             }
             result
-        }
-
-        pub fn inv(self) -> ModInt<Num> {
-            self.pow(MOD - 2)
         }
     }
 }
@@ -178,30 +195,32 @@ impl Combination {
         }
     }
 
-    pub fn get(&self, x: usize, y: usize) -> usize {
+    pub fn get(&self, x: usize, y: usize) -> ModInt<usize> {
         assert!(x >= y);
-        self.fact[x] * self.inv_fact[y] % self.modulo * self.inv_fact[x - y] % self.modulo
-    }
-
-    pub fn h(&self, n: usize, r: usize) -> usize {
-        self.get(n + r - 1, r)
+        let c = self.fact[x] * self.inv_fact[y] % self.modulo * self.inv_fact[x - y] % self.modulo;
+        ModInt(c)
     }
 }
 
-pub struct Scanner<R> {
-    stdin: R,
-}
+pub struct IO<R, W: std::io::Write>(R, std::io::BufWriter<W>);
 
-impl<R: std::io::Read> Scanner<R> {
+impl<R: std::io::Read, W: std::io::Write> IO<R, W> {
+    pub fn new(r: R, w: W) -> IO<R, W> {
+        IO(r, std::io::BufWriter::new(w))
+    }
+    pub fn write<S: std::ops::Deref<Target = str>>(&mut self, s: S) {
+        use std::io::Write;
+        self.1.write(s.as_bytes()).unwrap();
+    }
     pub fn read<T: std::str::FromStr>(&mut self) -> T {
         use std::io::Read;
         let buf = self
-            .stdin
+            .0
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
-            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r')
-            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r')
+            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r' || b == b'\t')
+            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r' && b != b'\t')
             .collect::<Vec<_>>();
         unsafe { std::str::from_utf8_unchecked(&buf) }
             .parse()

@@ -1,22 +1,23 @@
+use self::fenwick_tree::FenwickTree;
 use std::collections::{BTreeMap, BTreeSet};
 
 fn main() {
-    let s = std::io::stdin();
-    let mut sc = Scanner { stdin: s.lock() };
-    let n = sc.read();
-    let a: Vec<i64> = sc.vec(n);
+    let (r, w) = (std::io::stdin(), std::io::stdout());
+    let mut sc = IO::new(r.lock(), w.lock());
 
+    let n: usize = sc.read();
+    let a: Vec<i64> = sc.vec(n);
     let mut ok = 0;
     let mut ng = 1e10 as i64;
     while ng - ok > 1 {
         let x = (ng + ok) / 2;
-        let a = a
+        let b = a
             .iter()
             .map(|&a| if a >= x { 1 } else { -1 })
-            .collect::<Vec<i64>>();
+            .collect::<Vec<_>>();
         let mut acc = vec![0; n + 1];
         for i in 0..n {
-            acc[i + 1] = acc[i] + a[i];
+            acc[i + 1] = acc[i] + b[i];
         }
 
         let map = acc
@@ -25,26 +26,24 @@ fn main() {
             .collect::<BTreeSet<_>>()
             .into_iter()
             .enumerate()
-            .map(|(i, v)| (v, i))
+            .map(|(i, acc)| (acc, i))
             .collect::<BTreeMap<_, _>>();
-        let acc = acc
-            .into_iter()
-            .map(|v| *map.get(&v).unwrap())
+        let indices = acc
+            .iter()
+            .map(|acc| *map.get(acc).unwrap())
             .collect::<Vec<_>>();
+
         let m = map.len();
-        let mut bit = fenwick_tree::FenwickTree::new(m, 0);
-        let mut negative_segments = 0;
+        let mut bit = FenwickTree::new(m, 0);
+        let mut bigger = 0;
         for i in 0..(n + 1) {
-            negative_segments += i - bit.sum_one(acc[i] + 1);
-            bit.add(acc[i], 1);
+            let v = indices[i];
+            bigger += bit.sum(v + 1, m);
+            bit.add(v, 1);
         }
 
-        //        eprintln!(
-        //            "x={} a={:?} acc={:?} negative_segments={}",
-        //            x, a, acc, negative_segments
-        //        );
-
-        if negative_segments * 2 > (n + 1) * n / 2 {
+        let total = n * (n - 1) / 2 + n;
+        if bigger * 2 > total {
             ng = x;
         } else {
             ok = x;
@@ -53,6 +52,7 @@ fn main() {
 
     println!("{}", ok);
 }
+
 pub mod fenwick_tree {
     use std::ops::{AddAssign, Sub};
     /// `FenwickTree` is a data structure that can efficiently update elements
@@ -103,20 +103,25 @@ pub mod fenwick_tree {
     }
 }
 
-pub struct Scanner<R> {
-    stdin: R,
-}
+pub struct IO<R, W: std::io::Write>(R, std::io::BufWriter<W>);
 
-impl<R: std::io::Read> Scanner<R> {
+impl<R: std::io::Read, W: std::io::Write> IO<R, W> {
+    pub fn new(r: R, w: W) -> IO<R, W> {
+        IO(r, std::io::BufWriter::new(w))
+    }
+    pub fn write<S: std::ops::Deref<Target = str>>(&mut self, s: S) {
+        use std::io::Write;
+        self.1.write(s.as_bytes()).unwrap();
+    }
     pub fn read<T: std::str::FromStr>(&mut self) -> T {
         use std::io::Read;
         let buf = self
-            .stdin
+            .0
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
-            .skip_while(|&b| b == b' ' || b == b'\n')
-            .take_while(|&b| b != b' ' && b != b'\n')
+            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r' || b == b'\t')
+            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r' && b != b'\t')
             .collect::<Vec<_>>();
         unsafe { std::str::from_utf8_unchecked(&buf) }
             .parse()

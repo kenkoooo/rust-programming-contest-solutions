@@ -1,47 +1,50 @@
-use std::cmp;
+use std::cmp::min;
+use std::collections::BTreeMap;
+
+const INF: i64 = 1e17 as i64;
 
 fn main() {
     let (r, w) = (std::io::stdin(), std::io::stdout());
     let mut sc = IO::new(r.lock(), w.lock());
+
     let n: usize = sc.read();
-    let a: Vec<u64> = sc.vec(1 << n);
-    let mut top2 = a
-        .into_iter()
-        .enumerate()
-        .map(|(i, a)| ((a, i), (0, 0)))
-        .collect::<Vec<_>>();
-    let mut masks = (0..(1usize << n))
-        .map(|mask| (mask.count_ones(), mask))
-        .collect::<Vec<_>>();
-    masks.sort();
-    for (_, mask) in masks.into_iter() {
-        for i in 0..n {
-            if mask & (1 << i) != 0 {
-                continue;
+    let k: usize = sc.read();
+    let h: Vec<i64> = sc.vec(n);
+
+    let mut dp = BTreeMap::new();
+    dp.insert((0, 0), 0);
+    for height in h.into_iter() {
+        let mut next = BTreeMap::new();
+        for ((cur_height, cur_ops), min_cost) in dp.into_iter() {
+            if cur_height >= height {
+                {
+                    let cur = next.entry((height, cur_ops)).or_insert(INF);
+                    update_min(cur, min_cost);
+                }
+                if cur_ops < k {
+                    let cur = next.entry((cur_height, cur_ops + 1)).or_insert(INF);
+                    update_min(cur, min_cost);
+                }
+            } else {
+                {
+                    let cur = next.entry((height, cur_ops)).or_insert(INF);
+                    update_min(cur, min_cost + height - cur_height);
+                }
+                if cur_ops < k {
+                    let cur = next.entry((cur_height, cur_ops + 1)).or_insert(INF);
+                    update_min(cur, min_cost);
+                }
             }
-            let next_mask = mask | (1 << i);
-            top2[next_mask] = add(top2[next_mask], top2[mask].0);
-            top2[next_mask] = add(top2[next_mask], top2[mask].1);
         }
+        dp = next;
     }
 
-    let mut max = 0;
-    for i in 1..(1 << n) {
-        let ((a, _), (b, _)) = top2[i];
-        max = cmp::max(max, a + b);
-        sc.write(format!("{}\n", max));
-    }
+    println!("{}", dp.values().cloned().min().unwrap());
 }
 
-fn add<T: PartialOrd>((a, b): (T, T), v: T) -> (T, T) {
-    if a == v || b == v {
-        (a, b)
-    } else if v > a {
-        (v, a)
-    } else if v > b {
-        (a, v)
-    } else {
-        (a, b)
+fn update_min<T: PartialOrd>(cur: &mut T, v: T) {
+    if *cur > v {
+        *cur = v;
     }
 }
 

@@ -1,135 +1,98 @@
+use std::cmp;
+use std::collections::{BTreeSet, BinaryHeap, VecDeque};
+
+const INF: i64 = 1e9 as i64;
 fn main() {
-    let mut sc = Scanner::new();
-    let a: Vec<usize> = sc
-        .read::<String>()
-        .chars()
-        .map(|c| ((c as u8) - ('a' as u8)) as usize)
-        .collect();
+    let (r, w) = (std::io::stdin(), std::io::stdout());
+    let mut sc = IO::new(r.lock(), w.lock());
+    let a = sc.chars();
     let n = a.len();
-
-    let mut used = vec![false; 26];
-    let mut k = vec![0; n + 1];
-
-    for i in (0..n).rev() {
-        used[a[i]] = true;
-        let mut ok = true;
-        for &b in &used {
-            ok &= b;
+    let mut heads = vec![];
+    let mut set = BTreeSet::new();
+    for (i, &c) in a.iter().enumerate().rev() {
+        set.insert(c);
+        if set.len() == 26 {
+            set.clear();
+            heads.push(i);
         }
-        if ok {
-            for i in 0..used.len() {
-                used[i] = false;
-            }
-        }
-        k[i] = if ok { k[i + 1] + 1 } else { k[i + 1] };
     }
 
-    let mut indices = vec![vec![]; 26];
+    let mut group = vec![0; n];
+    for (i, head) in heads.into_iter().rev().enumerate() {
+        group[head] = i + 1;
+    }
+    for i in 1..n {
+        group[i] = cmp::max(group[i], group[i - 1]);
+    }
+
+    let mut index = vec![VecDeque::new(); 26];
     for i in 0..n {
-        indices[a[i]].push(i + 1);
+        let c = a[i] as usize - 'a' as usize;
+        index[c].push_back(i);
     }
 
-    let mut ans = Vec::new();
-    let mut cur = 0;
-    for _ in 0..(k[0] + 1) {
+    let mut cur_group = 0;
+    let mut cur_pos = 0;
+    let mut ans = String::new();
+    loop {
         for i in 0..26 {
-            let t: usize = match indices[i].binary_search(&(cur + 1)) {
-                Ok(t) => indices[i][t],
-                Err(t) => if t == indices[i].len() {
-                    n + 1
-                } else {
-                    indices[i][t]
-                },
-            };
-            if t != n + 1 && k[cur] == k[t] {
-                continue;
+            while let Some(x) = index[i].pop_front() {
+                if x >= cur_pos {
+                    index[i].push_front(x);
+                    break;
+                }
             }
-            cur = t;
-            ans.push(i);
-            break;
+            let c = (i as u8 + 'a' as u8) as char;
+            match index[i].iter().next().cloned() {
+                Some(head) => {
+                    if group[head] == cur_group + 1 {
+                        ans.push(c);
+                        cur_pos = head + 1;
+                        cur_group += 1;
+                        break;
+                    }
+                }
+                None => {
+                    println!("{}{}", ans, c);
+                    return;
+                }
+            }
         }
     }
-
-    for &i in &ans {
-        print!("{}", ((i as u8) + ('a' as u8)) as char);
-    }
-    println!();
 }
+/// frqn
+/// vhydscshfcgdemurlfrutcpzhopfotpifgepnqjxupnsk(a)pziurswqazdwnwbgdhyktfyhqqxpoidf
+/// hjdakoxraiedxskywuepzfniuyskxiyjpjlxuqnfgmnj(c)vtlpnclfkpervxmdbvrbrdn
 
-struct Scanner {
-    ptr: usize,
-    length: usize,
-    buf: Vec<u8>,
-    small_cache: Vec<u8>,
-}
+pub struct IO<R, W: std::io::Write>(R, std::io::BufWriter<W>);
 
-impl Scanner {
-    fn new() -> Scanner {
-        Scanner {
-            ptr: 0,
-            length: 0,
-            buf: vec![0; 1024],
-            small_cache: vec![0; 1024],
-        }
+impl<R: std::io::Read, W: std::io::Write> IO<R, W> {
+    pub fn new(r: R, w: W) -> IO<R, W> {
+        IO(r, std::io::BufWriter::new(w))
     }
-
-    fn load(&mut self) {
+    pub fn write<S: std::ops::Deref<Target = str>>(&mut self, s: S) {
+        use std::io::Write;
+        self.1.write(s.as_bytes()).unwrap();
+    }
+    pub fn read<T: std::str::FromStr>(&mut self) -> T {
         use std::io::Read;
-        let mut s = std::io::stdin();
-        self.length = s.read(&mut self.buf).unwrap();
+        let buf = self
+            .0
+            .by_ref()
+            .bytes()
+            .map(|b| b.unwrap())
+            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r' || b == b'\t')
+            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r' && b != b'\t')
+            .collect::<Vec<_>>();
+        unsafe { std::str::from_utf8_unchecked(&buf) }
+            .parse()
+            .ok()
+            .expect("Parse error.")
     }
-
-    fn byte(&mut self) -> u8 {
-        if self.ptr >= self.length {
-            self.ptr = 0;
-            self.load();
-            if self.length == 0 {
-                self.buf[0] = b'\n';
-                self.length = 1;
-            }
-        }
-
-        self.ptr += 1;
-        return self.buf[self.ptr - 1];
-    }
-
-    fn is_space(b: u8) -> bool {
-        b == b'\n' || b == b'\r' || b == b'\t' || b == b' '
-    }
-
-    fn read_vec<T>(&mut self, n: usize) -> Vec<T>
-    where
-        T: std::str::FromStr,
-        T::Err: std::fmt::Debug,
-    {
+    pub fn vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
         (0..n).map(|_| self.read()).collect()
     }
-
-    fn read<T>(&mut self) -> T
-    where
-        T: std::str::FromStr,
-        T::Err: std::fmt::Debug,
-    {
-        let mut b = self.byte();
-        while Scanner::is_space(b) {
-            b = self.byte();
-        }
-
-        for pos in 0..self.small_cache.len() {
-            self.small_cache[pos] = b;
-            b = self.byte();
-            if Scanner::is_space(b) {
-                return String::from_utf8_lossy(&self.small_cache[0..(pos + 1)])
-                    .parse()
-                    .unwrap();
-            }
-        }
-
-        let mut v = self.small_cache.clone();
-        while !Scanner::is_space(b) {
-            v.push(b);
-            b = self.byte();
-        }
-        return String::from_utf8_lossy(&v).parse().unwrap();
+    pub fn chars(&mut self) -> Vec<char> {
+        self.read::<String>().chars().collect()
     }
 }

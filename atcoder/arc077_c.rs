@@ -1,91 +1,78 @@
-/// Thank you tanakh!!!
-/// https://qiita.com/tanakh/items/0ba42c7ca36cd29d0ac8
-macro_rules! input {
-    (source = $s:expr, $($r:tt)*) => {
-        let mut iter = $s.split_whitespace();
-        input_inner!{iter, $($r)*}
-    };
-    ($($r:tt)*) => {
-        let mut s = {
-            use std::io::Read;
-            let mut s = String::new();
-            std::io::stdin().read_to_string(&mut s).unwrap();
-            s
-        };
-        let mut iter = s.split_whitespace();
-        input_inner!{iter, $($r)*}
-    };
-}
-
-macro_rules! input_inner {
-    ($iter:expr) => {};
-    ($iter:expr, ) => {};
-
-    ($iter:expr, $var:ident : $t:tt $($r:tt)*) => {
-        let $var = read_value!($iter, $t);
-        input_inner!{$iter $($r)*}
-    };
-}
-
-macro_rules! read_value {
-    ($iter:expr, ( $($t:tt),* )) => {
-        ( $(read_value!($iter, $t)),* )
-    };
-
-    ($iter:expr, [ $t:tt ; $len:expr ]) => {
-        (0..$len).map(|_| read_value!($iter, $t)).collect::<Vec<_>>()
-    };
-
-    ($iter:expr, chars) => {
-        read_value!($iter, String).chars().collect::<Vec<char>>()
-    };
-
-    ($iter:expr, usize1) => {
-        read_value!($iter, usize) - 1
-    };
-
-    ($iter:expr, $t:ty) => {
-        $iter.next().unwrap().parse::<$t>().expect("Parse error")
-    };
-}
-
 use std::cmp;
 
 fn main() {
-    input!(n: usize, m: usize, a: [usize1; n]);
-    let mut start = vec![vec![]; m];
-    let mut end = vec![vec![]; m];
-    for i in 0..(n - 1) {
-        let from = a[i];
-        let to = a[i + 1];
+    let (r, w) = (std::io::stdin(), std::io::stdout());
+    let mut sc = IO::new(r.lock(), w.lock());
+    let n: usize = sc.read();
+    let m: usize = sc.read();
+    let a: Vec<usize> = sc.vec(n);
+
+    let mut start = vec![vec![]; m + 1];
+    let mut end = vec![vec![]; m + 1];
+    for i in 1..n {
+        let from = a[i - 1];
+        let to = a[i];
         start[from].push(to);
         end[to].push(from);
     }
 
+    // initialize
     let mut total = 0;
-    let mut count = 0;
-    for from in 0..m {
+    let mut segments = 0;
+    for from in 0..(m + 1) {
         for &to in start[from].iter() {
             if from > to {
-                count += 1;
-                total += to + 1;
+                segments += 1;
+                total += to;
             } else {
                 total += to - from;
             }
         }
     }
-    let mut ans = total;
-    for cur in 1..m {
-        for &from in end[cur - 1].iter() {
-            count -= 1;
-            let to = cur - 1;
-            total += (to + m - from) % m;
-            total -= 1;
-        }
-        total -= count;
 
+    let mut ans = total;
+    for x in 1..m {
+        for &from in end[x].iter() {
+            segments -= 1;
+            total -= 1;
+            total += (x + m - from) % m;
+        }
+        total -= segments;
         ans = cmp::min(ans, total);
-        count += start[cur - 1].len();
+        segments += start[x].len();
     }
     println!("{}", ans);
+}
+
+pub struct IO<R, W: std::io::Write>(R, std::io::BufWriter<W>);
+
+impl<R: std::io::Read, W: std::io::Write> IO<R, W> {
+    pub fn new(r: R, w: W) -> IO<R, W> {
+        IO(r, std::io::BufWriter::new(w))
+    }
+    pub fn write<S: std::ops::Deref<Target = str>>(&mut self, s: S) {
+        use std::io::Write;
+        self.1.write(s.as_bytes()).unwrap();
+    }
+    pub fn read<T: std::str::FromStr>(&mut self) -> T {
+        use std::io::Read;
+        let buf = self
+            .0
+            .by_ref()
+            .bytes()
+            .map(|b| b.unwrap())
+            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r' || b == b'\t')
+            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r' && b != b'\t')
+            .collect::<Vec<_>>();
+        unsafe { std::str::from_utf8_unchecked(&buf) }
+            .parse()
+            .ok()
+            .expect("Parse error.")
+    }
+    pub fn vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
+        (0..n).map(|_| self.read()).collect()
+    }
+    pub fn chars(&mut self) -> Vec<char> {
+        self.read::<String>().chars().collect()
+    }
 }

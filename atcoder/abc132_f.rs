@@ -1,60 +1,72 @@
-use mod_int::ModInt;
+use self::mod_int::ModInt;
 use std::collections::BTreeSet;
+use std::iter::FromIterator;
 
 const MOD: usize = 1e9 as usize + 7;
 
 fn main() {
-    let s = std::io::stdin();
-    let mut sc = Scanner { stdin: s.lock() };
+    let (r, w) = (std::io::stdin(), std::io::stdout());
+    let mut sc = IO::new(r.lock(), w.lock());
+
     let n: usize = sc.read();
     let k: usize = sc.read();
-
     let mut seg = BTreeSet::new();
     for i in 1.. {
-        if i * i > n {
+        let j = n / i;
+        seg.insert(i);
+        if j <= i {
             break;
         }
-        let j = i + 1;
-        let m = n / j;
-        let from = m + 1;
-        let to = n / i;
-
-        seg.insert((from, to));
-        seg.insert((i, i));
+        seg.insert(j);
     }
 
-    let seg = seg.into_iter().collect::<Vec<_>>();
-    let n = seg.len();
-    let mut dp = vec![ModInt::new(1); n];
+    let seg = Vec::from_iter(seg);
+
+    assert_eq!(seg[0], 1);
+    let mut intervals = vec![(1, 1)];
+    for i in 1..seg.len() {
+        let prev = seg[i - 1];
+        let cur = seg[i];
+        intervals.push((prev + 1, cur));
+    }
+
+    let m = intervals.len();
+
+    let mut dp = vec![ModInt(1); m];
     for _ in 1..k {
-        let mut sum = vec![ModInt::new(0); n + 1];
-        for i in 0..n {
-            // i -> [0, n-1-i]
-            let (from, to) = seg[i];
-            let tmp = dp[i] * (to - from + 1);
-            sum[n - i] -= tmp;
-            sum[0] += tmp;
+        let mut tail = (m - 1) as i64;
+        let mut sum = ModInt(0);
+        for i in 0..m {
+            let (from, to) = intervals[i];
+            assert!(from <= to, "from={} to={}", from, to);
+            let length = to - from + 1;
+            sum += dp[i] * length;
         }
-        let mut next = vec![ModInt::new(0); n];
-        let mut cur = ModInt::new(0);
-        for i in 0..n {
-            cur += sum[i];
-            next[i] = cur;
+        let mut next = vec![ModInt(0); m];
+        for i in 0..m {
+            let (_, to) = intervals[i];
+            while tail >= 0 && intervals[tail as usize].1 * to > n {
+                let (from, to) = intervals[tail as usize];
+                let length = to - from + 1;
+                sum -= dp[tail as usize] * length;
+                tail -= 1;
+            }
+            next[i] = sum;
         }
         dp = next;
     }
 
-    let mut ans = ModInt::new(0);
-    for i in 0..n {
-        let (from, to) = seg[i];
-        ans += dp[i] * (to - from + 1);
+    let mut sum = ModInt(0);
+    for i in 0..m {
+        let (from, to) = intervals[i];
+        let length = to - from + 1;
+        sum += dp[i] * length;
     }
-    println!("{}", ans.0);
+    println!("{}", sum.0);
 }
-
 pub mod mod_int {
     use super::MOD;
-    use std::ops::{Add, AddAssign, Mul, MulAssign, Sub, SubAssign};
+    use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
     type Num = usize;
 
@@ -118,6 +130,31 @@ pub mod mod_int {
         }
     }
 
+    impl Div<Num> for ModInt<Num> {
+        type Output = ModInt<Num>;
+        fn div(self, rhs: Num) -> ModInt<Num> {
+            self * ModInt(rhs).pow(MOD - 2)
+        }
+    }
+
+    impl Div<ModInt<Num>> for ModInt<Num> {
+        type Output = ModInt<Num>;
+        fn div(self, rhs: ModInt<Num>) -> ModInt<Num> {
+            self / rhs.0
+        }
+    }
+
+    impl DivAssign<Num> for ModInt<Num> {
+        fn div_assign(&mut self, rhs: Num) {
+            *self = *self / rhs
+        }
+    }
+    impl DivAssign<ModInt<Num>> for ModInt<Num> {
+        fn div_assign(&mut self, rhs: ModInt<Num>) {
+            *self = *self / rhs
+        }
+    }
+
     impl Mul<ModInt<Num>> for ModInt<Num> {
         type Output = ModInt<Num>;
 
@@ -147,12 +184,8 @@ pub mod mod_int {
     }
 
     impl ModInt<Num> {
-        pub fn new(value: Num) -> Self {
-            ModInt(value)
-        }
-
         pub fn pow(self, e: usize) -> ModInt<Num> {
-            let mut result = ModInt::new(1);
+            let mut result = ModInt(1);
             let mut cur = self;
             let mut e = e;
             while e > 0 {
@@ -167,20 +200,25 @@ pub mod mod_int {
     }
 }
 
-pub struct Scanner<R> {
-    stdin: R,
-}
+pub struct IO<R, W: std::io::Write>(R, std::io::BufWriter<W>);
 
-impl<R: std::io::Read> Scanner<R> {
+impl<R: std::io::Read, W: std::io::Write> IO<R, W> {
+    pub fn new(r: R, w: W) -> IO<R, W> {
+        IO(r, std::io::BufWriter::new(w))
+    }
+    pub fn write<S: std::ops::Deref<Target = str>>(&mut self, s: S) {
+        use std::io::Write;
+        self.1.write(s.as_bytes()).unwrap();
+    }
     pub fn read<T: std::str::FromStr>(&mut self) -> T {
         use std::io::Read;
         let buf = self
-            .stdin
+            .0
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
-            .skip_while(|&b| b == b' ' || b == b'\n')
-            .take_while(|&b| b != b' ' && b != b'\n')
+            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r' || b == b'\t')
+            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r' && b != b'\t')
             .collect::<Vec<_>>();
         unsafe { std::str::from_utf8_unchecked(&buf) }
             .parse()
