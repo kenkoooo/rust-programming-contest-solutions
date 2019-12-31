@@ -1,48 +1,27 @@
-use std::cmp;
-use std::collections::BTreeSet;
-
 fn main() {
     let (r, w) = (std::io::stdin(), std::io::stdout());
     let mut sc = IO::new(r.lock(), w.lock());
-    let h: usize = sc.read();
-    let w: usize = sc.read();
-    let n: usize = sc.read();
+    let x: usize = sc.read();
 
-    let mut x_set = vec![BTreeSet::new(); w + 1];
-    let mut y_set = vec![BTreeSet::new(); h + 1];
-    for _ in 0..n {
-        let x: usize = sc.read();
-        let y: usize = sc.read();
-        x_set[y].insert(x);
-        y_set[x].insert(y);
-    }
-
-    for i in 1..(h + 1) {
-        y_set[i].insert(w + 1);
-    }
-    for j in 1..(w + 1) {
-        x_set[j].insert(h + 1);
-    }
-
-    let mut ans = std::usize::MAX;
-    let mut y = 1;
-    for x in 1.. {
-        if x_set[y].contains(&(x + 1)) {
-            ans = cmp::min(ans, x);
-            break;
-        }
-        let x = x + 1;
-
-        if let Some(&wx) = x_set[y].range((x + 1)..).next() {
-            ans = cmp::min(ans, wx - 1);
-        }
-
-        if !y_set[x].contains(&(y + 1)) {
-            y += 1;
+    let mut is_prime = [true; 1000000];
+    is_prime[0] = false;
+    is_prime[1] = false;
+    for p in 2..is_prime.len() {
+        if is_prime[p] {
+            let mut cur = p * 2;
+            while cur < is_prime.len() {
+                is_prime[cur] = false;
+                cur += p;
+            }
         }
     }
 
-    println!("{}", ans);
+    for i in x.. {
+        if is_prime[i] {
+            println!("{}", i);
+            return;
+        }
+    }
 }
 
 pub struct IO<R, W: std::io::Write>(R, std::io::BufWriter<W>);

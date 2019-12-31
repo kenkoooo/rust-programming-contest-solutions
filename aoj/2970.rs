@@ -1,43 +1,53 @@
 fn main() {
-    let s = std::io::stdin();
-    let mut sc = Scanner { stdin: s.lock() };
+    let (r, w) = (std::io::stdin(), std::io::stdout());
+    let mut sc = IO::new(r.lock(), w.lock());
 
     let n: usize = sc.read();
-    let p: Vec<usize> = (0..n).map(|_| sc.read::<usize>() - 1).collect();
-    let q: Vec<usize> = (0..n).map(|_| sc.read::<usize>() - 1).collect();
-    let mut b = vec![0; n];
-    let mut m = vec![0; n];
+    let mut p = vec![0; n];
+    let mut q = vec![0; n];
+    for i in 0..n {
+        p[i] = sc.read::<usize>() - 1;
+    }
+    for i in 0..n {
+        q[i] = sc.read::<usize>() - 1;
+    }
+
+    let mut count = vec![0; n];
     for i in 0..n {
         let mut cur = p[i];
-        let mut sorted: Option<i64> = None;
-        for d in 0..(2 * n as i64 + 2) {
-            if cur == i {
-                match sorted {
-                    Some(x) => {
-                        b[i] = x;
-                        m[i] = d - x;
-                        break;
-                    }
-                    None => sorted = Some(d),
-                }
-            }
+        while cur != i {
             cur = q[cur];
-        }
-        if m[i] == 0 {
-            println!("-1");
-            return;
+            count[i] += 1;
+            if cur == p[i] {
+                println!("-1");
+                return;
+            }
         }
     }
 
-    let (b, m) = chinese_remainder_theorem(&b, &m);
-    if m == -1 {
-        println!("-1");
-    } else {
-        println!("{}", b);
+    let mut cycle = vec![0; n];
+    for i in 0..n {
+        let mut cur = i;
+        loop {
+            cur = q[cur];
+            cycle[i] += 1;
+            if cur == i {
+                break;
+            }
+        }
+    }
+
+    let a = chinese_remainder_theorem(&count, &cycle);
+    match a {
+        Some((a, _)) => {
+            println!("{}", a);
+        }
+        None => {
+            println!("-1");
+        }
     }
 }
-
-fn extended_gcd(a: i64, b: i64, p: &mut i64, q: &mut i64) -> i64 {
+pub fn extended_gcd(a: i64, b: i64, p: &mut i64, q: &mut i64) -> i64 {
     if b == 0 {
         *p = 1;
         *q = 0;
@@ -49,35 +59,40 @@ fn extended_gcd(a: i64, b: i64, p: &mut i64, q: &mut i64) -> i64 {
     }
 }
 
-fn chinese_remainder_theorem(b: &Vec<i64>, modulo: &Vec<i64>) -> (i64, i64) {
+pub fn chinese_remainder_theorem(b: &Vec<i64>, modulo: &Vec<i64>) -> Option<(i64, i64)> {
     let (mut r, mut m) = (0, 1);
     for i in 0..b.len() {
         let (mut p, mut q) = (0, 0);
         let d = extended_gcd(m, modulo[i], &mut p, &mut q);
         if (b[i] - r) % d != 0 {
-            return (0, -1);
+            return None;
         }
         let tmp = ((b[i] - r) / d * p) % (modulo[i] / d);
         r += m * tmp;
         m *= modulo[i] / d;
     }
-    ((r % m + m) % m, m)
+    Some(((r % m + m) % m, m))
 }
 
-pub struct Scanner<R> {
-    stdin: R,
-}
+pub struct IO<R, W: std::io::Write>(R, std::io::BufWriter<W>);
 
-impl<R: std::io::Read> Scanner<R> {
+impl<R: std::io::Read, W: std::io::Write> IO<R, W> {
+    pub fn new(r: R, w: W) -> IO<R, W> {
+        IO(r, std::io::BufWriter::new(w))
+    }
+    pub fn write<S: std::ops::Deref<Target = str>>(&mut self, s: S) {
+        use std::io::Write;
+        self.1.write(s.as_bytes()).unwrap();
+    }
     pub fn read<T: std::str::FromStr>(&mut self) -> T {
         use std::io::Read;
         let buf = self
-            .stdin
+            .0
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
-            .skip_while(|&b| b == b' ' || b == b'\n')
-            .take_while(|&b| b != b' ' && b != b'\n')
+            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r' || b == b'\t')
+            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r' && b != b'\t')
             .collect::<Vec<_>>();
         unsafe { std::str::from_utf8_unchecked(&buf) }
             .parse()
