@@ -1,36 +1,56 @@
 fn main() {
-    let mut sc = Scanner::new();
+    let (r, w) = (std::io::stdin(), std::io::stdout());
+    let mut sc = IO::new(r.lock(), w.lock());
+
     let n: usize = sc.read();
-    let points = (0..n)
-        .map(|_| Point {
-            x: sc.read(),
-            y: sc.read(),
-        })
-        .collect();
-    let convex_hull = extract_convex_hull(&points, true);
+    let mut points = vec![];
+    for _ in 0..n {
+        let x = sc.read();
+        let y = sc.read();
+        let p = Point { x: x, y: y };
+        points.push(p);
+    }
+    let convex_hull = extract_convex_hull(&points, false);
+    let m = convex_hull.len();
+    let mut ans = vec![];
+    for i in 0..m {
+        let left = convex_hull[(m + i - 1) % m];
+        let center = convex_hull[i];
+        let right = convex_hull[(i + 1) % m];
 
-    let mut ans = vec![0.0; points.len()];
+        let ax = points[left].x - points[center].x;
+        let ay = points[left].y - points[center].y;
 
-    let n = convex_hull.len();
-    for i in 0..n {
-        let prev = points[convex_hull[(i + n - 1) % n]];
-        let cur = points[convex_hull[i]];
-        let next = points[convex_hull[(i + 1) % n]];
+        let bx = points[right].x - points[center].x;
+        let by = points[right].y - points[center].y;
 
-        let a = next - cur;
-        let b = prev - cur;
-
-        let cos = a.product(&b) / a.abs() / b.abs();
-        let rad = cos.acos();
-        ans[convex_hull[i]] = (1.0 - rad / std::f64::consts::PI) / 2.0;
+        let mut cos = (ax * bx + ay * by) / (ax * ax + ay * ay).sqrt() / (bx * bx + by * by).sqrt();
+        if cos > 1.0 {
+            assert!((cos - 1.0).abs() < 1e-6);
+            cos = 1.0;
+        }
+        let t = cos.acos();
+        let pi = std::f64::consts::PI;
+        ans.push((center, pi - t));
     }
 
-    for &a in &ans {
-        println!("{}", a);
+    let sum = ans.iter().map(|&(_, s)| s).sum::<f64>();
+    assert!(
+        (sum - std::f64::consts::PI * 2.0).abs() < 1e-5,
+        "{}",
+        (sum - std::f64::consts::PI * 2.0).abs()
+    );
+    let mut a = vec![0.0; n];
+    for (i, s) in ans.into_iter() {
+        a[i] = s / sum;
+    }
+
+    for ans in a.into_iter() {
+        sc.write(format!("{}\n", ans));
     }
 }
 
-fn extract_convex_hull(points: &Vec<Point>, contain_on_segment: bool) -> Vec<usize> {
+pub fn extract_convex_hull(points: &Vec<Point>, contain_on_segment: bool) -> Vec<usize> {
     let n = points.len();
     if n <= 1 {
         return vec![0];
@@ -79,7 +99,7 @@ fn extract_convex_hull(points: &Vec<Point>, contain_on_segment: bool) -> Vec<usi
 }
 
 #[derive(Debug, Copy, Clone)]
-struct Point {
+pub struct Point {
     x: f64,
     y: f64,
 }
@@ -95,94 +115,40 @@ impl std::ops::Sub for Point {
 }
 
 impl Point {
-    fn det(&self, other: &Point) -> f64 {
+    pub fn det(&self, other: &Point) -> f64 {
         self.x * other.y - self.y * other.x
     }
-
-    fn abs(&self) -> f64 {
-        (self.x * self.x + self.y * self.y).sqrt()
-    }
-
-    fn product(&self, other: &Point) -> f64 {
-        self.x * other.x + self.y * other.y
-    }
 }
 
-struct Scanner {
-    ptr: usize,
-    length: usize,
-    buf: Vec<u8>,
-    small_cache: Vec<u8>,
-}
+pub struct IO<R, W: std::io::Write>(R, std::io::BufWriter<W>);
 
-#[allow(dead_code)]
-impl Scanner {
-    fn new() -> Scanner {
-        Scanner {
-            ptr: 0,
-            length: 0,
-            buf: vec![0; 1024],
-            small_cache: vec![0; 1024],
-        }
+impl<R: std::io::Read, W: std::io::Write> IO<R, W> {
+    pub fn new(r: R, w: W) -> IO<R, W> {
+        IO(r, std::io::BufWriter::new(w))
     }
-
-    fn load(&mut self) {
+    pub fn write<S: std::ops::Deref<Target = str>>(&mut self, s: S) {
+        use std::io::Write;
+        self.1.write(s.as_bytes()).unwrap();
+    }
+    pub fn read<T: std::str::FromStr>(&mut self) -> T {
         use std::io::Read;
-        let mut s = std::io::stdin();
-        self.length = s.read(&mut self.buf).unwrap();
+        let buf = self
+            .0
+            .by_ref()
+            .bytes()
+            .map(|b| b.unwrap())
+            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r' || b == b'\t')
+            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r' && b != b'\t')
+            .collect::<Vec<_>>();
+        unsafe { std::str::from_utf8_unchecked(&buf) }
+            .parse()
+            .ok()
+            .expect("Parse error.")
     }
-
-    fn byte(&mut self) -> u8 {
-        if self.ptr >= self.length {
-            self.ptr = 0;
-            self.load();
-            if self.length == 0 {
-                self.buf[0] = b'\n';
-                self.length = 1;
-            }
-        }
-
-        self.ptr += 1;
-        return self.buf[self.ptr - 1];
-    }
-
-    fn is_space(b: u8) -> bool {
-        b == b'\n' || b == b'\r' || b == b'\t' || b == b' '
-    }
-
-    fn read_vec<T>(&mut self, n: usize) -> Vec<T>
-    where
-        T: std::str::FromStr,
-        T::Err: std::fmt::Debug,
-    {
+    pub fn vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
         (0..n).map(|_| self.read()).collect()
     }
-
-    fn read<T>(&mut self) -> T
-    where
-        T: std::str::FromStr,
-        T::Err: std::fmt::Debug,
-    {
-        let mut b = self.byte();
-        while Scanner::is_space(b) {
-            b = self.byte();
-        }
-
-        for pos in 0..self.small_cache.len() {
-            self.small_cache[pos] = b;
-            b = self.byte();
-            if Scanner::is_space(b) {
-                return String::from_utf8_lossy(&self.small_cache[0..(pos + 1)])
-                    .parse()
-                    .unwrap();
-            }
-        }
-
-        let mut v = self.small_cache.clone();
-        while !Scanner::is_space(b) {
-            v.push(b);
-            b = self.byte();
-        }
-        return String::from_utf8_lossy(&v).parse().unwrap();
+    pub fn chars(&mut self) -> Vec<char> {
+        self.read::<String>().chars().collect()
     }
 }

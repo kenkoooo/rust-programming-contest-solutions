@@ -1,55 +1,50 @@
-use std::collections::VecDeque;
-
 fn main() {
     let (r, w) = (std::io::stdin(), std::io::stdout());
     let mut sc = IO::new(r.lock(), w.lock());
 
     let n: usize = sc.read();
-    let m: usize = sc.read();
-    let s = sc
-        .read::<String>()
-        .chars()
-        .map(|c| c as usize - 'A' as usize)
-        .collect::<Vec<_>>();
+    let a: Vec<u64> = sc.vec(n);
+    let b: Vec<u64> = sc.vec(n);
 
-    let mut graph = vec![vec![]; n];
-    for _ in 0..m {
-        let a = sc.read::<usize>() - 1;
-        let b = sc.read::<usize>() - 1;
-        graph[a].push(b);
-        graph[b].push(a);
-    }
-
-    let mut removed = vec![false; n];
-    let mut count = vec![vec![0; 2]; n];
-    let mut q = VecDeque::new();
-    for i in 0..n {
-        for &next in graph[i].iter() {
-            count[i][s[next]] += 1;
-        }
-        if count[i][0] == 0 || count[i][1] == 0 {
-            q.push_back(i);
-        }
-    }
-
-    while let Some(remove) = q.pop_front() {
-        removed[remove] = true;
-        for &next in graph[remove].iter() {
-            if removed[next] {
-                continue;
-            }
-            count[next][s[remove]] -= 1;
-            if count[next][s[remove]] == 0 {
-                q.push_back(next);
-            }
-        }
-    }
-
-    if removed.contains(&false) {
+    if solve(a, b) {
         println!("Yes");
     } else {
         println!("No");
     }
+}
+
+fn solve(a: Vec<u64>, b: Vec<u64>) -> bool {
+    let n = a.len();
+    let mut ba: Vec<_> = (0..n).map(|i| (b[i], a[i])).collect();
+    ba.sort();
+
+    let mut a: Vec<_> = ba.iter().enumerate().map(|(i, &(_, a))| (a, i)).collect();
+    a.sort();
+
+    for i in 0..n {
+        if a[i].0 > ba[i].0 {
+            return false;
+        }
+    }
+
+    let mut cur = 0;
+    let mut vis = vec![false; n];
+    while !vis[cur] {
+        vis[cur] = true;
+        cur = a[cur].1;
+    }
+
+    if vis.contains(&false) {
+        return true;
+    }
+
+    for i in 1..n {
+        if a[i].0 <= ba[i - 1].0 {
+            return true;
+        }
+    }
+
+    false
 }
 
 pub struct IO<R, W: std::io::Write>(R, std::io::BufWriter<W>);
