@@ -1,43 +1,42 @@
-const INF: i64 = 1e15 as i64;
-
 fn main() {
-    let s = std::io::stdin();
-    let mut sc = Scanner { stdin: s.lock() };
+    let (r, w) = (std::io::stdin(), std::io::stdout());
+    let mut sc = IO::new(r.lock(), w.lock());
     let h: usize = sc.read();
     let w: usize = sc.read();
-    let a: Vec<Vec<char>> = (0..h).map(|_| sc.chars()).collect();
-    let v = h + w + 2;
+
+    let board = (0..h).map(|_| sc.chars()).collect::<Vec<_>>();
+    let mut dinitz = dinitz::Dinitz::new(h + w + 2);
     let source = h + w;
     let sink = source + 1;
-    let mut dinitz = dinitz::Dinitz::new(v);
+    let inf = 1 << 50;
     for i in 0..h {
         for j in 0..w {
-            match a[i][j] {
-                'o' => {
-                    dinitz.add_edge(i, h + j, 1);
-                    dinitz.add_edge(h + j, i, 1);
-                }
+            match board[i][j] {
                 'S' => {
-                    dinitz.add_edge(source, h + j, INF);
-                    dinitz.add_edge(source, i, INF);
+                    dinitz.add_edge(source, i, inf);
+                    dinitz.add_edge(source, j + h, inf);
                 }
                 'T' => {
-                    dinitz.add_edge(h + j, sink, INF);
-                    dinitz.add_edge(i, sink, INF);
+                    dinitz.add_edge(i, sink, inf);
+                    dinitz.add_edge(j + h, sink, inf);
                 }
-                _ => {}
+                'o' => {
+                    dinitz.add_edge(i, j + h, 1);
+                    dinitz.add_edge(j + h, i, 1);
+                }
+                '.' => {}
+                _ => unreachable!(),
             }
         }
     }
 
     let flow = dinitz.max_flow(source, sink);
-    if flow >= INF {
+    if flow >= inf {
         println!("-1");
     } else {
         println!("{}", flow);
     }
 }
-
 pub mod dinitz {
     use std::cmp;
     use std::collections::VecDeque;
@@ -154,20 +153,25 @@ pub mod dinitz {
     }
 }
 
-pub struct Scanner<R> {
-    stdin: R,
-}
+pub struct IO<R, W: std::io::Write>(R, std::io::BufWriter<W>);
 
-impl<R: std::io::Read> Scanner<R> {
+impl<R: std::io::Read, W: std::io::Write> IO<R, W> {
+    pub fn new(r: R, w: W) -> IO<R, W> {
+        IO(r, std::io::BufWriter::new(w))
+    }
+    pub fn write<S: std::ops::Deref<Target = str>>(&mut self, s: S) {
+        use std::io::Write;
+        self.1.write(s.as_bytes()).unwrap();
+    }
     pub fn read<T: std::str::FromStr>(&mut self) -> T {
         use std::io::Read;
         let buf = self
-            .stdin
+            .0
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
-            .skip_while(|&b| b == b' ' || b == b'\n')
-            .take_while(|&b| b != b' ' && b != b'\n')
+            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r' || b == b'\t')
+            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r' && b != b'\t')
             .collect::<Vec<_>>();
         unsafe { std::str::from_utf8_unchecked(&buf) }
             .parse()

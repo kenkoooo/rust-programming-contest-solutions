@@ -1,86 +1,89 @@
-use self::mod_int::ModInt;
-
+use mod_int::ModInt;
 const MOD: usize = 1e9 as usize + 7;
 
 fn main() {
     let (r, w) = (std::io::stdin(), std::io::stdout());
     let mut sc = IO::new(r.lock(), w.lock());
+
     let n: usize = sc.read();
-    let a: usize = sc.read();
-    let b: usize = sc.read();
-    let c: usize = sc.read();
-    let d: usize = sc.read();
+    let mut graph = vec![vec![]; n];
+    for _ in 1..n {
+        let a = sc.read::<usize>() - 1;
+        let b = sc.read::<usize>() - 1;
+        graph[a].push(b);
+        graph[b].push(a);
+    }
 
-    let comb = Combination::new(n + 1, MOD);
+    let mut sizes = vec![0; n];
+    let mut parent = vec![0; n];
+    calc_subtree_size(0, 0, &graph, &mut sizes, &mut parent);
+    //    eprintln!("{:?}", sizes);
 
-    let mut dp = vec![ModInt(0); n + 1];
-    dp[0] = ModInt(1);
-    for members in a..(b + 1) {
-        let mut next = dp.clone();
-        for used in 0..n {
-            let mut p = ModInt(1);
-            let mut tp = ModInt(1);
-            for groups in 1..(d + 1) {
-                let next_used = used + groups * members;
-                if next_used > n {
-                    break;
-                }
-                let remain = n - next_used + members;
-                p *= comb.get(remain, members);
-                tp *= groups;
-                if groups >= c {
-                    next[next_used] += dp[used] * p / tp;
-                }
+    let mut sum = ModInt(0);
+    for v in 0..n {
+        if graph[v].len() == 1 {
+            continue;
+        }
+        let mut ans = vec![];
+        for &next in graph[v].iter() {
+            if next == parent[v] {
+                let size = n - sizes[v];
+                let no_black = (ModInt(1) / ModInt(2)).pow(size);
+                ans.push(no_black);
+            } else {
+                let no_black = (ModInt(1) / ModInt(2)).pow(sizes[next]);
+                ans.push(no_black);
             }
         }
-        dp = next;
+
+        //        eprintln!("v={} ans={:?}", v, ans);
+
+        let mut all_white = ModInt(1);
+        for &white_p in ans.iter() {
+            all_white *= white_p;
+        }
+
+        let mut no_2_black = all_white;
+        for &p in ans.iter() {
+            let one_black = all_white / p * (ModInt(1) - p);
+            no_2_black += one_black;
+        }
+
+        let two_or_more_black = ModInt(1) - no_2_black;
+        sum += two_or_more_black / 2;
+        //        eprintln!("v={} p={}", v, two_or_more_black.0);
+        //        eprintln!(
+        //            "all_white={:?} no_2_black={:?} two_blaok={:?}",
+        //            all_white, no_2_black, two_or_more_black
+        //        );
     }
 
-    println!("{}", dp[n].0);
+    println!("{}", sum.0);
 }
 
-pub struct Combination {
-    fact: Vec<usize>,
-    inv_fact: Vec<usize>,
-    modulo: usize,
-}
-
-impl Combination {
-    pub fn new(max: usize, modulo: usize) -> Combination {
-        let mut inv = vec![0; max + 1];
-        let mut fact = vec![0; max + 1];
-        let mut inv_fact = vec![0; max + 1];
-        inv[1] = 1;
-        for i in 2..(max + 1) {
-            inv[i] = inv[modulo % i] * (modulo - modulo / i) % modulo;
+fn calc_subtree_size(
+    v: usize,
+    parent: usize,
+    graph: &Vec<Vec<usize>>,
+    sizes: &mut Vec<usize>,
+    p: &mut Vec<usize>,
+) -> usize {
+    p[v] = parent;
+    for &next in graph[v].iter() {
+        if next == parent {
+            continue;
         }
-        fact[0] = 1;
-        inv_fact[0] = 1;
-        for i in 0..max {
-            fact[i + 1] = fact[i] * (i + 1) % modulo;
-        }
-        for i in 0..max {
-            inv_fact[i + 1] = inv_fact[i] * inv[i + 1] % modulo;
-        }
-        Combination {
-            fact: fact,
-            inv_fact: inv_fact,
-            modulo: modulo,
-        }
+        sizes[v] += calc_subtree_size(next, v, graph, sizes, p);
     }
-
-    pub fn get(&self, x: usize, y: usize) -> ModInt<usize> {
-        assert!(x >= y);
-        let t = self.fact[x] * self.inv_fact[y] % self.modulo * self.inv_fact[x - y] % self.modulo;
-        ModInt(t)
-    }
+    sizes[v] += 1;
+    sizes[v]
 }
 
 pub mod mod_int {
+    use super::MOD;
     use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
     type Num = usize;
-    const MOD: Num = 1_000_000_007;
 
     #[derive(Clone, Copy, Debug)]
     pub struct ModInt<T: Copy + Clone>(pub T);

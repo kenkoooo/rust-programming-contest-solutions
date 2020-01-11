@@ -1,67 +1,75 @@
 use std::collections::VecDeque;
 
 fn main() {
-    let s = std::io::stdin();
-    let mut sc = Scanner { stdin: s.lock() };
-
+    let (r, w) = (std::io::stdin(), std::io::stdout());
+    let mut sc = IO::new(r.lock(), w.lock());
     let n: usize = sc.read();
     let m: usize = sc.read();
     let mut graph = vec![vec![]; n];
     for _ in 0..m {
-        let u = sc.read::<usize>() - 1;
-        let v = sc.read::<usize>() - 1;
-        graph[v].push(u);
-        graph[u].push(v);
+        let a = sc.read::<usize>() - 1;
+        let b = sc.read::<usize>() - 1;
+        graph[a].push(b);
+        graph[b].push(a);
     }
 
+    let mut queries = vec![];
     let q: usize = sc.read();
-    let queries = (0..q)
-        .map(|_| (sc.read::<usize>() - 1, sc.read::<usize>(), sc.read::<u32>()))
-        .collect::<Vec<_>>();
-    let mut color = vec![0; n];
+    for _ in 0..q {
+        let v = sc.read::<usize>() - 1;
+        let d: usize = sc.read();
+        let color: usize = sc.read();
+        queries.push((v, d, color));
+    }
 
-    let mut dist = vec![0; n];
-    for (v, d, c) in queries.into_iter().rev() {
-        let mut q = VecDeque::new();
-        if color[v] == 0 {
-            color[v] = c;
+    let mut height = vec![0; n];
+    let mut v_color = vec![0; n];
+    let mut q = VecDeque::new();
+    for (start, dist, color) in queries.into_iter().rev() {
+        if v_color[start] == 0 {
+            v_color[start] = color;
         }
-        q.push_back((v, d));
-        while let Some((v, d)) = q.pop_front() {
-            if d == 0 {
-                continue;
-            }
+        if height[start] >= dist {
+            continue;
+        }
+        q.push_back((start, dist, color));
+        while let Some((v, dist, color)) = q.pop_front() {
             for &next in graph[v].iter() {
-                if color[next] == 0 {
-                    color[next] = c;
+                if v_color[next] == 0 {
+                    v_color[next] = color;
                 }
-                if dist[next] < d - 1 {
-                    dist[next] = d - 1;
-                    q.push_back((next, dist[next]));
+                if height[next] >= dist - 1 {
+                    continue;
                 }
+                height[next] = dist - 1;
+                q.push_back((next, dist - 1, color));
             }
         }
     }
-
-    for color in color.into_iter() {
-        println!("{}", color);
+    for c in v_color.into_iter() {
+        sc.write(format!("{}\n", c));
     }
 }
 
-pub struct Scanner<R> {
-    stdin: R,
-}
+pub struct IO<R, W: std::io::Write>(R, std::io::BufWriter<W>);
 
-impl<R: std::io::Read> Scanner<R> {
+impl<R: std::io::Read, W: std::io::Write> IO<R, W> {
+    pub fn new(r: R, w: W) -> IO<R, W> {
+        IO(r, std::io::BufWriter::new(w))
+    }
+    pub fn write<S: std::ops::Deref<Target = str>>(&mut self, s: S) {
+        use std::io::Write;
+        self.1.write(s.as_bytes()).unwrap();
+    }
     pub fn read<T: std::str::FromStr>(&mut self) -> T {
         use std::io::Read;
         let buf = self
-            .stdin
+            .0
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
-            .skip_while(|&b| b == b' ' || b == b'\n')
-            .take_while(|&b| b != b' ' && b != b'\n')
+            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r' || b == b'\t')
+            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r' && b != b'\t')
             .collect::<Vec<_>>();
         unsafe { std::str::from_utf8_unchecked(&buf) }
             .parse()

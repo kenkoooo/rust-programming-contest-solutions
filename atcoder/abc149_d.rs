@@ -1,55 +1,52 @@
-use std::collections::VecDeque;
+use std::cmp::max;
 
 fn main() {
     let (r, w) = (std::io::stdin(), std::io::stdout());
     let mut sc = IO::new(r.lock(), w.lock());
 
     let n: usize = sc.read();
-    let m: usize = sc.read();
-    let s = sc
-        .read::<String>()
-        .chars()
-        .map(|c| c as usize - 'A' as usize)
-        .collect::<Vec<_>>();
+    let k: usize = sc.read();
+    let r: usize = sc.read();
+    let s: usize = sc.read();
+    let p: usize = sc.read();
 
-    let mut graph = vec![vec![]; n];
-    for _ in 0..m {
-        let a = sc.read::<usize>() - 1;
-        let b = sc.read::<usize>() - 1;
-        graph[a].push(b);
-        graph[b].push(a);
-    }
+    let t = sc.chars();
 
-    let mut removed = vec![false; n];
-    let mut count = vec![vec![0; 2]; n];
-    let mut q = VecDeque::new();
+    let mut ts = vec![vec![]; k];
     for i in 0..n {
-        for &next in graph[i].iter() {
-            count[i][s[next]] += 1;
-        }
-        if count[i][0] == 0 || count[i][1] == 0 {
-            q.push_back(i);
-        }
+        ts[i % k].push(t[i]);
     }
 
-    while let Some(remove) = q.pop_front() {
-        removed[remove] = true;
-        for &next in graph[remove].iter() {
-            if removed[next] {
-                continue;
+    let mut ans = 0;
+    for t in ts.into_iter() {
+        let n = t.len();
+        let mut dp = [0; 3];
+        for i in 0..n {
+            let mut next = [0; 3];
+            for next_hand in 0..3 {
+                // r, s, p
+                for prev_hand in 0..3 {
+                    if next_hand == prev_hand {
+                        continue;
+                    }
+
+                    let get = match t[i] {
+                        'r' if next_hand == 2 => p,
+                        's' if next_hand == 0 => r,
+                        'p' if next_hand == 1 => s,
+                        _ => 0,
+                    };
+
+                    next[next_hand] = max(next[next_hand], dp[prev_hand] + get);
+                }
             }
-            count[next][s[remove]] -= 1;
-            if count[next][s[remove]] == 0 {
-                q.push_back(next);
-            }
+            dp = next;
         }
+
+        ans += max(dp[0], max(dp[1], dp[2]));
     }
 
-    if removed.contains(&false) {
-        println!("Yes");
-    } else {
-        println!("No");
-    }
+    println!("{}", ans);
 }
 
 pub struct IO<R, W: std::io::Write>(R, std::io::BufWriter<W>);

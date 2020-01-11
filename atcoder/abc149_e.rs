@@ -1,55 +1,60 @@
-use std::collections::VecDeque;
-
 fn main() {
     let (r, w) = (std::io::stdin(), std::io::stdout());
     let mut sc = IO::new(r.lock(), w.lock());
-
     let n: usize = sc.read();
     let m: usize = sc.read();
-    let s = sc
-        .read::<String>()
-        .chars()
-        .map(|c| c as usize - 'A' as usize)
-        .collect::<Vec<_>>();
+    let mut a: Vec<u64> = sc.vec(n);
+    a.sort();
 
-    let mut graph = vec![vec![]; n];
-    for _ in 0..m {
-        let a = sc.read::<usize>() - 1;
-        let b = sc.read::<usize>() - 1;
-        graph[a].push(b);
-        graph[b].push(a);
-    }
-
-    let mut removed = vec![false; n];
-    let mut count = vec![vec![0; 2]; n];
-    let mut q = VecDeque::new();
+    let mut suffix_sum = vec![0; n + 1];
     for i in 0..n {
-        for &next in graph[i].iter() {
-            count[i][s[next]] += 1;
-        }
-        if count[i][0] == 0 || count[i][1] == 0 {
-            q.push_back(i);
+        suffix_sum[i + 1] = suffix_sum[i] + a[n - 1 - i];
+    }
+
+    let mut ng = 1e15 as u64;
+    let mut ok = 0;
+    while ng - ok > 1 {
+        let x = (ok + ng) >> 1;
+        let (count, _) = calc(x, &a, &suffix_sum);
+
+        if count >= m {
+            ok = x;
+        } else {
+            ng = x;
         }
     }
 
-    while let Some(remove) = q.pop_front() {
-        removed[remove] = true;
-        for &next in graph[remove].iter() {
-            if removed[next] {
-                continue;
-            }
-            count[next][s[remove]] -= 1;
-            if count[next][s[remove]] == 0 {
-                q.push_back(next);
-            }
-        }
+    let (count1, sum1) = calc(ok, &a, &suffix_sum);
+    if count1 == m {
+        println!("{}", sum1);
+        return;
     }
 
-    if removed.contains(&false) {
-        println!("Yes");
-    } else {
-        println!("No");
+    let (count2, sum2) = calc(ok + 1, &a, &suffix_sum);
+    assert!(count2 < m);
+    let remain = m - count2;
+    let ans = sum2 + ok * remain as u64;
+
+    println!("{}", ans);
+}
+
+fn calc(x: u64, a: &Vec<u64>, suffix_sum: &Vec<u64>) -> (usize, u64) {
+    let n = a.len();
+    let mut sum = 0;
+    let mut cur_row = n;
+    let mut cur_col = 0;
+    let mut count = 0;
+    while cur_col < n {
+        if cur_row > 0 && a[cur_col] + a[cur_row - 1] >= x {
+            cur_row -= 1;
+        } else {
+            let c = n - cur_row;
+            sum += suffix_sum[c] + a[cur_col] * c as u64;
+            count += c;
+            cur_col += 1;
+        }
     }
+    (count, sum)
 }
 
 pub struct IO<R, W: std::io::Write>(R, std::io::BufWriter<W>);
