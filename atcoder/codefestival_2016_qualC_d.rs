@@ -1,74 +1,72 @@
 use std::cmp;
 
-const INF: u64 = 1e9 as u64;
-
 fn main() {
-    let s = std::io::stdin();
-    let mut sc = Scanner { stdin: s.lock() };
-
+    let (r, w) = (std::io::stdin(), std::io::stdout());
+    let mut sc = IO::new(r.lock(), w.lock());
     let h: usize = sc.read();
     let w: usize = sc.read();
-    let c: Vec<Vec<char>> = (0..h).map(|_| sc.chars()).collect();
-    let mut d = vec![vec![' '; h]; w];
-    for i in 0..h {
-        for j in 0..w {
-            d[j][i] = c[i][j];
-        }
-    }
+    let board: Vec<Vec<char>> = (0..h).map(|_| sc.chars()).collect();
 
     let mut ans = 0;
-    for i in 1..w {
-        ans += solve(&d[i - 1], &d[i]);
+    for j in 1..w {
+        let a = (0..h).map(|i| board[h - 1 - i][j - 1]).collect();
+        let b = (0..h).map(|i| board[h - 1 - i][j]).collect();
+        let cost = calc(&a, &b);
+        ans += cost;
     }
     println!("{}", ans);
 }
 
-fn solve(a: &[char], b: &[char]) -> u64 {
+fn calc(a: &Vec<char>, b: &Vec<char>) -> u64 {
     let h = a.len();
     let mut cost = vec![vec![0; h + 1]; h + 1];
-    for i in 0..(h + 1) {
-        cost[0][i] = 0;
-        for j in 0..h {
-            if i + j < h && a[i + j] == b[j] {
-                cost[0][i] += 1;
+    for broken_a in 0..(h + 1) {
+        let mut c = 0;
+        for i in 0..h {
+            if i + broken_a >= h {
+                break;
+            }
+            if a[i + broken_a] == b[i] {
+                c += 1;
             }
         }
-
-        cost[i][0] = 0;
-        for j in 0..h {
-            if i + j < h && a[j] == b[i + j] {
-                cost[i][0] += 1;
+        cost[broken_a][0] = c;
+        for i in 0..h {
+            if broken_a + i >= h {
+                break;
             }
+            cost[broken_a + i + 1][i + 1] =
+                cost[broken_a + i][i] - if a[broken_a + i] == b[i] { 1 } else { 0 };
+        }
+    }
+    for broken_b in 0..(h + 1) {
+        let mut c = 0;
+        for i in 0..h {
+            if i + broken_b >= h {
+                break;
+            }
+            if a[i] == b[i + broken_b] {
+                c += 1;
+            }
+        }
+        cost[0][broken_b] = c;
+        for i in 0..h {
+            if broken_b + i >= h {
+                break;
+            }
+            cost[i + 1][broken_b + i + 1] =
+                cost[i][broken_b + i] - if a[i] == b[broken_b + i] { 1 } else { 0 };
         }
     }
 
-    for i in 0..h {
-        for j in 0..h {
-            if i + j < h {
-                cost[j + 1][i + j + 1] = cost[j][i + j]
-                    - if a[h - 1 - j] == b[h - 1 - (i + j)] {
-                        1
-                    } else {
-                        0
-                    };
-                cost[i + j + 1][j + 1] = cost[i + j][j]
-                    - if a[h - 1 - (i + j)] == b[h - 1 - j] {
-                        1
-                    } else {
-                        0
-                    };
-            }
-        }
-    }
-
-    let mut dp = vec![vec![INF; h + 1]; h + 1];
+    let mut dp = vec![vec![1 << 50; h + 1]; h + 1];
     dp[0][0] = 0;
     for i in 0..(h + 1) {
         for j in 0..(h + 1) {
-            if i + 1 <= h {
+            if i < h {
                 dp[i + 1][j] = cmp::min(dp[i + 1][j], dp[i][j] + cost[i][j]);
             }
-            if j + 1 <= h {
+            if j < h {
                 dp[i][j + 1] = cmp::min(dp[i][j + 1], dp[i][j] + cost[i][j]);
             }
         }
@@ -76,20 +74,25 @@ fn solve(a: &[char], b: &[char]) -> u64 {
     dp[h][h]
 }
 
-pub struct Scanner<R> {
-    stdin: R,
-}
+pub struct IO<R, W: std::io::Write>(R, std::io::BufWriter<W>);
 
-impl<R: std::io::Read> Scanner<R> {
+impl<R: std::io::Read, W: std::io::Write> IO<R, W> {
+    pub fn new(r: R, w: W) -> IO<R, W> {
+        IO(r, std::io::BufWriter::new(w))
+    }
+    pub fn write<S: std::ops::Deref<Target = str>>(&mut self, s: S) {
+        use std::io::Write;
+        self.1.write(s.as_bytes()).unwrap();
+    }
     pub fn read<T: std::str::FromStr>(&mut self) -> T {
         use std::io::Read;
         let buf = self
-            .stdin
+            .0
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
-            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r')
-            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r')
+            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r' || b == b'\t')
+            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r' && b != b'\t')
             .collect::<Vec<_>>();
         unsafe { std::str::from_utf8_unchecked(&buf) }
             .parse()

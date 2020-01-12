@@ -1,75 +1,74 @@
 fn main() {
-    let s = std::io::stdin();
-    let mut sc = Scanner { stdin: s.lock() };
-    let n: usize = sc.read();
-    let m: usize = sc.read();
+    let (r, w) = (std::io::stdin(), std::io::stdout());
+    let mut sc = IO::new(r.lock(), w.lock());
+
+    let h: usize = sc.read();
+    let w: usize = sc.read();
     let q: usize = sc.read();
-    let s: Vec<Vec<_>> = (0..n)
+    let s = (0..h)
         .map(|_| {
-            sc.chars()
-                .into_iter()
-                .map(|c| c as u32 - '0' as u32)
-                .collect()
+            sc.read::<String>()
+                .chars()
+                .map(|c| c as usize - '0' as usize)
+                .collect::<Vec<_>>()
         })
-        .collect();
+        .collect::<Vec<_>>();
+    let mut vertical = vec![vec![0; w]; h];
+    for i in 0..(h - 1) {
+        for j in 0..w {
+            vertical[i][j] = if s[i][j] == 1 && s[i + 1][j] == 1 {
+                1
+            } else {
+                0
+            };
+        }
+    }
 
+    let mut horizontal = vec![vec![0; w]; h];
+    for i in 0..h {
+        for j in 0..(w - 1) {
+            horizontal[i][j] = if s[i][j] == 1 && s[i][j + 1] == 1 {
+                1
+            } else {
+                0
+            };
+        }
+    }
+
+    let vertical = CumulativeSum::new(&vertical, 0);
+    let horizontal = CumulativeSum::new(&horizontal, 0);
     let sum = CumulativeSum::new(&s, 0);
-    let h_sum = match n {
-        1 => None,
-        _ => {
-            let mut h_edges: Vec<Vec<u32>> = vec![vec![0; m]; n - 1];
-            for i in 1..n {
-                for j in 0..m {
-                    h_edges[i - 1][j] = if s[i][j] == 1 && s[i - 1][j] == 1 {
-                        1
-                    } else {
-                        0
-                    };
-                }
-            }
-            Some(CumulativeSum::new(&h_edges, 0))
-        }
-    };
-
-    let v_sum = match m {
-        1 => None,
-        _ => {
-            let mut v_edges: Vec<Vec<u32>> = vec![vec![0; m - 1]; n];
-            for i in 0..n {
-                for j in 1..m {
-                    v_edges[i][j - 1] = if s[i][j - 1] == 1 && s[i][j] == 1 {
-                        1
-                    } else {
-                        0
-                    };
-                }
-            }
-            Some(CumulativeSum::new(&v_edges, 0))
-        }
-    };
 
     for _ in 0..q {
         let x1 = sc.read::<usize>() - 1;
         let y1 = sc.read::<usize>() - 1;
         let x2 = sc.read::<usize>() - 1;
         let y2 = sc.read::<usize>() - 1;
+        let v = sum.get_sum(x1, y1, x2, y2);
+        let e1 = if x1 < x2 {
+            vertical.get_sum(x1, y1, x2 - 1, y2)
+        } else {
+            0
+        };
+        let e2 = if y1 < y2 {
+            horizontal.get_sum(x1, y1, x2, y2 - 1)
+        } else {
+            0
+        };
+        //        println!();
+        //        for i in x1..(x2 + 1) {
+        //            for j in y1..(y2 + 1) {
+        //                print!("{}", s[i][j]);
+        //            }
+        //            println!();
+        //        }
+        //        println!("v={} ev={} eh={}", v, e1, e2);
+        //        println!("{}", v - e1 - e2);
 
-        let mut v = sum.get_sum(x1, y1, x2, y2);
-        match v_sum {
-            Some(ref v_sum) if y1 < y2 => {
-                v -= v_sum.get_sum(x1, y1, x2, y2 - 1);
-            }
-            _ => {}
-        }
-        match h_sum {
-            Some(ref h_sum) if x1 < x2 => {
-                v -= h_sum.get_sum(x1, y1, x2 - 1, y2);
-            }
-            _ => {}
-        }
-        println!("{}", v);
+        sc.write(format!("{}\n", v - e1 - e2));
     }
 }
+
 pub struct CumulativeSum<T> {
     ny: usize,
     nx: usize,
@@ -106,20 +105,26 @@ where
             - self.sum[y2 + 1][x1];
     }
 }
-pub struct Scanner<R> {
-    stdin: R,
-}
 
-impl<R: std::io::Read> Scanner<R> {
+pub struct IO<R, W: std::io::Write>(R, std::io::BufWriter<W>);
+
+impl<R: std::io::Read, W: std::io::Write> IO<R, W> {
+    pub fn new(r: R, w: W) -> IO<R, W> {
+        IO(r, std::io::BufWriter::new(w))
+    }
+    pub fn write<S: std::ops::Deref<Target = str>>(&mut self, s: S) {
+        use std::io::Write;
+        self.1.write(s.as_bytes()).unwrap();
+    }
     pub fn read<T: std::str::FromStr>(&mut self) -> T {
         use std::io::Read;
         let buf = self
-            .stdin
+            .0
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
-            .skip_while(|&b| b == b' ' || b == b'\n')
-            .take_while(|&b| b != b' ' && b != b'\n')
+            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r' || b == b'\t')
+            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r' && b != b'\t')
             .collect::<Vec<_>>();
         unsafe { std::str::from_utf8_unchecked(&buf) }
             .parse()

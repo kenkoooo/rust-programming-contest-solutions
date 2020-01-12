@@ -1,90 +1,94 @@
 fn main() {
-    let s = std::io::stdin();
-    let mut sc = Scanner { stdin: s.lock() };
+    let (r, w) = (std::io::stdin(), std::io::stdout());
+    let mut sc = IO::new(r.lock(), w.lock());
 
     let n: usize = sc.read();
     let a: u64 = sc.read();
     let b: u64 = sc.read();
-    match solve(a, b, n) {
-        Some(ans) => {
-            println!("YES");
-            for (i, ans) in ans.into_iter().enumerate() {
-                if i > 0 {
-                    print!(" ");
-                }
-                print!("{}", ans);
+    let ans = construct(a, b, 1 << n);
+    if ans.is_empty() {
+        println!("NO");
+    } else {
+        sc.write("YES\n");
+        for (i, ans) in ans.into_iter().enumerate() {
+            if i > 0 {
+                sc.write(" ");
             }
-            println!();
+            sc.write(format!("{}", ans));
         }
-        None => {
-            println!("NO");
-        }
+        sc.write("\n");
     }
 }
 
-fn solve(a: u64, b: u64, n: usize) -> Option<Vec<u64>> {
-    if (a ^ b).count_ones() & 1 == 0 {
-        return None;
+fn construct(first: u64, last: u64, n: usize) -> Vec<u64> {
+    let diff = first ^ last;
+    if diff.count_ones() % 2 == 0 {
+        return Vec::new();
     }
-    if n == 1 {
-        return Some(vec![a, b]);
+    if n == 2 {
+        return vec![first, last];
     }
-    let k = (0..).find(|&i| (a & (1 << i)) != (b & (1 << i))).unwrap();
-    let a_bit = (a >> k) & 1;
-    let b_bit = (b >> k) & 1;
-    assert_ne!(a_bit, b_bit);
+    let diff_pos = (0..).find(|&i| diff & (1 << i) != 0).unwrap();
 
-    let next_a = remove_bit(a, k);
-    let next_b = remove_bit(b, k);
-    let next_c = next_a ^ 1;
+    let prefix_add = (first >> diff_pos) & 1;
+    let suffix_add = (last >> diff_pos) & 1;
+    assert_ne!(prefix_add, suffix_add);
 
-    let prefix = solve(next_a, next_c, n - 1);
-    let suffix = solve(next_c, next_b, n - 1);
-    match (prefix, suffix) {
-        (Some(prefix), Some(suffix)) => {
-            let mut result = vec![];
-            for p in prefix.into_iter() {
-                result.push(insert(p, k, a_bit));
-            }
-            for s in suffix.into_iter() {
-                result.push(insert(s, k, b_bit));
-            }
-            Some(result)
-        }
-        _ => None,
+    let prefix_first = remove(first, diff_pos);
+    let prefix_last = prefix_first ^ 1;
+    let suffix_first = prefix_first ^ 1;
+    let suffix_last = remove(last, diff_pos);
+
+    let prefix = construct(prefix_first, prefix_last, n / 2);
+    let suffix = construct(suffix_first, suffix_last, n / 2);
+    if prefix.is_empty() || suffix.is_empty() {
+        return Vec::new();
     }
+
+    let mut v = vec![];
+    for t in prefix.into_iter() {
+        v.push(insert(t, diff_pos, prefix_add));
+    }
+    for t in suffix.into_iter() {
+        v.push(insert(t, diff_pos, suffix_add));
+    }
+
+    v
 }
 
-fn remove_bit(x: u64, i: u64) -> u64 {
-    let prefix = (x >> (i + 1)) << i;
-    let suffix = x & ((1 << i) - 1);
+fn remove(v: u64, pos: u64) -> u64 {
+    let suffix = v & ((1 << pos) - 1);
+    let prefix = (v >> (pos + 1)) << pos;
     assert_eq!(prefix & suffix, 0);
-    prefix | suffix
+    prefix + suffix
 }
 
-fn insert(x: u64, i: u64, b: u64) -> u64 {
-    let suffix = x & ((1 << i) - 1);
-    let prefix = (x >> i) << (i + 1);
-    assert_eq!(prefix & (1 << i), 0);
-    assert_eq!(suffix & (1 << i), 0);
+fn insert(v: u64, pos: u64, add: u64) -> u64 {
+    let suffix = v & ((1 << pos) - 1);
+    let prefix = (((v >> pos) << 1) + add) << pos;
     assert_eq!(prefix & suffix, 0);
-    prefix | (b << i) | suffix
+    prefix + suffix
 }
 
-pub struct Scanner<R> {
-    stdin: R,
-}
+pub struct IO<R, W: std::io::Write>(R, std::io::BufWriter<W>);
 
-impl<R: std::io::Read> Scanner<R> {
+impl<R: std::io::Read, W: std::io::Write> IO<R, W> {
+    pub fn new(r: R, w: W) -> IO<R, W> {
+        IO(r, std::io::BufWriter::new(w))
+    }
+    pub fn write<S: std::ops::Deref<Target = str>>(&mut self, s: S) {
+        use std::io::Write;
+        self.1.write(s.as_bytes()).unwrap();
+    }
     pub fn read<T: std::str::FromStr>(&mut self) -> T {
         use std::io::Read;
         let buf = self
-            .stdin
+            .0
             .by_ref()
             .bytes()
             .map(|b| b.unwrap())
-            .skip_while(|&b| b == b' ' || b == b'\n')
-            .take_while(|&b| b != b' ' && b != b'\n')
+            .skip_while(|&b| b == b' ' || b == b'\n' || b == b'\r' || b == b'\t')
+            .take_while(|&b| b != b' ' && b != b'\n' && b != b'\r' && b != b'\t')
             .collect::<Vec<_>>();
         unsafe { std::str::from_utf8_unchecked(&buf) }
             .parse()
