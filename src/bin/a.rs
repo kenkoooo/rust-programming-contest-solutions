@@ -6,8 +6,8 @@ fn main() {
 pub struct IO<R, W: std::io::Write>(R, std::io::BufWriter<W>);
 
 impl<R: std::io::Read, W: std::io::Write> IO<R, W> {
-    pub fn new(r: R, w: W) -> Self {
-        Self(r, std::io::BufWriter::new(w))
+    pub fn new(r: R, w: W) -> IO<R, W> {
+        IO(r, std::io::BufWriter::new(w))
     }
     pub fn write<S: ToString>(&mut self, s: S) {
         use std::io::Write;
@@ -27,6 +27,9 @@ impl<R: std::io::Read, W: std::io::Write> IO<R, W> {
             .parse()
             .ok()
             .expect("Parse error.")
+    }
+    pub fn usize0(&mut self) -> usize {
+        self.read::<usize>() - 1
     }
     pub fn vec<T: std::str::FromStr>(&mut self, n: usize) -> Vec<T> {
         (0..n).map(|_| self.read()).collect()
